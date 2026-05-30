@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { redirect } from "next/navigation";
 import { DashboardLayout } from "@/components/layout";
 import { useAuthStore } from "@/lib/store";
@@ -69,19 +68,14 @@ const mockEvents = [
   },
 ];
 
-const statusStyles: Record<string, string> = {
-  planned: "bg-blue-100 text-blue-700",
-  ongoing: "bg-orange-100 text-orange-700",
-  completed: "bg-green-100 text-green-700",
-  cancelled: "bg-gray-100 text-gray-700",
-};
-
-const statusIcons: Record<string, React.ReactNode> = {
-  planned: <Clock className="w-3 h-3" />,
-  ongoing: <DollarSign className="w-3 h-3" />,
-  completed: <CheckCircle className="w-3 h-3" />,
-  cancelled: null,
-};
+function getStatusIcon(status: string) {
+  switch (status) {
+    case "planned": return <Clock className="w-3 h-3" />;
+    case "ongoing": return <DollarSign className="w-3 h-3" />;
+    case "completed": return <CheckCircle className="w-3 h-3" />;
+    default: return null;
+  }
+}
 
 export default function EventsPage() {
   const { isAuthenticated } = useAuthStore();
@@ -163,7 +157,7 @@ export default function EventsPage() {
                         variant={event.status === "completed" ? "success" : event.status === "ongoing" ? "warning" : "info"}
                         size="sm"
                       >
-                        {statusIcons[event.status as keyof typeof statusIcons]}
+                        {getStatusIcon(event.status)}
                         <span className="ml-1 capitalize">{event.status}</span>
                       </Badge>
                     </div>
