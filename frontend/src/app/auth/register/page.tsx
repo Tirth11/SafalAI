@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { User, Mail, Phone, Package, ArrowRight, ArrowLeft } from "lucide-react";
+import { useAuthStore } from "@/lib/store";
 
 const productOptions = [
   { value: "safalmybuy", label: "SafalMyBuy" },
@@ -101,7 +102,6 @@ export default function RegisterPage() {
 
       if (otp === "1234" || otp.length >= 4) {
         // Create user and login
-        const { useAuthStore } = await import("@/lib/store");
         useAuthStore.getState().login(
           {
             id: "1",
@@ -122,7 +122,8 @@ export default function RegisterPage() {
           },
           "mock-token"
         );
-        // Full page navigation for proper store hydration
+        // Small delay to ensure localStorage persistence before navigation
+        await new Promise((resolve) => setTimeout(resolve, 100));
         window.location.href = "/chat";
       } else {
         setErrors({ otp: "Invalid OTP. Please try again." });

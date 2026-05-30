@@ -88,7 +88,8 @@ export default function LoginPage() {
       };
 
       login(mockUser, "mock-token");
-      // Use window.location for full navigation to ensure store hydrates properly
+      // Small delay to ensure localStorage persistence before navigation
+      await new Promise((resolve) => setTimeout(resolve, 100));
       window.location.href = "/chat";
     } catch (error) {
       setErrors({ otp: "Invalid OTP. Please try again." });

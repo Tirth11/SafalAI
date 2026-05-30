@@ -46,15 +46,11 @@ interface ChatState {
   chats: ChatSession[];
   activeChatId: string | null;
   isTyping: boolean;
-  // Computed helpers
-  messages: ChatMessage[];
-  // Actions
   createChat: () => string;
   switchChat: (chatId: string) => void;
   renameChat: (chatId: string, name: string) => void;
   deleteChat: (chatId: string) => void;
   addMessage: (message: ChatMessage) => void;
-  setMessages: (messages: ChatMessage[]) => void;
   setTyping: (isTyping: boolean) => void;
   clearMessages: () => void;
 }
@@ -68,30 +64,16 @@ export const useChatStore = create<ChatState>()(
       activeChatId: null,
       isTyping: false,
 
-      get messages() {
-        const state = get();
-        const active = state.chats.find((c) => c.id === state.activeChatId);
-        return active?.messages || [];
-      },
-
       createChat: () => {
         const id = generateChatId();
-        const newChat: ChatSession = {
-          id,
-          name: "New Chat",
-          messages: [],
-          createdAt: new Date().toISOString(),
-        };
         set((state) => ({
-          chats: [...state.chats, newChat],
+          chats: [...state.chats, { id, name: "New Chat", messages: [], createdAt: new Date().toISOString() }],
           activeChatId: id,
         }));
         return id;
       },
 
-      switchChat: (chatId) => {
-        set({ activeChatId: chatId });
-      },
+      switchChat: (chatId) => set({ activeChatId: chatId }),
 
       renameChat: (chatId, name) => {
         set((state) => ({
@@ -111,7 +93,6 @@ export const useChatStore = create<ChatState>()(
 
       addMessage: (message) => {
         set((state) => {
-          // If no active chat, create one
           let chatId = state.activeChatId;
           let chats = [...state.chats];
 
@@ -129,18 +110,9 @@ export const useChatStore = create<ChatState>()(
         });
       },
 
-      setMessages: (messages) => {
-        set((state) => ({
-          chats: state.chats.map((c) =>
-            c.id === state.activeChatId ? { ...c, messages } : c
-          ),
-        }));
-      },
-
       setTyping: (isTyping) => set({ isTyping }),
 
       clearMessages: () => {
-        // Create a new chat instead of clearing
         const id = generateChatId();
         set((state) => ({
           chats: [...state.chats, { id, name: "New Chat", messages: [], createdAt: new Date().toISOString() }],
@@ -155,41 +127,6 @@ export const useChatStore = create<ChatState>()(
     }
   )
 );
-
-// Notification Store
-interface NotificationState {
-  notifications: Notification[];
-  unreadCount: number;
-  addNotification: (notification: Notification) => void;
-  markAsRead: (id: string) => void;
-  markAllAsRead: () => void;
-  setNotifications: (notifications: Notification[]) => void;
-}
-
-export const useNotificationStore = create<NotificationState>((set) => ({
-  notifications: [],
-  unreadCount: 0,
-  addNotification: (notification) =>
-    set((state) => ({
-      notifications: [notification, ...state.notifications],
-      unreadCount: state.unreadCount + 1,
-    })),
-  markAsRead: (id) =>
-    set((state) => ({
-      notifications: state.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)),
-      unreadCount: Math.max(0, state.unreadCount - 1),
-    })),
-  markAllAsRead: () =>
-    set((state) => ({
-      notifications: state.notifications.map((n) => ({ ...n, read: true })),
-      unreadCount: 0,
-    })),
-  setNotifications: (notifications) =>
-    set({
-      notifications,
-      unreadCount: notifications.filter((n) => !n.read).length,
-    }),
-}));
 
 // UI Store
 interface UIState {
