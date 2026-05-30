@@ -88,7 +88,8 @@ export default function LoginPage() {
       };
 
       login(mockUser, "mock-token");
-      router.push("/chat");
+      // Use window.location for full navigation to ensure store hydrates properly
+      window.location.href = "/chat";
     } catch (error) {
       setErrors({ otp: "Invalid OTP. Please try again." });
     } finally {

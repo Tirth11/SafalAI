@@ -14,10 +14,18 @@ export default function ChatPage() {
   const [isProductConnected, setIsProductConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectedUser, setConnectedUser] = useState<{ name: string; email: string } | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Wait for Zustand store to hydrate from localStorage
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   useEffect(() => {
+    if (!hydrated) return; // Don't redirect until hydrated
     if (!isAuthenticated) {
       router.push("/auth/login");
+      return;
     }
     // Check if product was previously connected (from localStorage)
     const connected = localStorage.getItem("safalmybuy_connected");
@@ -28,9 +36,9 @@ export default function ChatPage() {
         email: user?.email || "",
       });
     }
-  }, [isAuthenticated, router, user]);
+  }, [hydrated, isAuthenticated, router, user]);
 
-  if (!isAuthenticated) return null;
+  if (!hydrated || !isAuthenticated) return null;
 
   const handleConnect = () => {
     setIsConnecting(true);

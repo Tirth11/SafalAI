@@ -100,8 +100,30 @@ export default function RegisterPage() {
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       if (otp === "1234" || otp.length >= 4) {
-        // Success - redirect to dashboard
-        router.push("/chat");
+        // Create user and login
+        const { useAuthStore } = await import("@/lib/store");
+        useAuthStore.getState().login(
+          {
+            id: "1",
+            email: formData.email,
+            name: `${formData.firstName} ${formData.lastName}`,
+            phone: formData.phone,
+            currency: "INR",
+            language: "en",
+            createdAt: new Date().toISOString(),
+            subscription: {
+              id: "1",
+              plan: "free" as const,
+              status: "active" as const,
+              creditsBalance: 20,
+              creditsUsed: 0,
+              renewalDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            },
+          },
+          "mock-token"
+        );
+        // Full page navigation for proper store hydration
+        window.location.href = "/chat";
       } else {
         setErrors({ otp: "Invalid OTP. Please try again." });
       }

@@ -13,14 +13,18 @@ export default function SettingsPage() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
   const [activeTab, setActiveTab] = useState("profile");
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => { setHydrated(true); }, []);
 
   useEffect(() => {
+    if (!hydrated) return;
     if (!isAuthenticated) {
       router.push("/auth/login");
     }
-  }, [isAuthenticated, router]);
+  }, [hydrated, isAuthenticated, router]);
 
-  if (!isAuthenticated) return null;
+  if (!hydrated || !isAuthenticated) return null;
 
   const handleNavigate = (id: string) => {
     if (id === "settings") return;

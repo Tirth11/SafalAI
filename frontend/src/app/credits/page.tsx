@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layout";
 import { useAuthStore } from "@/lib/store";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Zap, ArrowUpRight, ArrowDownRight, Plus, Check } from "lucide-react";
@@ -34,14 +34,18 @@ const creditCosts = [
 export default function CreditsPage() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => { setHydrated(true); }, []);
 
   useEffect(() => {
+    if (!hydrated) return;
     if (!isAuthenticated) {
       router.push("/auth/login");
     }
-  }, [isAuthenticated, router]);
+  }, [hydrated, isAuthenticated, router]);
 
-  if (!isAuthenticated) return null;
+  if (!hydrated || !isAuthenticated) return null;
 
   const handleNavigate = (id: string) => {
     if (id === "credits") return;
