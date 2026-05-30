@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { redirect } from "next/navigation";
 import { DashboardLayout } from "@/components/layout";
 import { useAuthStore } from "@/lib/store";
@@ -162,7 +163,7 @@ export default function EventsPage() {
                         variant={event.status === "completed" ? "success" : event.status === "ongoing" ? "warning" : "info"}
                         size="sm"
                       >
-                        {statusIcons[event.status]}
+                        {statusIcons[event.status as keyof typeof statusIcons]}
                         <span className="ml-1 capitalize">{event.status}</span>
                       </Badge>
                     </div>
