@@ -59,9 +59,13 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Safal-AI Backend running on port ${PORT}`);
-  console.log(`📍 Health check: http://localhost:${PORT}/health`);
-});
+// For local development
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Safal-AI Backend running on port ${PORT}`);
+    console.log(`📍 Health check: http://localhost:${PORT}/health`);
+  });
+}
 
+// Export for Vercel serverless
 export default app;

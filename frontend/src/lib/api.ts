@@ -1,4 +1,6 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+// Use relative URL for same-origin deployment (Vercel monorepo)
+// or absolute URL for separate backend deployment
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
 interface ApiOptions {
   method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
