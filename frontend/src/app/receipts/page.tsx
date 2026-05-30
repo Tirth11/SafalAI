@@ -1,20 +1,20 @@
 "use client";
 
-import { redirect } from "next/navigation";
-import { DashboardLayout } from "@/components/layout";
-import { ReceiptList } from "@/components/receipts";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store";
 
 export default function ReceiptsPage() {
+  const router = useRouter();
   const { isAuthenticated } = useAuthStore();
 
-  if (!isAuthenticated) {
-    redirect("/auth/login");
-  }
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/auth/login");
+    } else {
+      router.push("/chat");
+    }
+  }, [isAuthenticated, router]);
 
-  return (
-    <DashboardLayout title="Receipts" activeItem="receipts">
-      <ReceiptList />
-    </DashboardLayout>
-  );
+  return null;
 }

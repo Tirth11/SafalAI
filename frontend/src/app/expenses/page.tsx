@@ -1,20 +1,20 @@
 "use client";
 
-import { redirect } from "next/navigation";
-import { DashboardLayout } from "@/components/layout";
-import { ExpenseList } from "@/components/expenses";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store";
 
 export default function ExpensesPage() {
+  const router = useRouter();
   const { isAuthenticated } = useAuthStore();
 
-  if (!isAuthenticated) {
-    redirect("/auth/login");
-  }
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/auth/login");
+    } else {
+      router.push("/chat");
+    }
+  }, [isAuthenticated, router]);
 
-  return (
-    <DashboardLayout title="Expenses" activeItem="expenses">
-      <ExpenseList />
-    </DashboardLayout>
-  );
+  return null;
 }
