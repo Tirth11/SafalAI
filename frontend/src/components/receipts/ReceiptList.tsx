@@ -4,11 +4,11 @@ import { useState } from "react";
 import { cn, formatCurrency, formatDate, formatRelativeTime } from "@/lib/utils";
 import { Button, Input, Card, Badge } from "@/components/ui";
 import { ReceiptUpload } from "./ReceiptUpload";
-import type { Receipt } from "@/types";
+import type { Receipt as ReceiptType } from "@/types";
 import {
   Plus,
   Search,
-  Receipt,
+  Receipt as ReceiptIcon,
   Clock,
   CheckCircle,
   XCircle,
@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 // Mock data
-const mockReceipts: Receipt[] = [
+const mockReceipts: ReceiptType[] = [
   {
     id: "1",
     userId: "1",
@@ -64,7 +64,7 @@ const mockReceipts: Receipt[] = [
 ];
 
 export function ReceiptList() {
-  const [receipts] = useState<Receipt[]>(mockReceipts);
+  const [receipts] = useState<ReceiptType[]>(mockReceipts);
   const [searchQuery, setSearchQuery] = useState("");
   const [showUpload, setShowUpload] = useState(false);
 
@@ -119,7 +119,7 @@ export function ReceiptList() {
               <Card key={receipt.id} hover className="overflow-hidden">
                 {/* Image Placeholder */}
                 <div className="aspect-[3/4] bg-gray-100 flex items-center justify-center relative">
-                  <Receipt className="w-12 h-12 text-gray-300" />
+                  <ReceiptIcon className="w-12 h-12 text-gray-300" />
                   <Badge
                     variant={
                       receipt.status === "processed"
@@ -172,7 +172,7 @@ export function ReceiptList() {
 
           {filteredReceipts.length === 0 && (
             <Card className="text-center py-12">
-              <Receipt className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <ReceiptIcon className="w-12 h-12 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No receipts found</h3>
               <p className="text-gray-500 mb-4">Upload your first receipt to get started</p>
               <Button onClick={() => setShowUpload(true)}>
