@@ -8,25 +8,21 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
   activeItem?: string;
   onNavigate?: (id: string) => void;
+  isProductConnected?: boolean;
 }
 
 export function DashboardLayout({
   children,
   activeItem,
   onNavigate,
+  isProductConnected = false,
 }: DashboardLayoutProps) {
   const { sidebarOpen } = useUIStore();
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Sidebar activeItem={activeItem} onItemClick={onNavigate} />
-
-      <main
-        className={cn(
-          "transition-all duration-300 min-h-screen",
-          sidebarOpen ? "ml-60" : "ml-16"
-        )}
-      >
+      <Sidebar activeItem={activeItem} onItemClick={onNavigate} isProductConnected={isProductConnected} />
+      <main className={cn("transition-all duration-300 min-h-screen", sidebarOpen ? "ml-60" : "ml-16")}>
         {children}
       </main>
     </div>

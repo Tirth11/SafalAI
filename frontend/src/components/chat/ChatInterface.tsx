@@ -411,17 +411,7 @@ export function ChatInterface() {
   const hasMessages = messages.length > 0;
 
   return (
-    <div className="flex flex-col h-screen">
-      <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0">
-        <div>
-          <h1 className="text-sm font-semibold text-gray-900">SafalMyBuy Assistant</h1>
-          <p className="text-xs text-gray-500">AI-powered expense & purchase management</p>
-        </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg">
-          <span className="text-xs font-medium text-green-700">{user?.subscription?.creditsBalance || 0} credits</span>
-        </div>
-      </header>
-
+    <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4">
         {!hasMessages ? (
           <AIGreeting user={user} onQuickAction={handleQuickAction} />
