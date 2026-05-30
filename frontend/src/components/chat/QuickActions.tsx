@@ -9,6 +9,9 @@ import {
   BarChart3,
   Calendar,
   Users,
+  Wallet,
+  FolderOpen,
+  PartyPopper,
 } from "lucide-react";
 
 interface QuickAction {
@@ -38,6 +41,30 @@ const quickActions: QuickAction[] = [
     color: "bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100",
   },
   {
+    id: "create_budget",
+    label: "Create Budget",
+    icon: <Wallet className="w-5 h-5" />,
+    color: "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100",
+  },
+  {
+    id: "create_outlay",
+    label: "Create Outlay",
+    icon: <FolderOpen className="w-5 h-5" />,
+    color: "bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100",
+  },
+  {
+    id: "create_event",
+    label: "Create Event",
+    icon: <PartyPopper className="w-5 h-5" />,
+    color: "bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100",
+  },
+  {
+    id: "add_event_expense",
+    label: "Add Event Expense",
+    icon: <Calendar className="w-5 h-5" />,
+    color: "bg-teal-50 text-teal-600 border-teal-200 hover:bg-teal-100",
+  },
+  {
     id: "track_warranty",
     label: "Track Warranty",
     icon: <ShieldCheck className="w-5 h-5" />,
@@ -56,14 +83,8 @@ const quickActions: QuickAction[] = [
     color: "bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100",
   },
   {
-    id: "event_expense",
-    label: "Create Event Expense",
-    icon: <Calendar className="w-5 h-5" />,
-    color: "bg-teal-50 text-teal-600 border-teal-200 hover:bg-teal-100",
-  },
-  {
     id: "family_expense",
-    label: "Manage Family / Shared Expense",
+    label: "Family / Shared Expense",
     icon: <Users className="w-5 h-5" />,
     color: "bg-pink-50 text-pink-600 border-pink-200 hover:bg-pink-100",
   },
@@ -75,7 +96,7 @@ interface QuickActionsProps {
 
 export function QuickActions({ onAction }: QuickActionsProps) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
       {quickActions.map((action) => (
         <button
           key={action.id}

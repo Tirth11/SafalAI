@@ -1,24 +1,30 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
-import { Check, Edit, X, Image as ImageIcon, Store } from "lucide-react";
+import { Check, Edit, X } from "lucide-react";
 
 interface PreviewCardProps {
-  type: "expense" | "purchase";
+  type: "expense" | "purchase" | "budget" | "outlay" | "event";
   fields: Record<string, string>;
   onAction: (action: "confirm" | "edit" | "cancel") => void;
 }
 
+const typeStyles: Record<string, { bg: string; text: string; label: string }> = {
+  expense: { bg: "bg-green-50", text: "text-green-700", label: "Expense Preview" },
+  purchase: { bg: "bg-purple-50", text: "text-purple-700", label: "Purchase Item Preview" },
+  budget: { bg: "bg-emerald-50", text: "text-emerald-700", label: "Budget Preview" },
+  outlay: { bg: "bg-amber-50", text: "text-amber-700", label: "Outlay Preview" },
+  event: { bg: "bg-rose-50", text: "text-rose-700", label: "Event Preview" },
+};
+
 export function PreviewCard({ type, fields, onAction }: PreviewCardProps) {
+  const style = typeStyles[type] || typeStyles.expense;
+
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden ml-11">
       {/* Header */}
-      <div className={`px-4 py-2.5 text-xs font-semibold uppercase tracking-wide ${
-        type === "expense"
-          ? "bg-green-50 text-green-700 border-b border-green-100"
-          : "bg-purple-50 text-purple-700 border-b border-purple-100"
-      }`}>
-        {type === "expense" ? "Expense Preview" : "Purchase Item Preview"}
+      <div className={`px-4 py-2.5 text-xs font-semibold uppercase tracking-wide ${style.bg} ${style.text} border-b`}>
+        {style.label}
       </div>
 
       {/* Fields */}
@@ -42,29 +48,15 @@ export function PreviewCard({ type, fields, onAction }: PreviewCardProps) {
 
       {/* Actions */}
       <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex flex-wrap gap-2">
-        <Button
-          size="sm"
-          onClick={() => onAction("confirm")}
-          className="text-xs"
-        >
+        <Button size="sm" onClick={() => onAction("confirm")} className="text-xs">
           <Check className="w-3.5 h-3.5 mr-1.5" />
           Confirm & Save
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onAction("edit")}
-          className="text-xs"
-        >
+        <Button variant="outline" size="sm" onClick={() => onAction("edit")} className="text-xs">
           <Edit className="w-3.5 h-3.5 mr-1.5" />
           Edit Details
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onAction("cancel")}
-          className="text-xs text-gray-500"
-        >
+        <Button variant="ghost" size="sm" onClick={() => onAction("cancel")} className="text-xs text-gray-500">
           <X className="w-3.5 h-3.5 mr-1.5" />
           Cancel
         </Button>
