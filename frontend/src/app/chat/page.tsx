@@ -5,8 +5,8 @@ import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout";
 import { ChatInterface } from "@/components/chat";
 import { ProductConnect } from "@/components/chat/ProductConnect";
-import { useAuthStore } from "@/lib/store";
-import { CheckCircle } from "lucide-react";
+import { useAuthStore, useChatStore } from "@/lib/store";
+import { CheckCircle, RotateCcw } from "lucide-react";
 
 export default function ChatPage() {
   const router = useRouter();
@@ -72,10 +72,21 @@ export default function ChatPage() {
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg">
-            <span className="text-xs font-medium text-green-700">
-              {user?.subscription?.creditsBalance || 0} credits
-            </span>
+          <div className="flex items-center gap-3">
+            {isProductConnected && (
+              <button
+                onClick={() => useChatStore.getState().clearMessages()}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                New Chat
+              </button>
+            )}
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg">
+              <span className="text-xs font-medium text-green-700">
+                {user?.subscription?.creditsBalance || 0} credits
+              </span>
+            </div>
           </div>
         </header>
 

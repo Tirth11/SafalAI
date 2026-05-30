@@ -5,6 +5,8 @@ import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 import { AIGreeting } from "./AIGreeting";
 import { PreviewCard } from "./PreviewCard";
+import { TopActions } from "./TopActions";
+import { FollowUpActions } from "./FollowUpActions";
 import { useAuthStore, useChatStore } from "@/lib/store";
 import type { ChatMessage as ChatMessageType } from "@/types";
 import { generateId } from "@/lib/utils";
@@ -77,6 +79,7 @@ export function ChatInterface() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isSending, setIsSending] = useState(false);
   const [pendingRecord, setPendingRecord] = useState<PendingRecord | null>(null);
+  const [showFollowUp, setShowFollowUp] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -217,11 +220,13 @@ export function ChatInterface() {
       if (lower.includes("save") || lower.includes("confirm")) {
         const saved = pendingRecord;
         setPendingRecord(null);
+        setShowFollowUp(true);
         const label = saved.fields["Expense Name"] || saved.fields["Item Name"] || saved.fields["Event Name"] || saved.fields["Outlay Name"] || saved.fields["Year"] || "record";
         return { response: `Done! Your ${saved.type} "${label}" has been saved successfully. ✅`, record: null };
       }
       if (lower.includes("cancel")) {
         setPendingRecord(null);
+        setShowFollowUp(true);
         return { response: "Cancelled. No record was saved. How else can I help?", record: null };
       }
       // Edit commands
@@ -394,6 +399,7 @@ export function ChatInterface() {
   };
 
   const handleQuickAction = (actionId: string) => {
+    setShowFollowUp(false);
     addMessage({ id: generateId(), role: "user", content: actionLabels[actionId] || actionId, timestamp: new Date().toISOString() });
     setTimeout(() => {
       addMessage({ id: generateId(), role: "assistant", content: guidedResponses[actionId] || "How can I help?", timestamp: new Date().toISOString() });
@@ -408,10 +414,26 @@ export function ChatInterface() {
     }
   };
 
+  const handleNewChat = () => {
+    useChatStore.getState().clearMessages();
+    setPendingRecord(null);
+    setShowFollowUp(false);
+  };
+
   const hasMessages = messages.length > 0;
 
   return (
     <div className="flex flex-col h-full">
+      {/* Top Actions - always visible when chat has messages */}
+      {hasMessages && (
+        <div className="flex-shrink-0 bg-white border-b border-gray-100 px-4 lg:px-6 py-2.5">
+          <div className="max-w-2xl mx-auto">
+            <TopActions onAction={handleQuickAction} />
+          </div>
+        </div>
+      )}
+
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4">
         {!hasMessages ? (
           <AIGreeting user={user} onQuickAction={handleQuickAction} />
@@ -421,6 +443,11 @@ export function ChatInterface() {
             {pendingRecord && (
               <div className="animate-fade-in">
                 <PreviewCard type={pendingRecord.type} fields={pendingRecord.fields} onAction={handlePreviewAction} />
+              </div>
+            )}
+            {showFollowUp && !pendingRecord && (
+              <div className="animate-fade-in">
+                <FollowUpActions onAction={handleQuickAction} onNewChat={handleNewChat} />
               </div>
             )}
             {isTyping && (
@@ -442,6 +469,7 @@ export function ChatInterface() {
         )}
       </div>
 
+      {/* Input */}
       <div className="flex-shrink-0 bg-white border-t border-gray-100 p-4 lg:px-6">
         <div className="max-w-2xl mx-auto">
           <ChatInput onSend={handleSend} disabled={isSending || isTyping} placeholder={pendingRecord ? "Edit details, say 'Save it' to confirm, or 'Cancel'..." : "Type your request or describe what you need..."} />

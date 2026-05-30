@@ -5,3 +5,5 @@ export { QuickActions } from "./QuickActions";
 export { AIGreeting } from "./AIGreeting";
 export { PreviewCard } from "./PreviewCard";
 export { ProductConnect } from "./ProductConnect";
+export { TopActions } from "./TopActions";
+export { FollowUpActions } from "./FollowUpActions";
