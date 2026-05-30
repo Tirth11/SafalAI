@@ -13,7 +13,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <span className="text-lg font-bold text-gray-900">SafalVir</span>
+            <span className="text-lg font-bold text-gray-900">Safal-AI</span>
           </Link>
         </div>
       </header>
@@ -28,7 +28,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       {/* Footer */}
       <footer className="py-4 text-center">
         <p className="text-xs text-gray-400">
-          &copy; {new Date().getFullYear()} SafalVir. All rights reserved.
+          &copy; {new Date().getFullYear()} Safal-AI. All rights reserved.
         </p>
       </footer>
     </div>

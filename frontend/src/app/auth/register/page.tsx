@@ -57,7 +57,7 @@ export default function RegisterPage() {
     }
 
     if (!formData.product) {
-      newErrors.product = "Please select a SafalVir product.";
+      newErrors.product = "Please select a Safal-AI product.";
     }
 
     setErrors(newErrors);
@@ -140,7 +140,7 @@ export default function RegisterPage() {
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Create Account</h1>
           <p className="text-gray-500 mt-1 text-sm">
-            Enter your details to create a SafalVir account
+            Enter your details to create a Safal-AI account
           </p>
         </div>
 
@@ -204,7 +204,7 @@ export default function RegisterPage() {
           />
 
           <Select
-            label="Purchased SafalVir Product"
+            label="Purchased Safal-AI Product"
             options={productOptions}
             value={formData.product}
             onChange={(e) =>

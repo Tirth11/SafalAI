@@ -34,7 +34,7 @@ const products = [
     id: "more",
     name: "More Coming Soon",
     description:
-      "New SafalVir products for business workflows, records management, and automation.",
+      "New Safal-AI products for business workflows, records management, and automation.",
     icon: <Sparkles className="w-7 h-7" />,
     color: "bg-orange-100 text-orange-600",
     available: false,
@@ -51,7 +51,7 @@ export default function LandingPage() {
             <div className="w-9 h-9 rounded-lg gradient-hero flex items-center justify-center">
               <Zap className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">SafalVir</span>
+            <span className="text-xl font-bold text-gray-900">Safal-AI</span>
           </div>
           <div className="flex items-center gap-3">
             <Link
@@ -79,11 +79,11 @@ export default function LandingPage() {
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
-            Welcome to SafalVir
+            Welcome to Safal-AI
           </h1>
 
           <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mb-10">
-            SafalVir builds smart digital products that help users manage daily
+            Safal-AI builds smart digital products that help users manage daily
             tasks, expenses, purchases, records, and business workflows with
             ease. Choose your product and continue to access AI-powered features
             and services.
@@ -196,7 +196,7 @@ export default function LandingPage() {
       <footer className="border-t border-gray-100 py-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-sm text-gray-500">
-            &copy; {new Date().getFullYear()} SafalVir. All rights reserved.
+            &copy; {new Date().getFullYear()} Safal-AI. All rights reserved.
           </p>
         </div>
       </footer>
