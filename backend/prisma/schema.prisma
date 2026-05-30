@@ -104,6 +104,7 @@ model Receipt {
 // Warranty model
 model Warranty {
   id              String   @id @default(uuid())
+  userId          String
   purchaseItemId  String   @unique
   startDate       DateTime
   endDate         DateTime
@@ -116,8 +117,10 @@ model Warranty {
   reminderDays    Int[]    @default([30, 7])
   createdAt       DateTime @default(now())
 
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   purchaseItem    PurchaseItem @relation(fields: [purchaseItemId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@index([endDate])
 }
 
