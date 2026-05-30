@@ -1,14 +1,32 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { cn } from "@/lib/utils";
 import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 import { AIGreeting } from "./AIGreeting";
-import { QuickActions } from "./QuickActions";
 import { useAuthStore, useChatStore } from "@/lib/store";
-import type { ChatMessage as ChatMessageType, AIAction } from "@/types";
+import type { ChatMessage as ChatMessageType } from "@/types";
 import { generateId } from "@/lib/utils";
+
+// Guided AI responses per action - asks for details, never creates directly
+const guidedResponses: Record<string, string> = {
+  add_expense:
+    "Sure. Please tell me the expense details.\n\nFor example: amount, category, date, and purpose.\n\nYou can say something like:\n\"Add ₹10,000 for car repair today.\"",
+  add_purchase:
+    "Sure. Please tell me what you purchased, the amount, purchase date, store name, and warranty details if available.\n\nFor example:\n\"I purchased a Samsung fridge for ₹45,000 from Croma with 1 year warranty.\"",
+  upload_receipt:
+    "Please upload your bill or receipt. I will read it and show you the details before saving.\n\nYou can upload an image or PDF using the attachment button below.",
+  track_warranty:
+    "Sure. Please tell me the product name, purchase date, and warranty period, or upload the invoice/warranty card.\n\nFor example:\n\"iPhone 15 Pro purchased on Jan 15, 2024 with 1 year AppleCare warranty.\"",
+  add_expiry:
+    "Please tell me the item name and expiry date, or upload a bill/product image if the expiry date is visible.\n\nFor example:\n\"Milk expires on June 5\" or \"Medicine expires Aug 2026.\"",
+  generate_report:
+    "Sure. What report would you like to generate?\n\nFor example:\n• Monthly expense report\n• Category-wise spending report\n• Warranty expiry report\n• Family spending report\n• Event expense report\n\nPlease tell me the type and date range.",
+  event_expense:
+    "Please tell me the event name, budget, participants, and expense details you want to track.\n\nFor example:\n\"Create a Goa Trip event with ₹50,000 budget and 5 participants.\"",
+  family_expense:
+    "Please tell me which family member or group this expense belongs to and the expense details.\n\nFor example:\n\"Add ₹2,000 school expense for my son.\"",
+};
 
 export function ChatInterface() {
   const { user } = useAuthStore();
@@ -24,61 +42,48 @@ export function ChatInterface() {
     scrollToBottom();
   }, [messages]);
 
-  const simulateAIResponse = async (userMessage: string): Promise<ChatMessageType> => {
-    // Simulate AI processing delay
-    await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 1000));
+  const simulateAIResponse = async (userMessage: string): Promise<string> => {
+    await new Promise((resolve) => setTimeout(resolve, 800 + Math.random() * 800));
 
-    // Simple intent detection for demo
-    const lowerMessage = userMessage.toLowerCase();
-    let response = "";
-    let action: AIAction | undefined;
+    const lower = userMessage.toLowerCase();
 
-    if (lowerMessage.includes("expense") || lowerMessage.includes("spent")) {
-      // Extract amount and category from message
+    // Expense intent
+    if (lower.includes("expense") || lower.includes("spent") || lower.includes("paid")) {
       const amountMatch = userMessage.match(/₹?\$?(\d+[\d,]*)/);
-      const amount = amountMatch ? parseInt(amountMatch[1].replace(/,/g, "")) : 0;
-
-      response = `I've added your expense of ₹${amount.toLocaleString()}. Here's what I recorded:\n\n• Amount: ₹${amount.toLocaleString()}\n• Category: General\n• Date: Today\n\nIs this correct, or would you like to change the category?`;
-      action = {
-        type: "add_expense",
-        status: "requires_confirmation",
-        creditsUsed: 2,
-        confirmationRequired: true,
-        data: { amount, category: "general", date: new Date().toISOString() },
-      };
-    } else if (lowerMessage.includes("report") || lowerMessage.includes("spending")) {
-      response = `Here's your spending summary for this month:\n\n💰 Total Expenses: ₹45,230\n📊 Top Category: Food & Dining (₹12,500)\n📈 vs Last Month: +8.5%\n\nWould you like a detailed breakdown by category?`;
-      action = {
-        type: "generate_report",
-        status: "completed",
-        creditsUsed: 1,
-        confirmationRequired: false,
-      };
-    } else if (lowerMessage.includes("warranty")) {
-      response = `I found 3 items with warranties:\n\n1. **iPhone 15** - Expires in 8 months\n2. **Samsung TV** - Expires in 11 months\n3. **MacBook Pro** - Expires in 6 months\n\nWould you like me to set reminders for any of these?`;
-      action = {
-        type: "track_warranty",
-        status: "completed",
-        creditsUsed: 1,
-        confirmationRequired: false,
-      };
-    } else if (lowerMessage.includes("receipt") || lowerMessage.includes("upload")) {
-      response = `I can help you scan and upload receipts! Here's what I can do:\n\n📸 Scan receipts from images\n📄 Extract data from PDFs\n🧾 Auto-categorize expenses\n\nJust upload an image or PDF and I'll process it for you (uses 5 credits).`;
-    } else if (lowerMessage.includes("budget")) {
-      response = `Here's your budget status:\n\n🎯 Monthly Budget: ₹50,000\n✅ Spent: ₹45,230 (90%)\n💰 Remaining: ₹4,770\n\n⚠️ You're close to your budget limit. Consider reducing discretionary spending.`;
-    } else if (lowerMessage.includes("hello") || lowerMessage.includes("hi")) {
-      response = `Hello! 👋 I'm Safal-AI, your financial assistant. I can help you with:\n\n• Adding expenses and purchases\n• Scanning receipts\n• Tracking warranties\n• Generating reports\n• Managing budgets\n\nWhat would you like to do today?`;
-    } else {
-      response = `I understand you want to: "${userMessage}"\n\nI'm still learning! For now, I can best help with:\n• Adding expenses (e.g., "Add ₹500 for groceries")\n• Checking reports (e.g., "Show my spending")\n• Tracking warranties (e.g., "Check my warranties")\n\nHow else can I assist you?`;
+      if (amountMatch) {
+        const amount = amountMatch[1].replace(/,/g, "");
+        return `I understood:\n\n• **Amount:** ₹${parseInt(amount).toLocaleString()}\n• **Description:** ${userMessage}\n• **Date:** Today\n• **Category:** General\n\nShall I save this expense? Please confirm or tell me if you'd like to change anything.`;
+      }
+      return "Please provide the expense amount, category, and description. For example:\n\"₹500 for groceries today.\"";
     }
 
-    return {
-      id: generateId(),
-      role: "assistant",
-      content: response,
-      timestamp: new Date().toISOString(),
-      action,
-    };
+    // Purchase intent
+    if (lower.includes("purchase") || lower.includes("bought") || lower.includes("buy")) {
+      return "I can help with that! Please share:\n• Product name\n• Price\n• Store (optional)\n• Warranty period (optional)\n\nFor example: \"Bought Sony headphones for ₹3,500 from Amazon with 1 year warranty.\"";
+    }
+
+    // Report intent
+    if (lower.includes("report") || lower.includes("summary") || lower.includes("spending")) {
+      return "What type of report would you like?\n\n• Monthly expenses\n• Category breakdown\n• Family spending\n• Event expenses\n\nAlso, what time period? (e.g., this month, last 3 months, 2024)";
+    }
+
+    // Warranty intent
+    if (lower.includes("warranty")) {
+      return "I can help track warranties. Please tell me:\n• Product name\n• Purchase date\n• Warranty period\n\nOr upload the warranty card/invoice.";
+    }
+
+    // Budget/balance
+    if (lower.includes("budget") || lower.includes("balance") || lower.includes("credit")) {
+      return `Here's your current status:\n\n💰 **Credits Available:** ${user?.subscription?.creditsBalance || 0}\n📊 **Plan:** ${user?.subscription?.plan || "Free"}\n\nWould you like to buy more credits or see usage history?`;
+    }
+
+    // Greeting
+    if (lower.includes("hello") || lower.includes("hi") || lower === "hey") {
+      return `Hi ${user?.name?.split(" ")[0] || "there"}! 👋 How can I help you today?\n\nYou can ask me to add expenses, track purchases, scan receipts, check warranties, or generate reports.`;
+    }
+
+    // Default
+    return `I understand. Could you provide more details?\n\nI can help with:\n• Adding expenses or purchases\n• Scanning receipts and bills\n• Tracking warranties and expiry dates\n• Generating spending reports\n\nJust tell me what you'd like to do!`;
   };
 
   const handleSend = async (message: string, attachments?: File[]) => {
@@ -100,19 +105,23 @@ export function ChatInterface() {
     };
     addMessage(userMsg);
 
-    // Show typing indicator
+    // Show typing
     setTyping(true);
 
     try {
-      // Simulate AI response
-      const aiResponse = await simulateAIResponse(message);
-      addMessage(aiResponse);
-    } catch (error) {
-      // Add error message
+      const response = await simulateAIResponse(message);
+
       addMessage({
         id: generateId(),
         role: "assistant",
-        content: "I apologize, but I encountered an error processing your request. Please try again.",
+        content: response,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      addMessage({
+        id: generateId(),
+        role: "assistant",
+        content: "Sorry, something went wrong. Please try again.",
         timestamp: new Date().toISOString(),
       });
     } finally {
@@ -122,55 +131,72 @@ export function ChatInterface() {
   };
 
   const handleQuickAction = (actionId: string) => {
-    const actionMessages: Record<string, string> = {
-      add_expense: "I want to add a new expense",
-      upload_receipt: "I want to upload and scan a receipt",
-      add_purchase: "I want to add a new purchase item",
-      check_warranty: "Show me my warranty tracking",
-      check_expiry: "What items are expiring soon?",
-      create_event: "I want to create a new event budget",
-      generate_report: "Generate my spending report",
-      search: "I want to search my records",
-      check_budget: "What's my budget status?",
-      family_expenses: "Show family expenses",
-    };
+    // Quick action starts a guided conversation — NOT immediate creation
+    const guidedMessage = guidedResponses[actionId];
 
-    handleSend(actionMessages[actionId] || actionId);
-  };
+    if (guidedMessage) {
+      // Add a user message showing what they clicked
+      const actionLabels: Record<string, string> = {
+        add_expense: "Add Expense",
+        add_purchase: "Add Purchase Item",
+        upload_receipt: "Upload Bill / Receipt",
+        track_warranty: "Track Warranty",
+        add_expiry: "Add Expiry Reminder",
+        generate_report: "Generate Report",
+        event_expense: "Create Event Expense",
+        family_expense: "Manage Family / Shared Expense",
+      };
 
-  const handleVoiceInput = () => {
-    // Voice input placeholder
-    console.log("Voice input triggered");
+      addMessage({
+        id: generateId(),
+        role: "user",
+        content: actionLabels[actionId] || actionId,
+        timestamp: new Date().toISOString(),
+      });
+
+      // AI responds with guided question — does NOT create any record
+      setTimeout(() => {
+        addMessage({
+          id: generateId(),
+          role: "assistant",
+          content: guidedMessage,
+          timestamp: new Date().toISOString(),
+        });
+      }, 500);
+    }
   };
 
   const hasMessages = messages.length > 0;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
+    <div className="flex flex-col h-screen">
+      {/* Header */}
+      <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0">
+        <div>
+          <h1 className="text-sm font-semibold text-gray-900">SafalMyBuy Assistant</h1>
+          <p className="text-xs text-gray-500">AI-powered expense & purchase management</p>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg">
+          <span className="text-xs font-medium text-green-700">
+            {user?.subscription?.creditsBalance || 0} credits
+          </span>
+        </div>
+      </header>
+
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 lg:p-6">
+      <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4">
         {!hasMessages ? (
           <AIGreeting user={user} onQuickAction={handleQuickAction} />
         ) : (
-          <div className="max-w-3xl mx-auto space-y-6">
-            {/* Quick Actions Bar */}
-            <div className="sticky top-0 bg-gray-50 py-2 z-10">
-              <QuickActions onAction={handleQuickAction} compact />
-            </div>
-
-            {/* Messages */}
-            {messages.map((message, index) => (
-              <ChatMessage
-                key={message.id}
-                message={message}
-                isLast={index === messages.length - 1}
-              />
+          <div className="max-w-2xl mx-auto space-y-5">
+            {messages.map((message) => (
+              <ChatMessage key={message.id} message={message} />
             ))}
 
             {/* Typing Indicator */}
             {isTyping && (
               <div className="flex gap-3 animate-fade-in">
-                <div className="w-8 h-8 rounded-full gradient-hero flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full gradient-hero flex items-center justify-center flex-shrink-0">
                   <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
@@ -191,12 +217,12 @@ export function ChatInterface() {
       </div>
 
       {/* Input Area */}
-      <div className="sticky bottom-0 bg-gray-50 p-4 lg:p-6 border-t border-gray-100">
-        <div className="max-w-3xl mx-auto">
+      <div className="flex-shrink-0 bg-white border-t border-gray-100 p-4 lg:px-6">
+        <div className="max-w-2xl mx-auto">
           <ChatInput
             onSend={handleSend}
-            onVoiceInput={handleVoiceInput}
             disabled={isSending || isTyping}
+            placeholder="Type your request or describe what you need..."
           />
         </div>
       </div>

@@ -1,293 +1,133 @@
 "use client";
 
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layout";
 import { useAuthStore } from "@/lib/store";
-import { useState } from "react";
-import { cn, formatCurrency, formatDate, formatRelativeTime } from "@/lib/utils";
-import { Button, Input, Card, Badge, Modal } from "@/components/ui";
-import {
-  CreditCard,
-  Zap,
-  Sparkles,
-  Check,
-  Crown,
-  Star,
-  Building2,
-  History,
-  ArrowUpRight,
-  ArrowDownRight,
-  Plus,
-} from "lucide-react";
-
-// Mock data
-const plans = [
-  {
-    id: "free",
-    name: "Free Trial",
-    price: 0,
-    credits: 20,
-    features: [
-      "20 AI credits",
-      "Basic text commands",
-      "Basic receipt scanning",
-      "Limited reports",
-    ],
-    popular: false,
-  },
-  {
-    id: "basic",
-    name: "Basic AI",
-    price: 9.99,
-    credits: 100,
-    features: [
-      "100 AI credits/month",
-      "Expense creation",
-      "Purchase tracking",
-      "Basic receipt scanning",
-      "Basic reports",
-    ],
-    popular: false,
-  },
-  {
-    id: "advanced",
-    name: "Advanced AI",
-    price: 24.99,
-    credits: 300,
-    features: [
-      "300 AI credits/month",
-      "OCR invoice extraction",
-      "Warranty automation",
-      "Family expense AI",
-      "Smart categorization",
-      "Priority support",
-    ],
-    popular: true,
-  },
-  {
-    id: "premium",
-    name: "Premium AI",
-    price: 49.99,
-    credits: 750,
-    features: [
-      "750 AI credits/month",
-      "Advanced analytics",
-      "Voice commands",
-      "WhatsApp integration",
-      "Personalized insights",
-      "24/7 support",
-    ],
-    popular: false,
-  },
-];
-
-const transactions = [
-  {
-    id: "1",
-    type: "usage",
-    amount: -2,
-    description: "Added expense via chat",
-    createdAt: "2026-05-29T10:30:00Z",
-  },
-  {
-    id: "2",
-    type: "usage",
-    amount: -5,
-    description: "Receipt scan: Whole Foods",
-    createdAt: "2026-05-28T15:45:00Z",
-  },
-  {
-    id: "3",
-    type: "purchase",
-    amount: 100,
-    description: "Credit pack purchase",
-    createdAt: "2026-05-27T09:00:00Z",
-  },
-  {
-    id: "4",
-    type: "usage",
-    amount: -1,
-    description: "Budget status query",
-    createdAt: "2026-05-26T14:20:00Z",
-  },
-  {
-    id: "5",
-    type: "bonus",
-    amount: 10,
-    description: "Referral bonus",
-    createdAt: "2026-05-25T11:00:00Z",
-  },
-];
+import { useEffect } from "react";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Zap, ArrowUpRight, ArrowDownRight, Plus, Check } from "lucide-react";
+import { formatRelativeTime } from "@/lib/utils";
 
 const creditPacks = [
-  { credits: 50, price: 4.99, bonus: 0 },
-  { credits: 150, price: 12.99, bonus: 15 },
-  { credits: 500, price: 39.99, bonus: 75 },
-  { credits: 1000, price: 74.99, bonus: 200 },
+  { credits: 50, price: 4.99 },
+  { credits: 150, price: 12.99 },
+  { credits: 500, price: 39.99 },
+];
+
+const usageHistory = [
+  { id: "1", action: "Added expense via chat", credits: -2, time: "2026-05-30T10:30:00Z" },
+  { id: "2", action: "Receipt scan", credits: -5, time: "2026-05-29T15:00:00Z" },
+  { id: "3", action: "Report generated", credits: -10, time: "2026-05-28T09:00:00Z" },
+  { id: "4", action: "Credit pack purchased", credits: 100, time: "2026-05-27T12:00:00Z" },
+  { id: "5", action: "Chat query", credits: -1, time: "2026-05-26T14:20:00Z" },
+];
+
+const creditCosts = [
+  { action: "Chat message", cost: "1 credit" },
+  { action: "Add expense / purchase", cost: "2 credits" },
+  { action: "Receipt / bill scan", cost: "5 credits" },
+  { action: "Invoice extraction", cost: "8 credits" },
+  { action: "Report generation", cost: "10 credits" },
 ];
 
 export default function CreditsPage() {
+  const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [showPackModal, setShowPackModal] = useState(false);
 
-  if (!isAuthenticated) {
-    redirect("/auth/login");
-  }
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/auth/login");
+    }
+  }, [isAuthenticated, router]);
 
-  const currentCredits = user?.subscription?.creditsBalance || 50;
-  const currentPlan = user?.subscription?.plan || "free";
+  if (!isAuthenticated) return null;
+
+  const handleNavigate = (id: string) => {
+    if (id === "credits") return;
+    router.push(`/${id}`);
+  };
+
+  const balance = user?.subscription?.creditsBalance || 0;
+  const plan = user?.subscription?.plan || "free";
 
   return (
-    <DashboardLayout title="Credits" activeItem="credits">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Credits & Subscription</h1>
-            <p className="text-gray-500">Manage your AI credits and subscription plan</p>
-          </div>
-        </div>
+    <DashboardLayout activeItem="credits" onNavigate={handleNavigate}>
+      <div className="p-6 max-w-2xl mx-auto">
+        <h1 className="text-xl font-bold text-gray-900 mb-1">Credits</h1>
+        <p className="text-sm text-gray-500 mb-6">Manage your AI credits and usage</p>
 
-        {/* Current Balance */}
-        <Card className="bg-gradient-to-r from-primary-600 to-secondary-600 text-white">
-          <div className="flex items-start justify-between">
+        {/* Balance Card */}
+        <Card className="bg-gradient-to-r from-green-600 to-green-500 text-white mb-6 !border-0">
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/80 text-sm">Available Credits</p>
-              <p className="text-5xl font-bold mt-2">{currentCredits}</p>
-              <p className="text-white/60 text-sm mt-2">
-                Current plan: <span className="font-semibold text-white capitalize">{currentPlan}</span>
+              <p className="text-green-100 text-sm">Available Credits</p>
+              <p className="text-4xl font-bold mt-1">{balance}</p>
+              <p className="text-green-200 text-xs mt-1">
+                Plan: <span className="capitalize font-medium text-white">{plan}</span>
               </p>
             </div>
-            <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center">
-              <Zap className="w-8 h-8 text-white" />
+            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center">
+              <Zap className="w-7 h-7 text-white" />
             </div>
-          </div>
-          <div className="flex gap-3 mt-6">
-            <Button className="bg-white text-primary-700 hover:bg-gray-100">
-              <Plus className="w-4 h-4 mr-2" />
-              Buy Credits
-            </Button>
-            <Button variant="outline" className="border-white text-white hover:bg-white/10">
-              View Usage
-            </Button>
           </div>
         </Card>
 
-        {/* Credit Packs */}
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Buy Credit Packs</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Credit Costs */}
+        <Card className="mb-6">
+          <h3 className="font-semibold text-gray-900 mb-3">Credit Usage Guide</h3>
+          <div className="space-y-2">
+            {creditCosts.map((item, i) => (
+              <div key={i} className="flex justify-between text-sm py-1.5">
+                <span className="text-gray-600">{item.action}</span>
+                <span className="font-medium text-gray-900">{item.cost}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Buy Credits */}
+        <Card className="mb-6">
+          <h3 className="font-semibold text-gray-900 mb-3">Buy Credit Packs</h3>
+          <div className="grid grid-cols-3 gap-3">
             {creditPacks.map((pack, i) => (
-              <Card key={i} hover className="relative">
-                {pack.bonus > 0 && (
-                  <div className="absolute -top-2 -right-2 px-2 py-1 bg-green-500 text-white text-xs font-medium rounded-full">
-                    +{pack.bonus} bonus
-                  </div>
-                )}
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-gray-900">{pack.credits}</p>
-                  <p className="text-sm text-gray-500">credits</p>
-                  <p className="text-xl font-semibold text-primary-600 mt-2">
-                    ${pack.price}
-                  </p>
-                  <Button variant="outline" size="sm" className="mt-3 w-full">
-                    Purchase
-                  </Button>
-                </div>
-              </Card>
+              <div key={i} className="text-center border border-gray-200 rounded-xl p-4 hover:border-green-300 hover:bg-green-50 transition-colors">
+                <p className="text-2xl font-bold text-gray-900">{pack.credits}</p>
+                <p className="text-xs text-gray-500 mb-2">credits</p>
+                <p className="text-sm font-semibold text-green-600">${pack.price}</p>
+                <Button variant="outline" size="sm" className="mt-2 w-full text-xs">
+                  Buy
+                </Button>
+              </div>
             ))}
           </div>
-        </div>
+        </Card>
 
-        {/* Subscription Plans */}
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Subscription Plans</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {plans.map((plan) => (
-              <Card
-                key={plan.id}
-                hover
-                className={cn(
-                  "relative",
-                  plan.popular && "border-primary-500 border-2"
-                )}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary-500 text-white text-xs font-medium rounded-full">
-                    Most Popular
-                  </div>
-                )}
-                <div className="pt-2">
-                  <h3 className="font-semibold text-gray-900">{plan.name}</h3>
-                  <div className="mt-3">
-                    <span className="text-3xl font-bold text-gray-900">
-                      {plan.price === 0 ? "Free" : `$${plan.price}`}
-                    </span>
-                    {plan.price > 0 && (
-                      <span className="text-gray-500">/month</span>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-500 mt-2">
-                    {plan.credits} AI credits/month
-                  </p>
-                  <ul className="mt-4 space-y-2">
-                    {plan.features.map((feature, i) => (
-                      <li key={i} className="flex items-center gap-2 text-sm text-gray-600">
-                        <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                  <Button
-                    variant={plan.popular ? "primary" : "outline"}
-                    className="w-full mt-6"
-                    disabled={currentPlan === plan.id}
-                  >
-                    {currentPlan === plan.id ? "Current Plan" : "Upgrade"}
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Transaction History */}
+        {/* Usage History */}
         <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-gray-900">Credit History</h2>
-            <Button variant="ghost" size="sm">
-              View All
-            </Button>
-          </div>
-          <div className="divide-y">
-            {transactions.map((tx) => (
+          <h3 className="font-semibold text-gray-900 mb-3">Usage History</h3>
+          <div className="divide-y divide-gray-100">
+            {usageHistory.map((tx) => (
               <div key={tx.id} className="flex items-center justify-between py-3">
                 <div className="flex items-center gap-3">
                   <div
-                    className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center",
-                      tx.type === "usage" ? "bg-red-100 text-red-600" : tx.type === "purchase" ? "bg-green-100 text-green-600" : "bg-blue-100 text-blue-600"
-                    )}
+                    className={`w-7 h-7 rounded-full flex items-center justify-center ${
+                      tx.credits > 0 ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
+                    }`}
                   >
-                    {tx.type === "usage" ? (
-                      <ArrowDownRight className="w-4 h-4" />
+                    {tx.credits > 0 ? (
+                      <ArrowUpRight className="w-3.5 h-3.5" />
                     ) : (
-                      <ArrowUpRight className="w-4 h-4" />
+                      <ArrowDownRight className="w-3.5 h-3.5" />
                     )}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{tx.description}</p>
-                    <p className="text-xs text-gray-500">{formatRelativeTime(tx.createdAt)}</p>
+                    <p className="text-sm text-gray-900">{tx.action}</p>
+                    <p className="text-xs text-gray-400">{formatRelativeTime(tx.time)}</p>
                   </div>
                 </div>
-                <span
-                  className={cn(
-                    "font-semibold",
-                    tx.amount > 0 ? "text-green-600" : "text-red-600"
-                  )}
-                >
-                  {tx.amount > 0 ? "+" : ""}{tx.amount}
+                <span className={`text-sm font-medium ${tx.credits > 0 ? "text-green-600" : "text-red-600"}`}>
+                  {tx.credits > 0 ? "+" : ""}{tx.credits}
                 </span>
               </div>
             ))}

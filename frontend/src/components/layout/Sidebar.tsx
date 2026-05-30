@@ -1,38 +1,22 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import {
   MessageSquare,
-  Receipt,
-  Wallet,
-  ShoppingCart,
-  ShieldCheck,
-  Users,
-  Calendar,
-  BarChart3,
-  CreditCard,
-  Bell,
   Settings,
+  CreditCard,
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
+  Zap,
+  ShoppingCart,
 } from "lucide-react";
-import { Avatar } from "@/components/ui/Avatar";
 import { useAuthStore, useUIStore } from "@/lib/store";
 
 const menuItems = [
-  { id: "chat", label: "AI Chat", icon: MessageSquare, badge: null },
-  { id: "expenses", label: "Expenses", icon: Wallet, badge: null },
-  { id: "purchases", label: "Purchases", icon: ShoppingCart, badge: null },
-  { id: "receipts", label: "Receipts", icon: Receipt, badge: null },
-  { id: "warranties", label: "Warranties", icon: ShieldCheck, badge: "2" },
-  { id: "family", label: "Family", icon: Users, badge: null },
-  { id: "events", label: "Events", icon: Calendar, badge: null },
-  { id: "reports", label: "Reports", icon: BarChart3, badge: null },
-  { id: "credits", label: "Credits", icon: CreditCard, badge: "50" },
-  { id: "notifications", label: "Alerts", icon: Bell, badge: "3" },
-  { id: "settings", label: "Settings", icon: Settings, badge: null },
+  { id: "chat", label: "Chat", icon: MessageSquare },
+  { id: "settings", label: "Settings", icon: Settings },
+  { id: "credits", label: "Credits", icon: CreditCard },
 ];
 
 interface SidebarProps {
@@ -41,34 +25,41 @@ interface SidebarProps {
 }
 
 export function Sidebar({ activeItem = "chat", onItemClick }: SidebarProps) {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const { sidebarOpen, toggleSidebar } = useUIStore();
+
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to logout?")) {
+      logout();
+      window.location.href = "/";
+    }
+  };
 
   return (
     <aside
       className={cn(
         "fixed left-0 top-0 h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-300 z-40",
-        sidebarOpen ? "w-64" : "w-20"
+        sidebarOpen ? "w-60" : "w-16"
       )}
     >
-      {/* Logo */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100">
+      {/* Product Name */}
+      <div className="h-14 flex items-center px-4 border-b border-gray-100">
         {sidebarOpen ? (
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-lg gradient-hero flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
+              <ShoppingCart className="w-4 h-4 text-green-600" />
             </div>
-            <span className="text-xl font-bold text-gray-900">Safal-AI</span>
+            <span className="text-sm font-semibold text-gray-900">SafalMyBuy</span>
           </div>
         ) : (
-          <div className="w-12 h-12 rounded-lg gradient-hero flex items-center justify-center mx-auto">
-            <Sparkles className="w-6 h-6 text-white" />
+          <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center mx-auto">
+            <ShoppingCart className="w-4 h-4 text-green-600" />
           </div>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3">
+      <nav className="flex-1 py-4 px-2">
         <ul className="space-y-1">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -81,27 +72,13 @@ export function Sidebar({ activeItem = "chat", onItemClick }: SidebarProps) {
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
                     isActive
-                      ? "bg-primary-50 text-primary-700 font-medium"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                      ? "bg-green-50 text-green-700 font-medium"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                   )}
                 >
                   <Icon className="w-5 h-5 flex-shrink-0" />
                   {sidebarOpen && (
-                    <>
-                      <span className="flex-1 text-left">{item.label}</span>
-                      {item.badge && (
-                        <span
-                          className={cn(
-                            "px-2 py-0.5 text-xs rounded-full font-medium",
-                            isActive
-                              ? "bg-primary-100 text-primary-700"
-                              : "bg-gray-100 text-gray-600"
-                          )}
-                        >
-                          {item.badge}
-                        </span>
-                      )}
-                    </>
+                    <span className="text-sm">{item.label}</span>
                   )}
                 </button>
               </li>
@@ -110,39 +87,60 @@ export function Sidebar({ activeItem = "chat", onItemClick }: SidebarProps) {
         </ul>
       </nav>
 
-      {/* User Profile */}
-      <div className="p-3 border-t border-gray-100">
+      {/* User Profile & Logout */}
+      <div className="p-2 border-t border-gray-100">
         {sidebarOpen ? (
-          <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors">
-            <Avatar name={user?.name || "User"} size="sm" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {user?.name || "Guest"}
-              </p>
-              <p className="text-xs text-gray-500 truncate">
-                {user?.email || "Sign in"}
-              </p>
+          <div className="space-y-1">
+            {/* User Info */}
+            <div className="flex items-center gap-2.5 px-3 py-2.5">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                {getInitials(user?.name || "U")}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {user?.name || "User"}
+                </p>
+                <p className="text-xs text-gray-500 truncate">
+                  {user?.email || ""}
+                </p>
+              </div>
             </div>
-            <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-lg transition-colors">
-              <LogOut className="w-4 h-4" />
+
+            {/* Logout */}
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+              Logout
             </button>
           </div>
         ) : (
-          <button className="w-full flex justify-center p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-            <LogOut className="w-5 h-5" />
-          </button>
+          <div className="space-y-1">
+            <div className="flex justify-center py-2">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xs font-bold">
+                {getInitials(user?.name || "U")}
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="w-full flex justify-center p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
         )}
       </div>
 
       {/* Toggle Button */}
       <button
         onClick={toggleSidebar}
-        className="absolute -right-3 top-20 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 shadow-sm transition-colors"
+        className="absolute -right-3 top-16 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 shadow-sm transition-colors"
       >
         {sidebarOpen ? (
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-3.5 h-3.5" />
         ) : (
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="w-3.5 h-3.5" />
         )}
       </button>
     </aside>

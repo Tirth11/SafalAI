@@ -1,16 +1,13 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import {
   PlusCircle,
-  Receipt,
   ShoppingCart,
+  Receipt,
   ShieldCheck,
   Clock,
-  Calendar,
   BarChart3,
-  Search,
-  Wallet,
+  Calendar,
   Users,
 } from "lucide-react";
 
@@ -19,7 +16,6 @@ interface QuickAction {
   label: string;
   icon: React.ReactNode;
   color: string;
-  creditCost?: number;
 }
 
 const quickActions: QuickAction[] = [
@@ -27,117 +23,69 @@ const quickActions: QuickAction[] = [
     id: "add_expense",
     label: "Add Expense",
     icon: <PlusCircle className="w-5 h-5" />,
-    color: "bg-green-100 text-green-600 hover:bg-green-200",
-    creditCost: 2,
-  },
-  {
-    id: "upload_receipt",
-    label: "Upload Receipt",
-    icon: <Receipt className="w-5 h-5" />,
-    color: "bg-blue-100 text-blue-600 hover:bg-blue-200",
-    creditCost: 5,
+    color: "bg-green-50 text-green-600 border-green-200 hover:bg-green-100",
   },
   {
     id: "add_purchase",
-    label: "Add Purchase",
+    label: "Add Purchase Item",
     icon: <ShoppingCart className="w-5 h-5" />,
-    color: "bg-purple-100 text-purple-600 hover:bg-purple-200",
-    creditCost: 2,
+    color: "bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100",
   },
   {
-    id: "check_warranty",
+    id: "upload_receipt",
+    label: "Upload Bill / Receipt",
+    icon: <Receipt className="w-5 h-5" />,
+    color: "bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100",
+  },
+  {
+    id: "track_warranty",
     label: "Track Warranty",
     icon: <ShieldCheck className="w-5 h-5" />,
-    color: "bg-orange-100 text-orange-600 hover:bg-orange-200",
-    creditCost: 1,
+    color: "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100",
   },
   {
-    id: "check_expiry",
-    label: "Check Expiry",
+    id: "add_expiry",
+    label: "Add Expiry Reminder",
     icon: <Clock className="w-5 h-5" />,
-    color: "bg-red-100 text-red-600 hover:bg-red-200",
-    creditCost: 1,
-  },
-  {
-    id: "create_event",
-    label: "Create Event",
-    icon: <Calendar className="w-5 h-5" />,
-    color: "bg-teal-100 text-teal-600 hover:bg-teal-200",
-    creditCost: 3,
+    color: "bg-red-50 text-red-600 border-red-200 hover:bg-red-100",
   },
   {
     id: "generate_report",
     label: "Generate Report",
     icon: <BarChart3 className="w-5 h-5" />,
-    color: "bg-indigo-100 text-indigo-600 hover:bg-indigo-200",
-    creditCost: 10,
+    color: "bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100",
   },
   {
-    id: "search",
-    label: "Search Records",
-    icon: <Search className="w-5 h-5" />,
-    color: "bg-gray-100 text-gray-600 hover:bg-gray-200",
-    creditCost: 1,
+    id: "event_expense",
+    label: "Create Event Expense",
+    icon: <Calendar className="w-5 h-5" />,
+    color: "bg-teal-50 text-teal-600 border-teal-200 hover:bg-teal-100",
   },
   {
-    id: "check_budget",
-    label: "Check Budget",
-    icon: <Wallet className="w-5 h-5" />,
-    color: "bg-yellow-100 text-yellow-600 hover:bg-yellow-200",
-    creditCost: 1,
-  },
-  {
-    id: "family_expenses",
-    label: "Family Expenses",
+    id: "family_expense",
+    label: "Manage Family / Shared Expense",
     icon: <Users className="w-5 h-5" />,
-    color: "bg-pink-100 text-pink-600 hover:bg-pink-200",
-    creditCost: 2,
+    color: "bg-pink-50 text-pink-600 border-pink-200 hover:bg-pink-100",
   },
 ];
 
 interface QuickActionsProps {
   onAction: (actionId: string) => void;
-  compact?: boolean;
 }
 
-export function QuickActions({ onAction, compact = false }: QuickActionsProps) {
-  if (compact) {
-    return (
-      <div className="flex gap-2 overflow-x-auto pb-2">
-        {quickActions.slice(0, 5).map((action) => (
-          <button
-            key={action.id}
-            onClick={() => onAction(action.id)}
-            className={cn(
-              "flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200",
-              action.color
-            )}
-          >
-            {action.icon}
-            <span className="text-sm font-medium">{action.label}</span>
-          </button>
-        ))}
-      </div>
-    );
-  }
-
+export function QuickActions({ onAction }: QuickActionsProps) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       {quickActions.map((action) => (
         <button
           key={action.id}
           onClick={() => onAction(action.id)}
-          className={cn(
-            "flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-200",
-            "hover:scale-105 hover:shadow-md",
-            action.color
-          )}
+          className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all duration-200 ${action.color}`}
         >
           {action.icon}
-          <span className="text-sm font-medium text-center">{action.label}</span>
-          {action.creditCost && (
-            <span className="text-xs opacity-60">{action.creditCost} credits</span>
-          )}
+          <span className="text-xs font-medium text-center leading-tight">
+            {action.label}
+          </span>
         </button>
       ))}
     </div>
