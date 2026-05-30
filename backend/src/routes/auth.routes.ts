@@ -11,9 +11,9 @@ const users: any[] = [];
 
 // Generate JWT Token
 const generateToken = (userId: string): string => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET || 'fallback-secret', {
-    expiresIn: '7d',
-  } as jwt.SignOptions);
+  const secret = process.env.JWT_SECRET || 'fallback-secret';
+  // expiresIn in seconds: 7 days = 604800 seconds
+  return jwt.sign({ userId }, secret, { expiresIn: 604800 });
 };
 
 // Register
