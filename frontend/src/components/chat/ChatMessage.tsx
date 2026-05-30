@@ -30,7 +30,7 @@ const actionIcons: Record<string, React.ReactNode> = {
   generate_report: <BarChart3 className="w-4 h-4" />,
 };
 
-const actionStatusStyles = {
+const actionStatusStyles: Record<string, string> = {
   pending: "bg-yellow-50 border-yellow-200 text-yellow-700",
   completed: "bg-green-50 border-green-200 text-green-700",
   failed: "bg-red-50 border-red-200 text-red-700",
@@ -108,7 +108,7 @@ function ActionCard({ action }: { action: AIAction }) {
   const icon = actionIcons[action.type] || <FileText className="w-4 h-4" />;
   const statusStyle = actionStatusStyles[action.status];
 
-  const statusIcons = {
+  const statusIcons: Record<string, React.ReactNode> = {
     pending: <Clock className="w-4 h-4" />,
     completed: <CheckCircle className="w-4 h-4" />,
     failed: <AlertCircle className="w-4 h-4" />,

@@ -68,14 +68,14 @@ const mockEvents = [
   },
 ];
 
-const statusStyles = {
+const statusStyles: Record<string, string> = {
   planned: "bg-blue-100 text-blue-700",
   ongoing: "bg-orange-100 text-orange-700",
   completed: "bg-green-100 text-green-700",
   cancelled: "bg-gray-100 text-gray-700",
 };
 
-const statusIcons = {
+const statusIcons: Record<string, React.ReactNode> = {
   planned: <Clock className="w-3 h-3" />,
   ongoing: <DollarSign className="w-3 h-3" />,
   completed: <CheckCircle className="w-3 h-3" />,

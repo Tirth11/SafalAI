@@ -72,13 +72,13 @@ export function ReceiptList() {
     receipt.ocrData?.storeName?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const statusStyles = {
+  const statusStyles: Record<string, string> = {
     pending: "bg-yellow-100 text-yellow-700",
     processed: "bg-green-100 text-green-700",
     failed: "bg-red-100 text-red-700",
   };
 
-  const statusIcons = {
+  const statusIcons: Record<string, React.ReactNode> = {
     pending: <Clock className="w-3 h-3" />,
     processed: <CheckCircle className="w-3 h-3" />,
     failed: <XCircle className="w-3 h-3" />,
