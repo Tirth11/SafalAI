@@ -1,6 +1,6 @@
 "use client";
 
-import { cn, getInitials } from "@/lib/utils";
+import { cn, getInitials, truncate } from "@/lib/utils";
 import {
   MessageSquare,
   Settings,
@@ -11,8 +11,10 @@ import {
   Zap,
   CheckCircle,
   Circle,
+  Plus,
+  Trash2,
 } from "lucide-react";
-import { useAuthStore, useUIStore } from "@/lib/store";
+import { useAuthStore, useChatStore, useUIStore } from "@/lib/store";
 
 interface SidebarProps {
   activeItem?: string;
@@ -23,12 +25,29 @@ interface SidebarProps {
 export function Sidebar({ activeItem = "chat", onItemClick, isProductConnected = false }: SidebarProps) {
   const { user, logout } = useAuthStore();
   const { sidebarOpen, toggleSidebar } = useUIStore();
+  const { chats, activeChatId, createChat, switchChat, deleteChat } = useChatStore();
 
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to logout?")) {
       logout();
       window.location.href = "/";
     }
+  };
+
+  const handleNewChat = () => {
+    createChat();
+    onItemClick?.("chat");
+  };
+
+  const handleSwitchChat = (chatId: string) => {
+    switchChat(chatId);
+    onItemClick?.("chat");
+  };
+
+  const handleDeleteChat = (e: React.MouseEvent, chatId: string) => {
+    e.stopPropagation();
+    if (chats.length <= 1) return;
+    deleteChat(chatId);
   };
 
   return (
@@ -38,7 +57,7 @@ export function Sidebar({ activeItem = "chat", onItemClick, isProductConnected =
         sidebarOpen ? "w-60" : "w-16"
       )}
     >
-      {/* Safal-AI Branding - Top */}
+      {/* Safal-AI Branding */}
       <div className="h-14 flex items-center px-4 border-b border-gray-100">
         {sidebarOpen ? (
           <div className="flex items-center gap-2.5">
@@ -54,77 +73,105 @@ export function Sidebar({ activeItem = "chat", onItemClick, isProductConnected =
         )}
       </div>
 
-      {/* Product Chat */}
-      <nav className="flex-1 py-4 px-2">
-        <div className="mb-2 px-3">
-          {sidebarOpen && (
-            <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold">Products</p>
+      {/* Navigation */}
+      <nav className="flex-1 py-3 px-2 overflow-y-auto">
+        {/* Product Section */}
+        {sidebarOpen && (
+          <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold px-3 mb-2">Products</p>
+        )}
+
+        {/* SafalMyBuy Chat Header */}
+        <button
+          onClick={() => onItemClick?.("chat")}
+          className={cn(
+            "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-200 mb-1",
+            activeItem === "chat"
+              ? "bg-green-50 text-green-700 font-medium"
+              : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
           )}
-        </div>
+        >
+          <MessageSquare className="w-5 h-5 flex-shrink-0" />
+          {sidebarOpen && (
+            <>
+              <span className="flex-1 text-sm text-left">SafalMyBuy Chat</span>
+              {isProductConnected ? (
+                <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
+              ) : (
+                <Circle className="w-3.5 h-3.5 text-gray-300 flex-shrink-0" />
+              )}
+            </>
+          )}
+        </button>
 
-        <ul className="space-y-1">
-          {/* SafalMyBuy Chat */}
-          <li>
+        {/* Chat List (only when sidebar open and on chat tab) */}
+        {sidebarOpen && activeItem === "chat" && isProductConnected && (
+          <div className="ml-4 pl-3 border-l border-gray-200 space-y-0.5 mb-3">
+            {chats.map((chat) => (
+              <div
+                key={chat.id}
+                onClick={() => handleSwitchChat(chat.id)}
+                className={cn(
+                  "group flex items-center gap-2 px-2.5 py-1.5 rounded-md cursor-pointer transition-colors",
+                  activeChatId === chat.id
+                    ? "bg-green-50 text-green-700"
+                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                )}
+              >
+                <span className="flex-1 text-xs truncate">
+                  {truncate(chat.name, 20)}
+                </span>
+                {chats.length > 1 && (
+                  <button
+                    onClick={(e) => handleDeleteChat(e, chat.id)}
+                    className="hidden group-hover:block p-0.5 text-gray-400 hover:text-red-500"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            ))}
+
+            {/* + New Chat button */}
             <button
-              onClick={() => onItemClick?.("chat")}
-              className={cn(
-                "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                activeItem === "chat"
-                  ? "bg-green-50 text-green-700 font-medium"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              )}
+              onClick={handleNewChat}
+              className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-gray-400 hover:text-green-600 rounded-md hover:bg-green-50 transition-colors w-full"
             >
-              <MessageSquare className="w-5 h-5 flex-shrink-0" />
-              {sidebarOpen && (
-                <span className="flex-1 text-sm text-left">SafalMyBuy Chat</span>
-              )}
-              {sidebarOpen && (
-                isProductConnected ? (
-                  <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                ) : (
-                  <Circle className="w-4 h-4 text-gray-300 flex-shrink-0" />
-                )
-              )}
+              <Plus className="w-3.5 h-3.5" />
+              New Chat
             </button>
-          </li>
+          </div>
+        )}
 
-          {/* Divider */}
-          <li className="py-2">
-            <div className="border-t border-gray-100 mx-3" />
-          </li>
+        {/* Divider */}
+        <div className="border-t border-gray-100 mx-3 my-2" />
 
-          {/* Settings */}
-          <li>
-            <button
-              onClick={() => onItemClick?.("settings")}
-              className={cn(
-                "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                activeItem === "settings"
-                  ? "bg-green-50 text-green-700 font-medium"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              )}
-            >
-              <Settings className="w-5 h-5 flex-shrink-0" />
-              {sidebarOpen && <span className="text-sm">Settings</span>}
-            </button>
-          </li>
+        {/* Settings */}
+        <button
+          onClick={() => onItemClick?.("settings")}
+          className={cn(
+            "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+            activeItem === "settings"
+              ? "bg-green-50 text-green-700 font-medium"
+              : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+          )}
+        >
+          <Settings className="w-5 h-5 flex-shrink-0" />
+          {sidebarOpen && <span className="text-sm">Settings</span>}
+        </button>
 
-          {/* Credits */}
-          <li>
-            <button
-              onClick={() => onItemClick?.("credits")}
-              className={cn(
-                "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                activeItem === "credits"
-                  ? "bg-green-50 text-green-700 font-medium"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              )}
-            >
-              <CreditCard className="w-5 h-5 flex-shrink-0" />
-              {sidebarOpen && <span className="text-sm">Credits</span>}
-            </button>
-          </li>
-        </ul>
+        {/* Credits */}
+        <button
+          onClick={() => onItemClick?.("credits")}
+          className={cn(
+            "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+            activeItem === "credits"
+              ? "bg-green-50 text-green-700 font-medium"
+              : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+          )}
+        >
+          <CreditCard className="w-5 h-5 flex-shrink-0" />
+          {sidebarOpen && <span className="text-sm">Credits</span>}
+        </button>
       </nav>
 
       {/* User Profile & Logout */}

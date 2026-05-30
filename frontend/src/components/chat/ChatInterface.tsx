@@ -11,7 +11,6 @@ import { useAuthStore, useChatStore } from "@/lib/store";
 import type { ChatMessage as ChatMessageType } from "@/types";
 import { generateId } from "@/lib/utils";
 
-// Categories mapping
 const categoryMap: Record<string, { category: string; subcategory: string }> = {
   car: { category: "Vehicle / Automobile", subcategory: "Car Repair" },
   petrol: { category: "Vehicle / Automobile", subcategory: "Fuel" },
@@ -44,18 +43,24 @@ interface PendingRecord {
   fields: Record<string, string>;
 }
 
+// Numbered option context - tracks what the current active options are
+interface NumberedOptions {
+  options: { num: number; id: string; label: string }[];
+  context: string; // what these options are for
+}
+
 const guidedResponses: Record<string, string> = {
   add_expense: "Sure. Tell me the expense in one line.\n\nFor example: \"₹10,000 car repair today\" or \"Add $500 grocery expense.\"",
-  add_purchase: "Sure. Tell me what you purchased in one line.\n\nFor example: \"Bought milk for ₹20 from Kroger, expiry tomorrow\" or \"Purchased laptop from Amazon for $600 with 1 year warranty.\"",
-  upload_receipt: "Please upload your bill or receipt using the attachment button below. I will read it and show you the details before saving.",
-  create_budget: "Sure. Tell me the budget details.\n\nFor example: \"Create a 2026 yearly budget of $12,000 and split it equally monthly.\"",
-  create_outlay: "Sure. Tell me the outlay details.\n\nFor example: \"Create an outlay for Office Renovation from 1 June to 30 June with a budget of $5,000.\"",
-  create_event: "Sure. Tell me the event details.\n\nFor example: \"Create an event called Birthday Party on 10 July with a budget of $2,000.\"",
+  add_purchase: "Sure. Tell me what you purchased in one line.\n\nFor example: \"Bought milk for ₹20 from Kroger, expiry tomorrow.\"",
+  upload_receipt: "Please upload your bill or receipt using the attachment button below.",
+  create_budget: "Sure. Tell me the budget details.\n\nFor example: \"Create a 2026 yearly budget of $12,000 split monthly.\"",
+  create_outlay: "Sure. Tell me the outlay details.\n\nFor example: \"Create outlay for Office Renovation from 1 June to 30 June with $5,000 budget.\"",
+  create_event: "Sure. Tell me the event details.\n\nFor example: \"Create event called Birthday Party on 10 July with budget $2,000.\"",
   add_event_expense: "Sure. Tell me the event expense.\n\nFor example: \"Add $300 catering expense to Birthday Party.\"",
-  track_warranty: "Tell me the product name, purchase date, and warranty period.\n\nFor example: \"iPhone 15 Pro purchased Jan 15, 2024 with 1 year warranty.\"",
-  add_expiry: "Tell me the item name and expiry date.\n\nFor example: \"Milk expires on June 5.\"",
-  generate_report: "What report would you like?\n\n• Monthly expense report\n• Category-wise spending\n• Budget vs actual\n• Event expense report\n\nPlease tell me the type and time period.",
-  family_expense: "Tell me the family member name and expense details.\n\nFor example: \"Add $200 school expense for my son.\"",
+  track_warranty: "Tell me the product name, purchase date, and warranty period.",
+  add_expiry: "Tell me the item name and expiry date.",
+  generate_report: "What report would you like?\n\n1. Monthly expense report\n2. Category-wise spending\n3. Budget vs actual\n4. Event expense report\n\nType a number or describe what you need.",
+  family_expense: "Tell me the family member name and expense details.",
 };
 
 const actionLabels: Record<string, string> = {
@@ -75,20 +80,44 @@ const actionLabels: Record<string, string> = {
 
 export function ChatInterface() {
   const { user } = useAuthStore();
-  const { messages, addMessage, isTyping, setTyping } = useChatStore();
+  const { chats, activeChatId, addMessage, renameChat, isTyping, setTyping, createChat } = useChatStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isSending, setIsSending] = useState(false);
   const [pendingRecord, setPendingRecord] = useState<PendingRecord | null>(null);
   const [showFollowUp, setShowFollowUp] = useState(false);
+  const [followUpType, setFollowUpType] = useState<"success" | "cancel">("success");
+  const [activeOptions, setActiveOptions] = useState<NumberedOptions | null>(null);
+
+  // Get messages for active chat
+  const activeChat = chats.find((c) => c.id === activeChatId);
+  const messages = activeChat?.messages || [];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+  useEffect(() => { scrollToBottom(); }, [messages, pendingRecord, showFollowUp]);
 
-  useEffect(() => { scrollToBottom(); }, [messages, pendingRecord]);
+  // Reset state when switching chats
+  useEffect(() => {
+    setPendingRecord(null);
+    setShowFollowUp(false);
+    setActiveOptions(null);
+  }, [activeChatId]);
 
   const userName = user?.name || "User";
 
+  // Auto-name the chat based on first meaningful action
+  const autoNameChat = (text: string) => {
+    if (!activeChatId) return;
+    const currentChat = chats.find((c) => c.id === activeChatId);
+    if (currentChat && currentChat.name === "New Chat") {
+      const name = text.length > 25 ? text.slice(0, 25) + "..." : text;
+      renameChat(activeChatId, name);
+    }
+  };
+
+
+  // Helpers
   const autoCategory = (text: string) => {
     const lower = text.toLowerCase();
     for (const [keyword, cat] of Object.entries(categoryMap)) {
@@ -96,57 +125,40 @@ export function ChatInterface() {
     }
     return { category: "General", subcategory: "Other" };
   };
-
   const detectStoreType = (store: string) => {
     const lower = store.toLowerCase();
     if (onlineStores.some((s) => lower.includes(s))) return "Online";
     if (inStoreShops.some((s) => lower.includes(s))) return "In-store";
     return "Unknown";
   };
-
   const extractStore = (text: string): string | null => {
     const lower = text.toLowerCase();
-    const allStores = [...onlineStores, ...inStoreShops];
-    for (const store of allStores) {
+    for (const store of [...onlineStores, ...inStoreShops]) {
       if (lower.includes(store)) return store.charAt(0).toUpperCase() + store.slice(1);
     }
-    const fromMatch = text.match(/from\s+([A-Za-z\s]+?)(?:\s*[,.]|\s+for|\s+with|$)/i);
-    if (fromMatch) return fromMatch[1].trim();
-    return null;
+    const m = text.match(/from\s+([A-Za-z\s]+?)(?:\s*[,.]|\s+for|\s+with|$)/i);
+    return m ? m[1].trim() : null;
   };
-
   const extractDate = (text: string): string => {
     const lower = text.toLowerCase();
-    if (lower.includes("yesterday")) {
-      const d = new Date(); d.setDate(d.getDate() - 1);
-      return d.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
-    }
-    if (lower.includes("tomorrow")) {
-      const d = new Date(); d.setDate(d.getDate() + 1);
-      return d.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
-    }
+    if (lower.includes("yesterday")) { const d = new Date(); d.setDate(d.getDate() - 1); return d.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }); }
+    if (lower.includes("tomorrow")) { const d = new Date(); d.setDate(d.getDate() + 1); return d.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }); }
     return "Today";
   };
-
   const extractWarranty = (text: string): string | null => {
-    const match = text.match(/(\d+)\s*(year|month|yr|mo)s?\s*warranty/i);
-    if (match) return `${match[1]} ${match[2]}${parseInt(match[1]) > 1 ? "s" : ""}`;
-    return null;
+    const m = text.match(/(\d+)\s*(year|month)s?\s*warranty/i);
+    return m ? `${m[1]} ${m[2]}${parseInt(m[1]) > 1 ? "s" : ""}` : null;
   };
-
   const extractExpiry = (text: string): string | null => {
-    const lower = text.toLowerCase();
-    if (lower.includes("expiry tomorrow") || lower.includes("expiring tomorrow")) {
-      const d = new Date(); d.setDate(d.getDate() + 1);
-      return d.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
+    if (text.toLowerCase().includes("expiry tomorrow") || text.toLowerCase().includes("expiring tomorrow")) {
+      const d = new Date(); d.setDate(d.getDate() + 1); return d.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
     }
-    const match = text.match(/expir(?:y|ing|es?)\s+(?:on\s+)?(.+?)(?:\.|,|$)/i);
-    if (match) return match[1].trim();
-    return null;
+    const m = text.match(/expir(?:y|ing|es?)\s+(?:on\s+)?(.+?)(?:\.|,|$)/i);
+    return m ? m[1].trim() : null;
   };
 
 
-  // Budget, Outlay, Event detection
+  // Budget/Outlay/Event processors
   const processBudget = (text: string): PendingRecord | null => {
     const amountMatch = text.match(/[\$₹]?\s?(\d+[\d,]*)/);
     const yearMatch = text.match(/(20\d{2})/);
@@ -154,168 +166,149 @@ export function ChatInterface() {
     const amount = parseInt(amountMatch[1].replace(/,/g, ""));
     const year = yearMatch ? yearMatch[1] : new Date().getFullYear().toString();
     const monthly = text.toLowerCase().includes("monthly") || text.toLowerCase().includes("split");
-    return {
-      type: "budget",
-      fields: {
-        "Year": year,
-        "Total Budget": `$${amount.toLocaleString()}`,
-        "From Date": `01/01/${year}`,
-        "To Date": `12/31/${year}`,
-        "Monthly Allocation": monthly ? `$${Math.round(amount / 12).toLocaleString()} per month` : "Not set",
-        "Status": "Active",
-        "Restrict if Exceeded": "Not selected",
-      },
-    };
+    return { type: "budget", fields: { "Year": year, "Total Budget": `$${amount.toLocaleString()}`, "From Date": `01/01/${year}`, "To Date": `12/31/${year}`, "Monthly Allocation": monthly ? `$${Math.round(amount / 12).toLocaleString()} per month` : "Not set", "Status": "Active", "Restrict if Exceeded": "Not selected" } };
   };
-
   const processOutlay = (text: string): PendingRecord | null => {
     const amountMatch = text.match(/[\$₹]\s?(\d+[\d,]*)/);
-    const nameMatch = text.match(/(?:outlay\s+(?:for|called|named)\s+)(.+?)(?:\s+from|\s+with|\s+budget|$)/i)
-      || text.match(/(?:create\s+)(.+?)(?:\s+outlay)/i);
+    const nameMatch = text.match(/(?:outlay\s+(?:for|called|named)\s+)(.+?)(?:\s+from|\s+with|\s+budget|$)/i) || text.match(/(?:create\s+)(.+?)(?:\s+outlay)/i);
     const dateRange = text.match(/from\s+(.+?)\s+to\s+(.+?)(?:\s+with|\s+budget|$)/i);
-    const name = nameMatch ? nameMatch[1].trim() : "Untitled Outlay";
-    const amount = amountMatch ? parseInt(amountMatch[1].replace(/,/g, "")) : 0;
-    if (!amount) return null;
-    return {
-      type: "outlay",
-      fields: {
-        "Outlay Name": name,
-        "Start Date": dateRange ? dateRange[1].trim() : "Not set",
-        "End Date": dateRange ? dateRange[2].trim() : "Not set",
-        "Budget": `$${amount.toLocaleString()}`,
-        "Status": "Active",
-        "Included in Budget": "Not selected",
-      },
-    };
+    if (!amountMatch) return null;
+    const amount = parseInt(amountMatch[1].replace(/,/g, ""));
+    return { type: "outlay", fields: { "Outlay Name": nameMatch ? nameMatch[1].trim() : "Untitled", "Start Date": dateRange ? dateRange[1].trim() : "Not set", "End Date": dateRange ? dateRange[2].trim() : "Not set", "Budget": `$${amount.toLocaleString()}`, "Status": "Active", "Included in Budget": "Not selected" } };
   };
-
   const processEvent = (text: string): PendingRecord | null => {
     const amountMatch = text.match(/[\$₹]\s?(\d+[\d,]*)/);
-    const nameMatch = text.match(/(?:event\s+(?:called|named|for)\s+)(.+?)(?:\s+on|\s+from|\s+with|\s+budget|$)/i)
-      || text.match(/(?:create\s+)(.+?)(?:\s+event)/i);
+    const nameMatch = text.match(/(?:event\s+(?:called|named|for)\s+)(.+?)(?:\s+on|\s+from|\s+with|\s+budget|$)/i) || text.match(/(?:create\s+)(.+?)(?:\s+event)/i);
     const dateMatch = text.match(/(?:on|from)\s+(\d{1,2}\s+\w+(?:\s+\d{4})?)/i);
     const name = nameMatch ? nameMatch[1].trim() : "";
-    const amount = amountMatch ? parseInt(amountMatch[1].replace(/,/g, "")) : 0;
     if (!name) return null;
-    return {
-      type: "event",
-      fields: {
-        "Event Name": name,
-        "Event Date": dateMatch ? dateMatch[1].trim() : "Not set",
-        "Budget": amount ? `$${amount.toLocaleString()}` : "Not set",
-        "Status": "Active",
-        "Description": `${name} event`,
-        "Image": "Not added",
-      },
-    };
+    const amount = amountMatch ? parseInt(amountMatch[1].replace(/,/g, "")) : 0;
+    return { type: "event", fields: { "Event Name": name, "Event Date": dateMatch ? dateMatch[1].trim() : "Not set", "Budget": amount ? `$${amount.toLocaleString()}` : "Not set", "Status": "Active", "Description": `${name} event`, "Image": "Not added" } };
   };
 
 
   // Main processing function
   const processUserInput = (text: string): { response: string; record: PendingRecord | null } => {
-    const lower = text.toLowerCase();
+    const lower = text.toLowerCase().trim();
 
-    // Handle edit/confirm/cancel on pending record
+    // Handle number-based selection
+    if (activeOptions && /^\d+$/.test(lower)) {
+      const num = parseInt(lower);
+      const selected = activeOptions.options.find((o) => o.num === num);
+      if (!selected) {
+        return { response: `${num} is not available in this list. Please choose a number from 1 to ${activeOptions.options.length}.`, record: null };
+      }
+      setActiveOptions(null);
+      // Handle follow-up number selections
+      if (activeOptions.context === "follow_up") {
+        if (selected.id === "main") {
+          setShowFollowUp(false);
+          return { response: "Sure! Here are the main options. You can also type your request directly.", record: null };
+        }
+        setShowFollowUp(false);
+        return { response: guidedResponses[selected.id] || "How can I help?", record: null };
+      }
+      // Handle category selection
+      if (activeOptions.context === "category" && pendingRecord) {
+        const updated = { ...pendingRecord, fields: { ...pendingRecord.fields, "Category": selected.label } };
+        setPendingRecord(updated);
+        return { response: `Selected: ${selected.label}.\n\nI've updated the preview. You can say "Save it" to confirm or edit more details.`, record: updated };
+      }
+      // Handle report type
+      if (activeOptions.context === "report_type") {
+        return { response: `Selected: ${selected.label}.\n\nWhat time period? (e.g., this month, last 3 months, 2026)`, record: null };
+      }
+      // Generic selection
+      return { response: `Selected: ${selected.label}.`, record: null };
+    }
+
+    // Handle pending record edits
     if (pendingRecord) {
-      if (lower.includes("save") || lower.includes("confirm")) {
+      if (lower.includes("save") || lower.includes("confirm") || lower === "yes") {
         const saved = pendingRecord;
         setPendingRecord(null);
         setShowFollowUp(true);
+        setFollowUpType("success");
+        setActiveOptions({ context: "follow_up", options: [
+          { num: 1, id: "add_expense", label: "Add Another Expense" },
+          { num: 2, id: "add_purchase", label: "Add Purchase Item" },
+          { num: 3, id: "upload_receipt", label: "Upload Receipt" },
+          { num: 4, id: "generate_report", label: "Generate Report" },
+          { num: 5, id: "main", label: "Go to Main Options" },
+        ]});
         const label = saved.fields["Expense Name"] || saved.fields["Item Name"] || saved.fields["Event Name"] || saved.fields["Outlay Name"] || saved.fields["Year"] || "record";
-        return { response: `Done! Your ${saved.type} "${label}" has been saved successfully. ✅`, record: null };
+        autoNameChat(label);
+        return { response: `Done! Your ${saved.type} "${label}" has been saved successfully. ✅\n\nWhat would you like to do next?\n\n1. Add Another Expense\n2. Add Purchase Item\n3. Upload Receipt\n4. Generate Report\n5. Go to Main Options`, record: null };
       }
-      if (lower.includes("cancel")) {
+      if (lower.includes("cancel") || lower === "no") {
         setPendingRecord(null);
         setShowFollowUp(true);
-        return { response: "Cancelled. No record was saved. How else can I help?", record: null };
+        setFollowUpType("cancel");
+        setActiveOptions({ context: "follow_up", options: [
+          { num: 1, id: "add_expense", label: "Add Expense" },
+          { num: 2, id: "add_purchase", label: "Add Purchase Item" },
+          { num: 3, id: "upload_receipt", label: "Upload Receipt" },
+          { num: 4, id: "create_event", label: "Create Event" },
+          { num: 5, id: "main", label: "Go to Main Options" },
+        ]});
+        return { response: "No problem. I have cancelled this action. What would you like to do next?\n\n1. Add Expense\n2. Add Purchase Item\n3. Upload Receipt\n4. Create Event\n5. Go to Main Options", record: null };
       }
       // Edit commands
-      const updatedRecord = { ...pendingRecord, fields: { ...pendingRecord.fields } };
+      const updated = { ...pendingRecord, fields: { ...pendingRecord.fields } };
       const amountChange = text.match(/(?:amount|price|budget)\s+(?:to\s+)?[\$₹]?(\d+[\d,]*)/i);
-      if (amountChange) {
-        const val = `$${parseInt(amountChange[1].replace(/,/g, "")).toLocaleString()}`;
-        if (updatedRecord.fields["Amount"]) updatedRecord.fields["Amount"] = val;
-        if (updatedRecord.fields["Price"]) updatedRecord.fields["Price"] = val;
-        if (updatedRecord.fields["Total Budget"]) updatedRecord.fields["Total Budget"] = val;
-        if (updatedRecord.fields["Budget"]) updatedRecord.fields["Budget"] = val;
-      }
-      if (lower.includes("date") && lower.includes("yesterday")) {
-        const d = new Date(); d.setDate(d.getDate() - 1);
-        const dateStr = d.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
-        if (updatedRecord.fields["Date"]) updatedRecord.fields["Date"] = dateStr;
-      }
+      if (amountChange) { const v = `$${parseInt(amountChange[1].replace(/,/g, "")).toLocaleString()}`; if (updated.fields["Amount"]) updated.fields["Amount"] = v; if (updated.fields["Price"]) updated.fields["Price"] = v; if (updated.fields["Total Budget"]) updated.fields["Total Budget"] = v; if (updated.fields["Budget"]) updated.fields["Budget"] = v; }
+      if (lower.includes("date") && lower.includes("yesterday")) { const d = new Date(); d.setDate(d.getDate() - 1); const ds = d.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }); if (updated.fields["Date"]) updated.fields["Date"] = ds; }
       const catMatch = text.match(/category\s+(?:to\s+)?(.+?)(?:\.|$)/i);
-      if (catMatch) updatedRecord.fields["Category"] = catMatch[1].trim();
+      if (catMatch) updated.fields["Category"] = catMatch[1].trim();
       const storeMatch = text.match(/store\s+(?:name\s+)?(?:to\s+)?(.+?)(?:\.|$)/i);
-      if (storeMatch) updatedRecord.fields["Store"] = storeMatch[1].trim();
-      if (lower.includes("reimbursable")) updatedRecord.fields["Reimbursable"] = "Yes";
-      if (lower.includes("restrict") && lower.includes("exceeded")) updatedRecord.fields["Restrict if Exceeded"] = "Yes";
-      if (lower.includes("included in budget") || lower.includes("include in budget")) updatedRecord.fields["Included in Budget"] = "Yes";
-      if (lower.includes("status") && lower.includes("inactive")) updatedRecord.fields["Status"] = "Inactive";
-      // Monthly allocation change
-      const monthlyMatch = text.match(/(?:march|january|february|april|may|june|july|august|september|october|november|december)\s+(?:to\s+)?[\$₹]?(\d+[\d,]*)/i);
-      if (monthlyMatch) updatedRecord.fields["Monthly Allocation"] = "Custom (updated)";
+      if (storeMatch) updated.fields["Store"] = storeMatch[1].trim();
+      if (lower.includes("reimbursable")) updated.fields["Reimbursable"] = "Yes";
+      if (lower.includes("restrict") && lower.includes("exceeded")) updated.fields["Restrict if Exceeded"] = "Yes";
+      if (lower.includes("include") && lower.includes("budget")) updated.fields["Included in Budget"] = "Yes";
       if (lower.includes("split equally") || lower.includes("split monthly")) {
-        const budgetStr = updatedRecord.fields["Total Budget"] || updatedRecord.fields["Budget"] || "";
-        const budgetNum = parseInt(budgetStr.replace(/[\$₹,\s]/g, "")) || 0;
-        if (budgetNum) updatedRecord.fields["Monthly Allocation"] = `$${Math.round(budgetNum / 12).toLocaleString()} per month`;
+        const b = parseInt((updated.fields["Total Budget"] || updated.fields["Budget"] || "").replace(/[\$₹,\s]/g, "")) || 0;
+        if (b) updated.fields["Monthly Allocation"] = `$${Math.round(b / 12).toLocaleString()} per month`;
       }
-      setPendingRecord(updatedRecord);
-      return { response: "Updated! Here's the revised preview:", record: updatedRecord };
+      setPendingRecord(updated);
+      return { response: "Updated! Here's the revised preview:", record: updated };
     }
 
-    // Detect intent
+
+    // Detect intent for new records
     if (lower.includes("budget") && (lower.includes("create") || lower.includes("set"))) {
       const record = processBudget(text);
-      if (record) { setPendingRecord(record); return { response: "I created a draft budget. Please review before saving:", record }; }
+      if (record) { setPendingRecord(record); autoNameChat("Budget " + (record.fields["Year"] || "")); return { response: "I created a draft budget. Please review before saving:", record }; }
       return { response: "Sure. What total budget amount and year would you like to set?", record: null };
     }
     if (lower.includes("outlay") && (lower.includes("create") || lower.includes("set"))) {
       const record = processOutlay(text);
-      if (record) { setPendingRecord(record); return { response: "I created a draft outlay. Please check before saving:", record }; }
+      if (record) { setPendingRecord(record); autoNameChat(record.fields["Outlay Name"]); return { response: "I created a draft outlay. Please check before saving:", record }; }
       return { response: "Sure. What budget and date range should I set for this outlay?", record: null };
     }
     if (lower.includes("event") && (lower.includes("create") || lower.includes("add"))) {
       if (lower.includes("expense")) {
-        // Event expense
         const amountMatch = text.match(/[\$₹]\s?(\d+[\d,]*)/);
         if (!amountMatch) return { response: "What amount should I add for this event expense?", record: null };
         const amount = parseInt(amountMatch[1].replace(/,/g, ""));
-        const { category, subcategory } = autoCategory(text);
+        const { category } = autoCategory(text);
         const eventMatch = text.match(/to\s+(.+?)(?:\.|$)/i);
         const desc = text.replace(/[\$₹]?\d+[\d,]*/g, "").replace(/\b(add|expense|to|event)\b/gi, "").replace(/\s+/g, " ").trim();
-        const record: PendingRecord = {
-          type: "expense",
-          fields: {
-            "Expense Name": desc.charAt(0).toUpperCase() + desc.slice(1) || category,
-            "Amount": `$${amount.toLocaleString()}`,
-            "Event": eventMatch ? eventMatch[1].trim() : "Not specified",
-            "Category": category,
-            "Date": "Today",
-            "Purchased By": userName,
-          },
-        };
+        const record: PendingRecord = { type: "expense", fields: { "Expense Name": (desc.charAt(0).toUpperCase() + desc.slice(1)) || category, "Amount": `$${amount.toLocaleString()}`, "Event": eventMatch ? eventMatch[1].trim() : "Not specified", "Category": category, "Date": "Today", "Purchased By": userName } };
         setPendingRecord(record);
         return { response: "I found these event expense details. Please check before I save:", record };
       }
       const record = processEvent(text);
-      if (record) { setPendingRecord(record); return { response: "I created a draft event. Please review before saving:", record }; }
+      if (record) { setPendingRecord(record); autoNameChat(record.fields["Event Name"]); return { response: "I created a draft event. Please review before saving:", record }; }
       return { response: "Sure. What is the event name, date, and budget?", record: null };
     }
-
 
     // Expense / Purchase detection
     const amountMatch = text.match(/[\$₹]?\s?(\d+[\d,]*)/);
     if (!amountMatch) {
-      if (lower.includes("expense") || lower.includes("spent") || lower.includes("paid")) {
-        return { response: "Sure. What amount should I add for this expense?", record: null };
-      }
-      if (lower.includes("bought") || lower.includes("purchased") || lower.includes("purchase")) {
-        return { response: "Sure. What was the price for this purchase?", record: null };
-      }
+      if (lower.includes("expense") || lower.includes("spent") || lower.includes("paid")) return { response: "Sure. What amount should I add for this expense?", record: null };
+      if (lower.includes("bought") || lower.includes("purchased") || lower.includes("purchase")) return { response: "Sure. What was the price for this purchase?", record: null };
       return { response: "I can help with that! Please provide more details including the amount.", record: null };
     }
-
     const amount = parseInt(amountMatch[1].replace(/,/g, ""));
     const isPurchase = lower.includes("bought") || lower.includes("purchased") || lower.includes("purchase") || lower.includes("expiry") || lower.includes("warranty");
     const { category, subcategory } = autoCategory(text);
@@ -327,64 +320,29 @@ export function ChatInterface() {
     if (!description || description.length < 2) description = category;
 
     if (!isPurchase) {
-      const record: PendingRecord = {
-        type: "expense",
-        fields: {
-          "Expense Name": description.charAt(0).toUpperCase() + description.slice(1),
-          "Amount": `$${amount.toLocaleString()}`,
-          "Date": date,
-          "Category": category,
-          "Subcategory": subcategory,
-          "Store": store || "Not provided",
-          "Purchased By": userName,
-          "Reimbursable": "No",
-          "Event / Outlay": "None",
-        },
-      };
+      const record: PendingRecord = { type: "expense", fields: { "Expense Name": description.charAt(0).toUpperCase() + description.slice(1), "Amount": `$${amount.toLocaleString()}`, "Date": date, "Category": category, "Subcategory": subcategory, "Store": store || "Not provided", "Purchased By": userName, "Reimbursable": "No", "Event / Outlay": "None" } };
       setPendingRecord(record);
+      autoNameChat(record.fields["Expense Name"]);
       return { response: "I found these details. Please check before I save:", record };
     } else {
-      const record: PendingRecord = {
-        type: "purchase",
-        fields: {
-          "Item Name": description.charAt(0).toUpperCase() + description.slice(1),
-          "Price": `$${amount.toLocaleString()}`,
-          "Quantity": "1 Unit",
-          "Store": store || "Not provided",
-          "Store Type": store ? detectStoreType(store) : "Not provided",
-          "Purchase Date": date,
-          ...(expiry ? { "Expiry Date": expiry } : {}),
-          "Category": category,
-          "Subcategory": subcategory,
-          ...(warranty ? { "Warranty": warranty } : {}),
-          "Purchased By": userName,
-        },
-      };
+      const record: PendingRecord = { type: "purchase", fields: { "Item Name": description.charAt(0).toUpperCase() + description.slice(1), "Price": `$${amount.toLocaleString()}`, "Quantity": "1 Unit", "Store": store || "Not provided", "Store Type": store ? detectStoreType(store) : "Not provided", "Purchase Date": date, ...(expiry ? { "Expiry Date": expiry } : {}), "Category": category, "Subcategory": subcategory, ...(warranty ? { "Warranty": warranty } : {}), "Purchased By": userName } };
       setPendingRecord(record);
+      autoNameChat(record.fields["Item Name"]);
       return { response: "I found these purchase details. Please check before I save:", record };
     }
   };
 
 
+  // Send handler
   const handleSend = async (message: string, attachments?: File[]) => {
     if (isSending) return;
     setIsSending(true);
+    setShowFollowUp(false);
 
-    const userMsg: ChatMessageType = {
-      id: generateId(),
-      role: "user",
-      content: message,
-      timestamp: new Date().toISOString(),
-      attachments: attachments?.map((file) => ({
-        id: generateId(),
-        type: file.type.startsWith("image/") ? "image" : "document",
-        url: URL.createObjectURL(file),
-        name: file.name,
-      })),
-    };
+    const userMsg: ChatMessageType = { id: generateId(), role: "user", content: message, timestamp: new Date().toISOString(), attachments: attachments?.map((file) => ({ id: generateId(), type: file.type.startsWith("image/") ? "image" as const : "document" as const, url: URL.createObjectURL(file), name: file.name })) };
     addMessage(userMsg);
     setTyping(true);
-    await new Promise((resolve) => setTimeout(resolve, 500 + Math.random() * 500));
+    await new Promise((resolve) => setTimeout(resolve, 400 + Math.random() * 400));
 
     try {
       const { response, record } = processUserInput(message);
@@ -392,91 +350,50 @@ export function ChatInterface() {
       if (record) setPendingRecord(record);
     } catch {
       addMessage({ id: generateId(), role: "assistant", content: "Sorry, something went wrong. Please try again.", timestamp: new Date().toISOString() });
-    } finally {
-      setTyping(false);
-      setIsSending(false);
-    }
+    } finally { setTyping(false); setIsSending(false); }
   };
 
   const handleQuickAction = (actionId: string) => {
     setShowFollowUp(false);
+    setActiveOptions(null);
     addMessage({ id: generateId(), role: "user", content: actionLabels[actionId] || actionId, timestamp: new Date().toISOString() });
     setTimeout(() => {
       addMessage({ id: generateId(), role: "assistant", content: guidedResponses[actionId] || "How can I help?", timestamp: new Date().toISOString() });
-    }, 400);
+    }, 300);
   };
 
   const handlePreviewAction = (action: string) => {
     if (action === "confirm") handleSend("Save it.");
     else if (action === "cancel") handleSend("Cancel");
     else if (action === "edit") {
-      addMessage({ id: generateId(), role: "assistant", content: "What would you like to change? You can say:\n• \"Change amount to $12,000\"\n• \"Change category to Vehicle Repair\"\n• \"Change date to yesterday\"\n• \"Add store name Volkswagen\"\n• \"Make this reimbursable\"\n• \"Split equally across months\"\n• \"Include in budget\"", timestamp: new Date().toISOString() });
+      addMessage({ id: generateId(), role: "assistant", content: "What would you like to change?\n\n1. Change amount\n2. Change category\n3. Change date\n4. Add store name\n5. Mark as reimbursable\n6. Other change\n\nType a number or describe what to change.", timestamp: new Date().toISOString() });
+      setActiveOptions({ context: "edit_field", options: [
+        { num: 1, id: "amount", label: "Change amount" },
+        { num: 2, id: "category", label: "Change category" },
+        { num: 3, id: "date", label: "Change date" },
+        { num: 4, id: "store", label: "Add store name" },
+        { num: 5, id: "reimbursable", label: "Mark as reimbursable" },
+        { num: 6, id: "other", label: "Other change" },
+      ]});
     }
   };
 
   const handleFieldAction = (field: string) => {
-    // Immediate toggle actions
-    if (field === "Mark Reimbursable" && pendingRecord) {
-      setPendingRecord({ ...pendingRecord, fields: { ...pendingRecord.fields, "Reimbursable": "Yes" } });
-      addMessage({ id: generateId(), role: "assistant", content: "Done! Marked as reimbursable.", timestamp: new Date().toISOString() });
-      return;
-    }
-    if (field === "Enable Restrict if Exceeded" && pendingRecord) {
-      setPendingRecord({ ...pendingRecord, fields: { ...pendingRecord.fields, "Restrict if Exceeded": "Yes" } });
-      addMessage({ id: generateId(), role: "assistant", content: "Done! Restriction enabled.", timestamp: new Date().toISOString() });
-      return;
-    }
-    if (field === "Include in Budget" && pendingRecord) {
-      setPendingRecord({ ...pendingRecord, fields: { ...pendingRecord.fields, "Included in Budget": "Yes" } });
-      addMessage({ id: generateId(), role: "assistant", content: "Done! Included in budget.", timestamp: new Date().toISOString() });
-      return;
-    }
-    if (field === "Split Equally Monthly" && pendingRecord) {
-      const budgetStr = pendingRecord.fields["Total Budget"] || pendingRecord.fields["Budget"] || "";
-      const num = parseInt(budgetStr.replace(/[\$₹,\s]/g, "")) || 0;
-      if (num) {
-        setPendingRecord({ ...pendingRecord, fields: { ...pendingRecord.fields, "Monthly Allocation": `$${Math.round(num / 12).toLocaleString()} per month` } });
-        addMessage({ id: generateId(), role: "assistant", content: `Done! Split equally: $${Math.round(num / 12).toLocaleString()}/month.`, timestamp: new Date().toISOString() });
-        return;
-      }
-    }
-    // Ask user for value
-    const prompts: Record<string, string> = {
-      "Add Store": "Please enter the store name.",
-      "Add Outlay": "Which outlay should this be linked to?",
-      "Add Event": "Which event should this be linked to?",
-      "Upload Receipt": "Please upload the receipt using the attachment button.",
-      "Add Comment": "Please enter your comment.",
-      "Add Invoice Number": "Please enter the invoice/receipt number.",
-      "Add Expiry Date": "Please enter the expiry date (e.g., June 5, 2026).",
-      "Add Warranty": "Please enter the warranty period (e.g., 1 year).",
-      "Upload Image": "Please upload an image using the attachment button.",
-      "Add Quantity": "How many units?",
-      "Add Description": "Please enter a description.",
-      "Change Year": "Which year?",
-      "Change Total Budget": "What total budget amount?",
-      "Custom Monthly Allocation": "Please tell me the monthly amounts.",
-      "Change Status": "Active or Inactive?",
-      "Add Start Date": "Please enter the start date.",
-      "Add End Date": "Please enter the end date.",
-      "Add Budget": "What budget amount?",
-      "Add Event Date": "Please enter the event date.",
-      "Add Event Expense": "Please tell me the event expense details.",
-    };
+    if (field === "Mark Reimbursable" && pendingRecord) { setPendingRecord({ ...pendingRecord, fields: { ...pendingRecord.fields, "Reimbursable": "Yes" } }); addMessage({ id: generateId(), role: "assistant", content: "Done! Marked as reimbursable.", timestamp: new Date().toISOString() }); return; }
+    if (field === "Enable Restrict if Exceeded" && pendingRecord) { setPendingRecord({ ...pendingRecord, fields: { ...pendingRecord.fields, "Restrict if Exceeded": "Yes" } }); addMessage({ id: generateId(), role: "assistant", content: "Done! Restriction enabled.", timestamp: new Date().toISOString() }); return; }
+    if (field === "Include in Budget" && pendingRecord) { setPendingRecord({ ...pendingRecord, fields: { ...pendingRecord.fields, "Included in Budget": "Yes" } }); addMessage({ id: generateId(), role: "assistant", content: "Done! Included in budget.", timestamp: new Date().toISOString() }); return; }
+    if (field === "Split Equally Monthly" && pendingRecord) { const b = parseInt((pendingRecord.fields["Total Budget"] || pendingRecord.fields["Budget"] || "").replace(/[\$₹,\s]/g, "")) || 0; if (b) { setPendingRecord({ ...pendingRecord, fields: { ...pendingRecord.fields, "Monthly Allocation": `$${Math.round(b / 12).toLocaleString()} per month` } }); addMessage({ id: generateId(), role: "assistant", content: `Done! Split equally: $${Math.round(b / 12).toLocaleString()}/month.`, timestamp: new Date().toISOString() }); return; } }
+    const prompts: Record<string, string> = { "Add Store": "Please enter the store name.", "Add Outlay": "Which outlay?", "Add Event": "Which event?", "Upload Receipt": "Please upload using the attachment button.", "Add Comment": "Please enter your comment.", "Add Invoice Number": "Please enter the invoice number.", "Add Expiry Date": "Please enter the expiry date.", "Add Warranty": "Please enter the warranty period.", "Upload Image": "Please upload an image.", "Add Quantity": "How many units?", "Add Description": "Please enter a description.", "Change Year": "Which year?", "Change Total Budget": "What total amount?", "Custom Monthly Allocation": "Please tell me the monthly amounts.", "Change Status": "Active or Inactive?", "Add Start Date": "Please enter the start date.", "Add End Date": "Please enter the end date.", "Add Budget": "What budget amount?", "Add Event Date": "Please enter the event date.", "Add Event Expense": "Please tell me the event expense details." };
     addMessage({ id: generateId(), role: "assistant", content: prompts[field] || `Please provide the value for "${field}".`, timestamp: new Date().toISOString() });
   };
 
-  const handleNewChat = () => {
-    useChatStore.getState().clearMessages();
-    setPendingRecord(null);
-    setShowFollowUp(false);
-  };
+  const handleNewChat = () => { createChat(); setPendingRecord(null); setShowFollowUp(false); setActiveOptions(null); };
+
 
   const hasMessages = messages.length > 0;
 
   return (
     <div className="flex flex-col h-full">
-      {/* Top Actions - always visible when chat has messages */}
       {hasMessages && (
         <div className="flex-shrink-0 bg-white border-b border-gray-100 px-4 lg:px-6 py-2.5">
           <div className="max-w-2xl mx-auto">
@@ -485,7 +402,6 @@ export function ChatInterface() {
         </div>
       )}
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4">
         {!hasMessages ? (
           <AIGreeting user={user} onQuickAction={handleQuickAction} />
@@ -499,7 +415,7 @@ export function ChatInterface() {
             )}
             {showFollowUp && !pendingRecord && (
               <div className="animate-fade-in">
-                <FollowUpActions onAction={handleQuickAction} onNewChat={handleNewChat} />
+                <FollowUpActions onAction={handleQuickAction} onNewChat={handleNewChat} type={followUpType} />
               </div>
             )}
             {isTyping && (
@@ -508,11 +424,7 @@ export function ChatInterface() {
                   <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                 </div>
                 <div className="bg-gray-100 px-4 py-3 rounded-2xl rounded-bl-md">
-                  <div className="flex gap-1">
-                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-                  </div>
+                  <div className="flex gap-1"><span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" /><span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} /><span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} /></div>
                 </div>
               </div>
             )}
@@ -521,10 +433,9 @@ export function ChatInterface() {
         )}
       </div>
 
-      {/* Input */}
       <div className="flex-shrink-0 bg-white border-t border-gray-100 p-4 lg:px-6">
         <div className="max-w-2xl mx-auto">
-          <ChatInput onSend={handleSend} disabled={isSending || isTyping} placeholder={pendingRecord ? "Edit details, say 'Save it' to confirm, or 'Cancel'..." : "Type your request or describe what you need..."} />
+          <ChatInput onSend={handleSend} disabled={isSending || isTyping} placeholder={pendingRecord ? "Edit details, type a number, say 'Save it' or 'Cancel'..." : activeOptions ? "Type a number to select..." : "Type your request or describe what you need..."} />
         </div>
       </div>
     </div>

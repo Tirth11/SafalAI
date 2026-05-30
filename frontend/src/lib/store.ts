@@ -34,24 +34,127 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
-// Chat Store
-interface ChatState {
+// Multi-Chat Store
+export interface ChatSession {
+  id: string;
+  name: string;
   messages: ChatMessage[];
+  createdAt: string;
+}
+
+interface ChatState {
+  chats: ChatSession[];
+  activeChatId: string | null;
   isTyping: boolean;
+  // Computed helpers
+  messages: ChatMessage[];
+  // Actions
+  createChat: () => string;
+  switchChat: (chatId: string) => void;
+  renameChat: (chatId: string, name: string) => void;
+  deleteChat: (chatId: string) => void;
   addMessage: (message: ChatMessage) => void;
   setMessages: (messages: ChatMessage[]) => void;
   setTyping: (isTyping: boolean) => void;
   clearMessages: () => void;
 }
 
-export const useChatStore = create<ChatState>((set) => ({
-  messages: [],
-  isTyping: false,
-  addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
-  setMessages: (messages) => set({ messages }),
-  setTyping: (isTyping) => set({ isTyping }),
-  clearMessages: () => set({ messages: [] }),
-}));
+const generateChatId = () => `chat_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+export const useChatStore = create<ChatState>()(
+  persist(
+    (set, get) => ({
+      chats: [],
+      activeChatId: null,
+      isTyping: false,
+
+      get messages() {
+        const state = get();
+        const active = state.chats.find((c) => c.id === state.activeChatId);
+        return active?.messages || [];
+      },
+
+      createChat: () => {
+        const id = generateChatId();
+        const newChat: ChatSession = {
+          id,
+          name: "New Chat",
+          messages: [],
+          createdAt: new Date().toISOString(),
+        };
+        set((state) => ({
+          chats: [...state.chats, newChat],
+          activeChatId: id,
+        }));
+        return id;
+      },
+
+      switchChat: (chatId) => {
+        set({ activeChatId: chatId });
+      },
+
+      renameChat: (chatId, name) => {
+        set((state) => ({
+          chats: state.chats.map((c) => (c.id === chatId ? { ...c, name } : c)),
+        }));
+      },
+
+      deleteChat: (chatId) => {
+        set((state) => {
+          const remaining = state.chats.filter((c) => c.id !== chatId);
+          const newActive = state.activeChatId === chatId
+            ? remaining[remaining.length - 1]?.id || null
+            : state.activeChatId;
+          return { chats: remaining, activeChatId: newActive };
+        });
+      },
+
+      addMessage: (message) => {
+        set((state) => {
+          // If no active chat, create one
+          let chatId = state.activeChatId;
+          let chats = [...state.chats];
+
+          if (!chatId || !chats.find((c) => c.id === chatId)) {
+            const id = generateChatId();
+            chats.push({ id, name: "New Chat", messages: [], createdAt: new Date().toISOString() });
+            chatId = id;
+          }
+
+          chats = chats.map((c) =>
+            c.id === chatId ? { ...c, messages: [...c.messages, message] } : c
+          );
+
+          return { chats, activeChatId: chatId };
+        });
+      },
+
+      setMessages: (messages) => {
+        set((state) => ({
+          chats: state.chats.map((c) =>
+            c.id === state.activeChatId ? { ...c, messages } : c
+          ),
+        }));
+      },
+
+      setTyping: (isTyping) => set({ isTyping }),
+
+      clearMessages: () => {
+        // Create a new chat instead of clearing
+        const id = generateChatId();
+        set((state) => ({
+          chats: [...state.chats, { id, name: "New Chat", messages: [], createdAt: new Date().toISOString() }],
+          activeChatId: id,
+        }));
+      },
+    }),
+    {
+      name: "safal-chats",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ chats: state.chats, activeChatId: state.activeChatId }),
+    }
+  )
+);
 
 // Notification Store
 interface NotificationState {
