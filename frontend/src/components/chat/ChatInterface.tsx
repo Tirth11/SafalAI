@@ -414,6 +414,58 @@ export function ChatInterface() {
     }
   };
 
+  const handleFieldAction = (field: string) => {
+    // Immediate toggle actions
+    if (field === "Mark Reimbursable" && pendingRecord) {
+      setPendingRecord({ ...pendingRecord, fields: { ...pendingRecord.fields, "Reimbursable": "Yes" } });
+      addMessage({ id: generateId(), role: "assistant", content: "Done! Marked as reimbursable.", timestamp: new Date().toISOString() });
+      return;
+    }
+    if (field === "Enable Restrict if Exceeded" && pendingRecord) {
+      setPendingRecord({ ...pendingRecord, fields: { ...pendingRecord.fields, "Restrict if Exceeded": "Yes" } });
+      addMessage({ id: generateId(), role: "assistant", content: "Done! Restriction enabled.", timestamp: new Date().toISOString() });
+      return;
+    }
+    if (field === "Include in Budget" && pendingRecord) {
+      setPendingRecord({ ...pendingRecord, fields: { ...pendingRecord.fields, "Included in Budget": "Yes" } });
+      addMessage({ id: generateId(), role: "assistant", content: "Done! Included in budget.", timestamp: new Date().toISOString() });
+      return;
+    }
+    if (field === "Split Equally Monthly" && pendingRecord) {
+      const budgetStr = pendingRecord.fields["Total Budget"] || pendingRecord.fields["Budget"] || "";
+      const num = parseInt(budgetStr.replace(/[\$₹,\s]/g, "")) || 0;
+      if (num) {
+        setPendingRecord({ ...pendingRecord, fields: { ...pendingRecord.fields, "Monthly Allocation": `$${Math.round(num / 12).toLocaleString()} per month` } });
+        addMessage({ id: generateId(), role: "assistant", content: `Done! Split equally: $${Math.round(num / 12).toLocaleString()}/month.`, timestamp: new Date().toISOString() });
+        return;
+      }
+    }
+    // Ask user for value
+    const prompts: Record<string, string> = {
+      "Add Store": "Please enter the store name.",
+      "Add Outlay": "Which outlay should this be linked to?",
+      "Add Event": "Which event should this be linked to?",
+      "Upload Receipt": "Please upload the receipt using the attachment button.",
+      "Add Comment": "Please enter your comment.",
+      "Add Invoice Number": "Please enter the invoice/receipt number.",
+      "Add Expiry Date": "Please enter the expiry date (e.g., June 5, 2026).",
+      "Add Warranty": "Please enter the warranty period (e.g., 1 year).",
+      "Upload Image": "Please upload an image using the attachment button.",
+      "Add Quantity": "How many units?",
+      "Add Description": "Please enter a description.",
+      "Change Year": "Which year?",
+      "Change Total Budget": "What total budget amount?",
+      "Custom Monthly Allocation": "Please tell me the monthly amounts.",
+      "Change Status": "Active or Inactive?",
+      "Add Start Date": "Please enter the start date.",
+      "Add End Date": "Please enter the end date.",
+      "Add Budget": "What budget amount?",
+      "Add Event Date": "Please enter the event date.",
+      "Add Event Expense": "Please tell me the event expense details.",
+    };
+    addMessage({ id: generateId(), role: "assistant", content: prompts[field] || `Please provide the value for "${field}".`, timestamp: new Date().toISOString() });
+  };
+
   const handleNewChat = () => {
     useChatStore.getState().clearMessages();
     setPendingRecord(null);
@@ -442,7 +494,7 @@ export function ChatInterface() {
             {messages.map((msg) => (<ChatMessage key={msg.id} message={msg} />))}
             {pendingRecord && (
               <div className="animate-fade-in">
-                <PreviewCard type={pendingRecord.type} fields={pendingRecord.fields} onAction={handlePreviewAction} />
+                <PreviewCard type={pendingRecord.type} fields={pendingRecord.fields} onAction={handlePreviewAction} onFieldAction={handleFieldAction} />
               </div>
             )}
             {showFollowUp && !pendingRecord && (
