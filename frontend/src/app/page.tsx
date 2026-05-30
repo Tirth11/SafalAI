@@ -127,12 +127,12 @@ export default function LandingPage() {
               </div>
 
               <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 leading-tight mb-5">
-                Manage tasks faster with
-                <span className="text-green-600"> AI-powered prompts.</span>
+                One AI Assistant for
+                <span className="text-green-600"> All SafalVir Applications</span>
               </h1>
 
               <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                Add expenses, purchases, receipts, records, and business details directly into SafalVir apps — without manual effort.
+                Safal-AI helps users complete manual tasks through simple prompts, voice commands, and uploads — making everyday work faster, easier, and more organized.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3">
