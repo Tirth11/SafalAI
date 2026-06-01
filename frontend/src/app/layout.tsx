@@ -8,9 +8,25 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Safal-AI | Your AI Financial Assistant",
-  description: "AI-powered expense management, receipt tracking, warranty reminders, and financial insights",
-  keywords: ["AI", "expense management", "financial assistant", "receipt tracking", "warranty"],
+  title: "SAFAL-AI | Single AI Platform for Everything",
+  description:
+    "SAFAL-AI is a single AI platform to connect AI models, integrate SafalVir applications, upload files, and complete tasks through simple prompts. Automate work with Safal Tokens.",
+  keywords: [
+    "AI automation platform",
+    "AI model integration",
+    "prompt-based automation",
+    "AI workflow platform",
+    "connect AI models",
+    "Safal Tokens",
+    "SafalVir AI",
+    "ChatGPT Claude Gemini integration",
+  ],
+  openGraph: {
+    title: "SAFAL-AI | Single AI Platform for Everything",
+    description:
+      "Connect AI models, integrate applications, upload files, and complete tasks through simple prompts — all inside SAFAL-AI.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
