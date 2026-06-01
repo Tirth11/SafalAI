@@ -344,9 +344,6 @@ export type SafalProductId =
 export interface SafalProduct {
   id: SafalProductId;
   name: string;
-  // Marketing/launch state. All products start as "launching_soon" but a user
-  // can still try to "Login with X" to test the connect flow.
-  launchStatus: "launching_soon" | "available";
 }
 
 // LLM Model APIs (added in Settings -> LLM Model APIs)
