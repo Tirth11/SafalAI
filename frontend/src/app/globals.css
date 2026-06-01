@@ -4,23 +4,10 @@
 
 body {
   font-family: system-ui, -apple-system, sans-serif;
-  background-color: #f9fafb;
 }
 
 .gradient-hero {
   background: linear-gradient(135deg, #16a34a, #9333ea, #f97316);
-}
-
-.gradient-primary {
-  background: linear-gradient(to right, #16a34a, #22c55e);
-}
-
-.gradient-secondary {
-  background: linear-gradient(to right, #9333ea, #a855f7);
-}
-
-.gradient-accent {
-  background: linear-gradient(to right, #f97316, #fb923c);
 }
 
 ::-webkit-scrollbar {
@@ -51,4 +38,13 @@ body {
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
