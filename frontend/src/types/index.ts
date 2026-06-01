@@ -324,3 +324,88 @@ export interface AdminStats {
   totalReceiptsProcessed: number;
   subscriptionBreakdown: Record<string, number>;
 }
+
+
+// =====================================================================
+// SAFAL-AI workspace types (post-login)
+// =====================================================================
+
+// SafalVir product catalogue
+export type SafalProductId =
+  | "safalmybuy"
+  | "safalirdrainmate"
+  | "safalvendors"
+  | "safalcalendar"
+  | "safalsubscriptions"
+  | "safalreviews"
+  | "safaldrive"
+  | "safalutilities";
+
+export interface SafalProduct {
+  id: SafalProductId;
+  name: string;
+  // Marketing/launch state. All products start as "launching_soon" but a user
+  // can still try to "Login with X" to test the connect flow.
+  launchStatus: "launching_soon" | "available";
+}
+
+// LLM Model APIs (added in Settings -> LLM Model APIs)
+export type LLMProvider =
+  | "openai"
+  | "anthropic"
+  | "google"
+  | "azure_openai"
+  | "custom";
+
+export interface LLMApiConfig {
+  id: string;
+  provider: LLMProvider;
+  providerLabel: string; // e.g. "ChatGPT", "Claude", "Gemini", "Custom LLM"
+  modelName: string; // e.g. "gpt-4o", "claude-3-opus"
+  apiKey: string; // stored masked in UI; persisted as-is in localStorage demo
+  endpoint?: string;
+  username?: string;
+  password?: string;
+  status: "active" | "inactive";
+  lastTestedAt?: string;
+  testResult?: "success" | "failed";
+  createdAt: string;
+}
+
+// Third-party integrations (Integration section)
+export type IntegrationAuthType =
+  | "api_key"
+  | "bearer"
+  | "basic"
+  | "oauth"
+  | "custom";
+
+export interface IntegrationConfig {
+  id: string;
+  name: string;
+  baseUrl: string;
+  authType: IntegrationAuthType;
+  apiKey?: string;
+  username?: string;
+  password?: string;
+  status: "active" | "inactive";
+  notes?: string;
+  lastTestedAt?: string;
+  testResult?: "success" | "failed";
+  createdAt: string;
+}
+
+// Per-user product connection state
+export interface ProductConnection {
+  productId: SafalProductId;
+  connected: boolean;
+  connectedAt?: string;
+  connectedAs?: { name?: string; email?: string };
+}
+
+// Used by Custom Chat model dropdown
+export interface CustomChatModelOption {
+  id: string; // "auto" or LLMApiConfig.id
+  label: string;
+  isAuto?: boolean;
+}
