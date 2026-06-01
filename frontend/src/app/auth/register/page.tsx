@@ -63,7 +63,7 @@ export default function RegisterPage() {
     const finalPhone = override?.phone ?? phone ?? "";
     const fallbackName =
       finalEmail.split("@")[0] ||
-      (finalPhone ? `User ${finalPhone.slice(-4)}` : "SAFAL-AI User");
+      (finalPhone ? `User ${finalPhone.slice(-4)}` : "Safal-AI User");
 
     useAuthStore.getState().login(
       {
@@ -210,7 +210,7 @@ export default function RegisterPage() {
     <div className="grid lg:grid-cols-2 gap-6">
       <AuthBrandPanel
         title="Start using one AI platform for apps, files, models, and workflows."
-        subtitle="Create your SAFAL-AI account to connect AI models, upload files, and automate everyday tasks."
+        subtitle="Create your Safal-AI account to connect AI models, upload files, and automate everyday tasks."
       />
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
@@ -289,7 +289,7 @@ function MethodStep({
     <>
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">
-          Create your SAFAL-AI account
+          Create your Safal-AI account
         </h1>
         <p className="text-gray-500 mt-1 text-sm">
           Choose how you want to continue.

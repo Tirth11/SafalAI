@@ -766,7 +766,7 @@ function SettingsPageInner() {
           <Card>
             <h3 className="font-semibold text-gray-900 mb-2">Logout</h3>
             <p className="text-sm text-gray-500 mb-4">
-              Sign out of SAFAL-AI on this device. Your data and connected
+              Sign out of Safal-AI on this device. Your data and connected
               products stay safe and ready when you sign back in.
             </p>
             <Button variant="danger" onClick={handleLogout}>

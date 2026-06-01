@@ -52,7 +52,7 @@ export default function LandingPage() {
     { label: "Contact", href: "#contact" },
   ];
 
-  // What is SAFAL-AI benefit cards (SAI-LP-005)
+  // What is Safal-AI benefit cards (SAI-LP-005)
   const benefitCards = [
     { icon: MessageSquare, title: "Type a prompt", desc: "Describe what you need in plain words." },
     { icon: Upload, title: "Upload a file", desc: "Share documents and let AI read them." },
@@ -63,7 +63,7 @@ export default function LandingPage() {
   // Key features (SAI-LP-006)
   const features = [
     { icon: MessageSquare, title: "AI Chat Workspace", desc: "Complete tasks through a simple, smart chat." },
-    { icon: Zap, title: "Prompt-Based Automation", desc: "Type what you want and let SAFAL-AI do it." },
+    { icon: Zap, title: "Prompt-Based Automation", desc: "Type what you want and let Safal-AI do it." },
     { icon: Globe, title: "Connect AI Models", desc: "Use ChatGPT, Claude, Gemini, and other LLMs." },
     { icon: Key, title: "Bring Your Own API Key", desc: "Connect supported models with your own key." },
     { icon: Package, title: "SafalVir App Integration", desc: "Work with SafalVir products in one place." },
@@ -102,7 +102,7 @@ export default function LandingPage() {
     { step: "2", title: "Choose a product", desc: "Pick a SafalVir product to work with." },
     { step: "3", title: "Connect a model", desc: "Add an AI model if your plan allows." },
     { step: "4", title: "Prompt or upload", desc: "Type a prompt or upload a file." },
-    { step: "5", title: "Review the result", desc: "Check what SAFAL-AI prepared for you." },
+    { step: "5", title: "Review the result", desc: "Check what Safal-AI prepared for you." },
     { step: "6", title: "Confirm & complete", desc: "Approve the action and you are done." },
   ];
 
@@ -131,7 +131,7 @@ export default function LandingPage() {
 
   // Pricing comparison (SAI-LP-014)
   const comparisonRows = [
-    { feature: "SAFAL-AI access", values: ["Yes", "Yes", "Yes", "Yes", "Yes"] },
+    { feature: "Safal-AI access", values: ["Yes", "Yes", "Yes", "Yes", "Yes"] },
     { feature: "Safal Tokens", values: ["Limited", "More", "Higher", "Premium", "Highest"] },
     { feature: "SafalVir product access", values: ["1 product", "2 products", "4 products", "6 products", "All products"] },
     { feature: "Prompt automation", values: ["Basic", "Yes", "Yes", "Advanced", "Advanced"] },
@@ -177,15 +177,15 @@ export default function LandingPage() {
 
   // FAQs (SAI-LP-021) - Safal Tokens
   const faqs = [
-    { q: "What is SAFAL-AI?", a: "SAFAL-AI is a single AI platform that helps you complete tasks using prompts, voice commands, file uploads, and integrations. It works with SafalVir apps, external AI models, and custom LLMs." },
-    { q: "Is SAFAL-AI only for SafalVir products?", a: "No. SAFAL-AI is a platform for many uses. It connects with SafalVir apps, but you can also connect external AI models and automate your own tasks and workflows." },
+    { q: "What is Safal-AI?", a: "Safal-AI is a single AI platform that helps you complete tasks using prompts, voice commands, file uploads, and integrations. It works with SafalVir apps, external AI models, and custom LLMs." },
+    { q: "Is Safal-AI only for SafalVir products?", a: "No. Safal-AI is a platform for many uses. It connects with SafalVir apps, but you can also connect external AI models and automate your own tasks and workflows." },
     { q: "Can I connect ChatGPT, Claude, Gemini, or other models?", a: "Yes. You can connect supported models through API keys. External AI model integration is available on Premium and Premium Plus plans." },
     { q: "Can I use my own API key?", a: "Yes. The Bring Your Own API Key feature lets you connect supported models securely. It is available on Premium and Premium Plus plans." },
     { q: "Which plans support external AI model integration?", a: "Only Premium and Premium Plus plans support external AI model integration and Bring Your Own API Key. Free, Basic, and Advanced plans do not include this." },
-    { q: "What are Safal Tokens?", a: "Safal Tokens are usage units inside SAFAL-AI. Different AI actions use different numbers of Safal Tokens based on the task, files, model usage, and workflow complexity." },
+    { q: "What are Safal Tokens?", a: "Safal Tokens are usage units inside Safal-AI. Different AI actions use different numbers of Safal Tokens based on the task, files, model usage, and workflow complexity." },
     { q: "Can I buy more Safal Tokens?", a: "Yes. You can buy top-up packs anytime when your plan tokens are low or finished. Packs range from 100 tokens ($1.99) to 2,000 tokens ($19.99)." },
     { q: "Which SafalVir products are supported?", a: "SafalMyBuy, SafalIRDrainMate, SafalVendors, SafalCalendar, SafalSubscriptions, SafalReviews, SafalDrive, and SafalUtilities are all supported. Product access depends on your plan." },
-    { q: "Is my data secure?", a: "Yes. SAFAL-AI uses secure login, OTP verification, product-level authorization, and encrypted API key storage. Important actions always need your confirmation." },
+    { q: "Is my data secure?", a: "Yes. Safal-AI uses secure login, OTP verification, product-level authorization, and encrypted API key storage. Important actions always need your confirmation." },
     { q: "Can I upgrade my plan later?", a: "Yes. You can upgrade or change your plan anytime from your account to unlock more products, Safal Tokens, and AI model integrations." },
   ];
 
@@ -199,7 +199,7 @@ export default function LandingPage() {
               <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-purple-500 text-white">
                 <Sparkles size={16} />
               </span>
-              SAFAL-AI
+              Safal-AI
             </Link>
 
             {/* Desktop Nav */}
@@ -291,7 +291,7 @@ export default function LandingPage() {
                 Connect AI models, integrate applications, upload files, and complete tasks through simple prompts.
               </p>
               <p className="mt-3 text-sm text-gray-500">
-                SAFAL-AI helps you automate manual work across SafalVir products, external AI models, files, and workflows from one simple platform.
+                Safal-AI helps you automate manual work across SafalVir products, external AI models, files, and workflows from one simple platform.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
@@ -322,7 +322,7 @@ export default function LandingPage() {
                   <div className="w-3 h-3 rounded-full bg-red-400" />
                   <div className="w-3 h-3 rounded-full bg-yellow-400" />
                   <div className="w-3 h-3 rounded-full bg-green-400" />
-                  <span className="ml-2 text-xs text-gray-400">SAFAL-AI Chat</span>
+                  <span className="ml-2 text-xs text-gray-400">Safal-AI Chat</span>
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
@@ -382,12 +382,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* What is SAFAL-AI Section (SAI-LP-005) */}
+      {/* What is Safal-AI Section (SAI-LP-005) */}
       <section className="py-16 md:py-20 bg-gray-50">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">What is SAFAL-AI?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">What is Safal-AI?</h2>
           <p className="text-lg text-gray-600 leading-relaxed max-w-3xl mx-auto">
-            SAFAL-AI is a smart AI platform that helps you complete tasks using prompts, voice commands, file uploads, and integrations. It works with SafalVir applications, external AI models, custom LLMs, and other business tools.
+            Safal-AI is a smart AI platform that helps you complete tasks using prompts, voice commands, file uploads, and integrations. It works with SafalVir applications, external AI models, custom LLMs, and other business tools.
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-10">
             {benefitCards.map((card) => (
@@ -474,7 +474,7 @@ export default function LandingPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">SafalVir Products</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Connect and manage SafalVir applications through SAFAL-AI. Product access depends on your plan.
+              Connect and manage SafalVir applications through Safal-AI. Product access depends on your plan.
             </p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 mb-12">
@@ -541,7 +541,7 @@ export default function LandingPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Use Cases</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Real ways SAFAL-AI helps with business and personal work every day.
+              Real ways Safal-AI helps with business and personal work every day.
             </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
@@ -671,7 +671,7 @@ export default function LandingPage() {
             </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Safal Tokens</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Safal Tokens are usage units inside SAFAL-AI. Different AI actions use different numbers of tokens based on the task, file processing, model usage, and workflow complexity.
+              Safal Tokens are usage units inside Safal-AI. Different AI actions use different numbers of tokens based on the task, file processing, model usage, and workflow complexity.
             </p>
           </div>
 
@@ -744,7 +744,7 @@ export default function LandingPage() {
             </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Security &amp; Trust</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              You stay in control. SAFAL-AI asks for confirmation before important actions and connects to products or models only with your permission.
+              You stay in control. Safal-AI asks for confirmation before important actions and connects to products or models only with your permission.
             </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -768,7 +768,7 @@ export default function LandingPage() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Frequently Asked Questions</h2>
-            <p className="text-gray-600">Quick answers to common questions about SAFAL-AI.</p>
+            <p className="text-gray-600">Quick answers to common questions about Safal-AI.</p>
           </div>
           <div className="space-y-3">
             {faqs.map((faq, idx) => (
@@ -893,7 +893,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
             <div>
-              <h4 className="text-white font-semibold mb-4">SAFAL-AI</h4>
+              <h4 className="text-white font-semibold mb-4">Safal-AI</h4>
               <p className="text-sm leading-relaxed">
                 Single AI Platform for Everything. Connect AI models, use SafalVir products, upload files, and automate tasks through simple prompts.
               </p>
@@ -910,7 +910,7 @@ export default function LandingPage() {
             <div>
               <h4 className="text-white font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">About SAFAL-AI</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">About Safal-AI</a></li>
                 <li><a href="#faqs" className="hover:text-white transition-colors">FAQs</a></li>
                 <li><a href="#contact" className="hover:text-white transition-colors">Contact</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
@@ -926,7 +926,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="border-t border-gray-800 pt-8 text-center text-sm">
-            <p>&copy; {new Date().getFullYear()} SAFAL-AI. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Safal-AI. All rights reserved.</p>
           </div>
         </div>
       </footer>

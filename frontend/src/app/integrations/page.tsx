@@ -214,7 +214,7 @@ export default function IntegrationsPage() {
             <h1 className="text-xl font-bold text-gray-900">Integration</h1>
             <p className="text-sm text-gray-500 mt-1">
               Add and manage third-party API integrations to use them across
-              SAFAL-AI.
+              Safal-AI.
             </p>
           </div>
           {!showForm && (
@@ -374,7 +374,7 @@ export default function IntegrationsPage() {
                 No integrations yet
               </p>
               <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
-                Add your first third-party API integration so SAFAL-AI can work
+                Add your first third-party API integration so Safal-AI can work
                 with external tools.
               </p>
               {!showForm && (
