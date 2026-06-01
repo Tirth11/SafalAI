@@ -327,7 +327,7 @@ export interface AdminStats {
 
 
 // =====================================================================
-// SAFAL-AI workspace types (post-login)
+// Safal-AI workspace types (post-login)
 // =====================================================================
 
 // SafalVir product catalogue

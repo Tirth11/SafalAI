@@ -12,7 +12,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-purple-500 flex items-center justify-center">
               <Sparkles size={16} className="text-white" />
             </div>
-            <span className="text-lg font-bold text-gray-900">SAFAL-AI</span>
+            <span className="text-lg font-bold text-gray-900">Safal-AI</span>
           </Link>
         </div>
       </header>
@@ -25,7 +25,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       {/* Footer */}
       <footer className="py-4 text-center">
         <p className="text-xs text-gray-400">
-          &copy; {new Date().getFullYear()} SAFAL-AI. All rights reserved.
+          &copy; {new Date().getFullYear()} Safal-AI. All rights reserved.
         </p>
       </footer>
     </div>

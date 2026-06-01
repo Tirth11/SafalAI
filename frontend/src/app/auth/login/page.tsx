@@ -195,7 +195,7 @@ export default function LoginPage() {
   return (
     <div className="grid lg:grid-cols-2 gap-6">
       <AuthBrandPanel
-        title="Welcome back to SAFAL-AI."
+        title="Welcome back to Safal-AI."
         subtitle="Continue your work from one smart AI workspace — apps, files, models, and workflows in one place."
       />
 
@@ -204,7 +204,7 @@ export default function LoginPage() {
           <>
             <div className="text-center mb-6">
               <h1 className="text-2xl font-bold text-gray-900">
-                Sign in to SAFAL-AI
+                Sign in to Safal-AI
               </h1>
               <p className="text-gray-500 mt-1 text-sm">
                 Choose how you want to sign in.
@@ -255,7 +255,7 @@ export default function LoginPage() {
             </div>
 
             <p className="text-center text-sm text-gray-500 mt-6">
-              New to SAFAL-AI?{" "}
+              New to Safal-AI?{" "}
               <Link
                 href="/auth/register"
                 className="text-green-600 hover:text-green-700 font-medium"

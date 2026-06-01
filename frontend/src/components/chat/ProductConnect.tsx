@@ -33,7 +33,7 @@ export function ProductConnect({
       </h2>
       <p className="text-sm text-gray-500 text-center max-w-sm mb-6">
         {description ||
-          `Please login with ${productName} to connect this product. After authorization, SAFAL-AI can securely access your ${productName} data.`}
+          `Please login with ${productName} to connect this product. After authorization, Safal-AI can securely access your ${productName} data.`}
       </p>
 
       <Button
@@ -51,7 +51,7 @@ export function ProductConnect({
         <div className="flex items-start gap-3 text-xs text-gray-500">
           <Shield className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
           <span>
-            Your {productName} password is never stored in SAFAL-AI. We use
+            Your {productName} password is never stored in Safal-AI. We use
             secure token-based authorization.
           </span>
         </div>

@@ -9,9 +9,9 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
   activeKey?: string;
   onNavigate?: (key: string, path: string) => void;
-  /** When true, the SAFAL-AI top header is rendered automatically */
+  /** When true, the Safal-AI top header is rendered automatically */
   showHeader?: boolean;
-  /** Page title shown next to the SAFAL-AI brand */
+  /** Page title shown next to the Safal-AI brand */
   headerTitle?: string;
   /** Optional helper text shown under the page title */
   headerSubtitle?: string;

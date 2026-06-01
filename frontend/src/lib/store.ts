@@ -155,7 +155,7 @@ export const useUIStore = create<UIState>()(
 
 
 // =====================================================================
-// SAFAL-AI workspace stores (post-login)
+// Safal-AI workspace stores (post-login)
 // =====================================================================
 
 import type {

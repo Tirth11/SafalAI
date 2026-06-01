@@ -8,9 +8,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "SAFAL-AI | Single AI Platform for Everything",
+  title: "Safal-AI | Single AI Platform for Everything",
   description:
-    "SAFAL-AI is a single AI platform to connect AI models, integrate SafalVir applications, upload files, and complete tasks through simple prompts. Automate work with Safal Tokens.",
+    "Safal-AI is a single AI platform to connect AI models, integrate SafalVir applications, upload files, and complete tasks through simple prompts. Automate work with Safal Tokens.",
   keywords: [
     "AI automation platform",
     "AI model integration",
@@ -22,9 +22,9 @@ export const metadata: Metadata = {
     "ChatGPT Claude Gemini integration",
   ],
   openGraph: {
-    title: "SAFAL-AI | Single AI Platform for Everything",
+    title: "Safal-AI | Single AI Platform for Everything",
     description:
-      "Connect AI models, integrate applications, upload files, and complete tasks through simple prompts — all inside SAFAL-AI.",
+      "Connect AI models, integrate applications, upload files, and complete tasks through simple prompts — all inside Safal-AI.",
     type: "website",
   },
 };

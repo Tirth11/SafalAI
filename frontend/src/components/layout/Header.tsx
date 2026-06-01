@@ -5,7 +5,7 @@ import { Coins, Sparkles } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
 
 interface HeaderProps {
-  /** Section heading shown to the right of the SAFAL-AI brand */
+  /** Section heading shown to the right of the Safal-AI brand */
   title?: string;
   /** Optional helper text under the title */
   subtitle?: string;
@@ -20,13 +20,13 @@ export function Header({ title, subtitle, rightSlot }: HeaderProps) {
   return (
     <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30">
       <div className="flex items-center gap-3 min-w-0">
-        {/* Always-visible SAFAL-AI brand */}
+        {/* Always-visible Safal-AI brand */}
         <Link href="/chat" className="flex items-center gap-2 flex-shrink-0">
           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-green-500 to-purple-500 flex items-center justify-center">
             <Sparkles className="w-3.5 h-3.5 text-white" />
           </div>
           <span className="text-sm font-bold text-gray-900 hidden sm:inline">
-            SAFAL-AI
+            Safal-AI
           </span>
         </Link>
 
