@@ -134,7 +134,6 @@ function ChatPageInner() {
         ) : (
           <ProductConnect
             productName={productName}
-            launchingSoon
             onConnect={handleConnect}
             isConnecting={isConnecting}
           />

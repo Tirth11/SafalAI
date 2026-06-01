@@ -6,15 +6,12 @@ import {
   ExternalLink,
   Shield,
   CheckCircle,
-  AlertTriangle,
 } from "lucide-react";
 
 interface ProductConnectProps {
   productName: string;
   /** Optional one-line description shown under the heading */
   description?: string;
-  /** True when the product is still listed as Launching Soon */
-  launchingSoon?: boolean;
   onConnect: () => void;
   isConnecting?: boolean;
 }
@@ -22,7 +19,6 @@ interface ProductConnectProps {
 export function ProductConnect({
   productName,
   description,
-  launchingSoon,
   onConnect,
   isConnecting = false,
 }: ProductConnectProps) {
@@ -35,17 +31,10 @@ export function ProductConnect({
       <h2 className="text-xl font-semibold text-gray-900 mb-2 text-center">
         Connect your {productName} account
       </h2>
-      <p className="text-sm text-gray-500 text-center max-w-sm mb-2">
+      <p className="text-sm text-gray-500 text-center max-w-sm mb-6">
         {description ||
           `Please login with ${productName} to connect this product. After authorization, SAFAL-AI can securely access your ${productName} data.`}
       </p>
-
-      {launchingSoon && (
-        <div className="mt-2 mb-6 inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-full px-3 py-1 text-xs text-yellow-800">
-          <AlertTriangle className="w-3.5 h-3.5" />
-          {productName} is launching soon — connection is in preview
-        </div>
-      )}
 
       <Button
         onClick={onConnect}

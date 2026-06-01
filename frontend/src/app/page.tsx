@@ -184,7 +184,7 @@ export default function LandingPage() {
     { q: "Which plans support external AI model integration?", a: "Only Premium and Premium Plus plans support external AI model integration and Bring Your Own API Key. Free, Basic, and Advanced plans do not include this." },
     { q: "What are Safal Tokens?", a: "Safal Tokens are usage units inside SAFAL-AI. Different AI actions use different numbers of Safal Tokens based on the task, files, model usage, and workflow complexity." },
     { q: "Can I buy more Safal Tokens?", a: "Yes. You can buy top-up packs anytime when your plan tokens are low or finished. Packs range from 100 tokens ($1.99) to 2,000 tokens ($19.99)." },
-    { q: "Which SafalVir products are supported?", a: "SafalMyBuy, SafalIRDrainMate, SafalVendors, SafalCalendar, SafalSubscriptions, SafalReviews, SafalDrive, and SafalUtilities are launching soon. Product access depends on your plan." },
+    { q: "Which SafalVir products are supported?", a: "SafalMyBuy, SafalIRDrainMate, SafalVendors, SafalCalendar, SafalSubscriptions, SafalReviews, SafalDrive, and SafalUtilities are all supported. Product access depends on your plan." },
     { q: "Is my data secure?", a: "Yes. SAFAL-AI uses secure login, OTP verification, product-level authorization, and encrypted API key storage. Important actions always need your confirmation." },
     { q: "Can I upgrade my plan later?", a: "Yes. You can upgrade or change your plan anytime from your account to unlock more products, Safal Tokens, and AI model integrations." },
   ];
