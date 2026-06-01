@@ -2,28 +2,51 @@
 
 import { cn } from "@/lib/utils";
 import { Sidebar } from "./Sidebar";
+import { Header } from "./Header";
 import { useUIStore } from "@/lib/store";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  activeItem?: string;
-  onNavigate?: (id: string) => void;
-  isProductConnected?: boolean;
+  activeKey?: string;
+  onNavigate?: (key: string, path: string) => void;
+  /** When true, the SAFAL-AI top header is rendered automatically */
+  showHeader?: boolean;
+  /** Page title shown next to the SAFAL-AI brand */
+  headerTitle?: string;
+  /** Optional helper text shown under the page title */
+  headerSubtitle?: string;
+  /** Right-side controls injected into the header */
+  headerRight?: React.ReactNode;
 }
 
 export function DashboardLayout({
   children,
-  activeItem,
+  activeKey,
   onNavigate,
-  isProductConnected = false,
+  showHeader = true,
+  headerTitle,
+  headerSubtitle,
+  headerRight,
 }: DashboardLayoutProps) {
   const { sidebarOpen } = useUIStore();
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Sidebar activeItem={activeItem} onItemClick={onNavigate} isProductConnected={isProductConnected} />
-      <main className={cn("transition-all duration-300 min-h-screen", sidebarOpen ? "ml-60" : "ml-16")}>
-        {children}
+      <Sidebar activeKey={activeKey} onNavigate={onNavigate} />
+      <main
+        className={cn(
+          "transition-all duration-300 min-h-screen flex flex-col",
+          sidebarOpen ? "ml-64" : "ml-16"
+        )}
+      >
+        {showHeader && (
+          <Header
+            title={headerTitle}
+            subtitle={headerSubtitle}
+            rightSlot={headerRight}
+          />
+        )}
+        <div className="flex-1 min-h-0">{children}</div>
       </main>
     </div>
   );
