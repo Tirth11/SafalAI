@@ -4,9 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
 import {
-  User,
   Mail,
   Phone,
   ArrowRight,
@@ -22,18 +20,7 @@ import {
 import AuthBrandPanel from "@/components/auth/AuthBrandPanel";
 
 type SocialProvider = "google" | "apple" | "microsoft";
-type Step = "method" | "email" | "phone" | "otp" | "profile";
-
-const productOptions = [
-  { value: "safalmybuy", label: "SafalMyBuy" },
-  { value: "safaldraintmate", label: "SafalIRDrainMate" },
-  { value: "safalvendors", label: "SafalVendors" },
-  { value: "safalcalendar", label: "SafalCalendar" },
-  { value: "safalsubscriptions", label: "SafalSubscriptions" },
-  { value: "safalreviews", label: "SafalReviews" },
-  { value: "safaldrive", label: "SafalDrive" },
-  { value: "safalutilities", label: "SafalUtilities" },
-];
+type Step = "method" | "email" | "phone" | "otp";
 
 const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 const isPhone = (value: string) => /^\+?[\d\s-]{8,15}$/.test(value);
@@ -49,12 +36,6 @@ export default function RegisterPage() {
   const [otp, setOtp] = useState("");
   const [resendTimer, setResendTimer] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-
-  const [profile, setProfile] = useState({
-    firstName: "",
-    lastName: "",
-    product: "",
-  });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [info, setInfo] = useState<string>("");
@@ -73,14 +54,39 @@ export default function RegisterPage() {
     }, 1000);
   };
 
-  const reset = () => {
-    setStep("method");
-    setMethod(null);
-    setEmail("");
-    setPhone("");
-    setOtp("");
-    setErrors({});
-    setInfo("");
+  const finishAuth = (override?: {
+    email?: string;
+    phone?: string;
+    name?: string;
+  }) => {
+    const finalEmail = override?.email ?? email ?? "";
+    const finalPhone = override?.phone ?? phone ?? "";
+    const fallbackName =
+      finalEmail.split("@")[0] ||
+      (finalPhone ? `User ${finalPhone.slice(-4)}` : "SAFAL-AI User");
+
+    useAuthStore.getState().login(
+      {
+        id: "1",
+        email: finalEmail || "user@example.com",
+        name: override?.name ?? fallbackName,
+        phone: finalPhone,
+        currency: "INR",
+        language: "en",
+        createdAt: new Date().toISOString(),
+        subscription: {
+          id: "1",
+          plan: "free" as const,
+          status: "active" as const,
+          creditsBalance: 20,
+          creditsUsed: 0,
+          renewalDate: new Date(
+            Date.now() + 30 * 24 * 60 * 60 * 1000
+          ).toISOString(),
+        },
+      },
+      "mock-token"
+    );
   };
 
   // ---------- step handlers ----------
@@ -98,20 +104,18 @@ export default function RegisterPage() {
       return;
     }
 
-    // Social providers — simulate OAuth/OpenID redirect & callback
+    // Social providers — simulate OAuth/OpenID redirect & callback,
+    // then log the user straight in.
     setIsLoading(true);
     try {
       await new Promise((r) => setTimeout(r, 1200));
-      // Simulate verified provider details. Email auto-filled from provider.
       const fakeEmail = `${selected}.user@example.com`;
-      setEmail(fakeEmail);
-      // Provider gives us name parts in many cases — leave blank so user fills
-      setStep("profile");
-      setInfo(
-        `${capitalize(
-          selected
-        )} authorization successful. Please complete your profile to continue.`
-      );
+      finishAuth({
+        email: fakeEmail,
+        name: `${capitalize(selected)} User`,
+      });
+      await new Promise((r) => setTimeout(r, 100));
+      window.location.href = "/chat";
     } catch {
       setErrors({
         method: `${capitalize(selected)} authorization failed. Please try again.`,
@@ -133,8 +137,6 @@ export default function RegisterPage() {
     setIsLoading(true);
     try {
       await new Promise((r) => setTimeout(r, 900));
-      // For demo: pretend email is not yet registered. In a real system, the
-      // server would return "exists" and we'd guide the user to sign in.
       setStep("otp");
       setInfo("OTP sent to your email.");
       startResendTimer();
@@ -176,9 +178,10 @@ export default function RegisterPage() {
     setIsLoading(true);
     try {
       await new Promise((r) => setTimeout(r, 1200));
-      // Demo: any 4-6 digit OTP passes
-      setStep("profile");
-      setInfo("Verified. One last step to set up your account.");
+      // Demo: any 4-6 digit OTP passes — log the user straight in.
+      finishAuth();
+      await new Promise((r) => setTimeout(r, 100));
+      window.location.href = "/chat";
     } catch {
       setErrors({ otp: "Invalid OTP. Please try again." });
     } finally {
@@ -202,57 +205,6 @@ export default function RegisterPage() {
     }
   };
 
-  const completeProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const newErrors: Record<string, string> = {};
-    if (!profile.firstName.trim())
-      newErrors.firstName = "Please enter your first name.";
-    else if (!/^[a-zA-Z\s]+$/.test(profile.firstName))
-      newErrors.firstName = "First name should contain only letters.";
-    if (!profile.lastName.trim())
-      newErrors.lastName = "Please enter your last name.";
-    else if (!/^[a-zA-Z\s]+$/.test(profile.lastName))
-      newErrors.lastName = "Last name should contain only letters.";
-    if (!profile.product)
-      newErrors.product = "Please select at least one SafalVir product.";
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return;
-
-    setIsLoading(true);
-    try {
-      await new Promise((r) => setTimeout(r, 900));
-      useAuthStore.getState().login(
-        {
-          id: "1",
-          email: email || "user@example.com",
-          name: `${profile.firstName} ${profile.lastName}`.trim(),
-          phone: phone || "",
-          currency: "INR",
-          language: "en",
-          createdAt: new Date().toISOString(),
-          subscription: {
-            id: "1",
-            plan: "free" as const,
-            status: "active" as const,
-            creditsBalance: 20,
-            creditsUsed: 0,
-            renewalDate: new Date(
-              Date.now() + 30 * 24 * 60 * 60 * 1000
-            ).toISOString(),
-          },
-        },
-        "mock-token"
-      );
-      // Allow store to flush before navigating
-      await new Promise((r) => setTimeout(r, 100));
-      window.location.href = "/chat";
-    } catch {
-      setErrors({ form: "Something went wrong. Please try again." });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // ---------- render ----------
   return (
     <div className="grid lg:grid-cols-2 gap-6">
@@ -264,7 +216,6 @@ export default function RegisterPage() {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
         {step === "method" && (
           <MethodStep
-            mode="signup"
             onPick={pickMethod}
             isLoading={isLoading}
             error={errors.method}
@@ -273,7 +224,6 @@ export default function RegisterPage() {
 
         {step === "email" && (
           <EmailStep
-            mode="signup"
             email={email}
             setEmail={setEmail}
             error={errors.email}
@@ -288,7 +238,6 @@ export default function RegisterPage() {
 
         {step === "phone" && (
           <PhoneStep
-            mode="signup"
             phone={phone}
             setPhone={setPhone}
             error={errors.phone}
@@ -303,7 +252,6 @@ export default function RegisterPage() {
 
         {step === "otp" && (
           <OtpStep
-            mode="signup"
             destination={method === "phone" ? phone : email}
             otp={otp}
             setOtp={setOtp}
@@ -321,20 +269,6 @@ export default function RegisterPage() {
             onResend={resendOtp}
           />
         )}
-
-        {step === "profile" && (
-          <ProfileStep
-            email={email}
-            phone={phone}
-            profile={profile}
-            setProfile={setProfile}
-            errors={errors}
-            info={info}
-            onSubmit={completeProfile}
-            onBack={reset}
-            isLoading={isLoading}
-          />
-        )}
       </div>
     </div>
   );
@@ -343,27 +277,22 @@ export default function RegisterPage() {
 // =================== sub-components ===================
 
 function MethodStep({
-  mode,
   onPick,
   isLoading,
   error,
 }: {
-  mode: "signup" | "login";
   onPick: (m: "email" | "phone" | SocialProvider) => void;
   isLoading: boolean;
   error?: string;
 }) {
-  const isSignup = mode === "signup";
   return (
     <>
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">
-          {isSignup ? "Create your SAFAL-AI account" : "Sign in to SAFAL-AI"}
+          Create your SAFAL-AI account
         </h1>
         <p className="text-gray-500 mt-1 text-sm">
-          {isSignup
-            ? "Choose how you want to continue."
-            : "Choose how you want to sign in."}
+          Choose how you want to continue.
         </p>
       </div>
 
@@ -375,14 +304,14 @@ function MethodStep({
 
       <div className="space-y-3">
         <ProviderButton
-          label={isSignup ? "Continue with Email" : "Login with Email"}
+          label="Continue with Email"
           icon={<Mail className="w-4 h-4" />}
           onClick={() => onPick("email")}
           disabled={isLoading}
           variant="primary"
         />
         <ProviderButton
-          label={isSignup ? "Continue with Phone" : "Login with Phone"}
+          label="Continue with Phone"
           icon={<Phone className="w-4 h-4" />}
           onClick={() => onPick("phone")}
           disabled={isLoading}
@@ -391,19 +320,19 @@ function MethodStep({
         <Divider />
 
         <ProviderButton
-          label={isSignup ? "Continue with Google" : "Login with Google"}
+          label="Continue with Google"
           icon={<GoogleIcon />}
           onClick={() => onPick("google")}
           disabled={isLoading}
         />
         <ProviderButton
-          label={isSignup ? "Continue with Apple" : "Login with Apple"}
+          label="Continue with Apple"
           icon={<AppleIcon />}
           onClick={() => onPick("apple")}
           disabled={isLoading}
         />
         <ProviderButton
-          label={isSignup ? "Continue with Microsoft" : "Login with Microsoft"}
+          label="Continue with Microsoft"
           icon={<MicrosoftIcon />}
           onClick={() => onPick("microsoft")}
           disabled={isLoading}
@@ -411,34 +340,19 @@ function MethodStep({
       </div>
 
       <p className="text-center text-sm text-gray-500 mt-6">
-        {isSignup ? (
-          <>
-            Already have an account?{" "}
-            <Link
-              href="/auth/login"
-              className="text-green-600 hover:text-green-700 font-medium"
-            >
-              Sign In
-            </Link>
-          </>
-        ) : (
-          <>
-            New to SAFAL-AI?{" "}
-            <Link
-              href="/auth/register"
-              className="text-green-600 hover:text-green-700 font-medium"
-            >
-              Create Account
-            </Link>
-          </>
-        )}
+        Already have an account?{" "}
+        <Link
+          href="/auth/login"
+          className="text-green-600 hover:text-green-700 font-medium"
+        >
+          Sign In
+        </Link>
       </p>
     </>
   );
 }
 
 function EmailStep({
-  mode,
   email,
   setEmail,
   error,
@@ -446,7 +360,6 @@ function EmailStep({
   onSubmit,
   isLoading,
 }: {
-  mode: "signup" | "login";
   email: string;
   setEmail: (v: string) => void;
   error?: string;
@@ -458,9 +371,7 @@ function EmailStep({
     <>
       <BackButton onClick={onBack} />
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
-          {mode === "signup" ? "Continue with Email" : "Login with Email"}
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-900">Continue with Email</h1>
         <p className="text-gray-500 mt-1 text-sm">
           We&apos;ll send a one-time code to your email.
         </p>
@@ -487,7 +398,6 @@ function EmailStep({
 }
 
 function PhoneStep({
-  mode,
   phone,
   setPhone,
   error,
@@ -495,7 +405,6 @@ function PhoneStep({
   onSubmit,
   isLoading,
 }: {
-  mode: "signup" | "login";
   phone: string;
   setPhone: (v: string) => void;
   error?: string;
@@ -507,9 +416,7 @@ function PhoneStep({
     <>
       <BackButton onClick={onBack} />
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
-          {mode === "signup" ? "Continue with Phone" : "Login with Phone"}
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-900">Continue with Phone</h1>
         <p className="text-gray-500 mt-1 text-sm">
           We&apos;ll send a one-time code to your phone.
         </p>
@@ -536,7 +443,6 @@ function PhoneStep({
 }
 
 function OtpStep({
-  mode,
   destination,
   otp,
   setOtp,
@@ -548,7 +454,6 @@ function OtpStep({
   resendTimer,
   onResend,
 }: {
-  mode: "signup" | "login";
   destination: string;
   otp: string;
   setOtp: (v: string) => void;
@@ -592,7 +497,7 @@ function OtpStep({
           required
         />
         <Button type="submit" className="w-full" size="lg" isLoading={isLoading}>
-          {mode === "signup" ? "Verify & Continue" : "Verify & Sign In"}
+          Verify & Continue
         </Button>
       </form>
 
@@ -610,121 +515,6 @@ function OtpStep({
           </button>
         )}
       </div>
-    </>
-  );
-}
-
-function ProfileStep({
-  email,
-  phone,
-  profile,
-  setProfile,
-  errors,
-  info,
-  onSubmit,
-  onBack,
-  isLoading,
-}: {
-  email: string;
-  phone: string;
-  profile: { firstName: string; lastName: string; product: string };
-  setProfile: (p: { firstName: string; lastName: string; product: string }) => void;
-  errors: Record<string, string>;
-  info?: string;
-  onSubmit: (e: React.FormEvent) => void;
-  onBack: () => void;
-  isLoading: boolean;
-}) {
-  return (
-    <>
-      <BackButton onClick={onBack} label="Start over" />
-      <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Complete your profile</h1>
-        <p className="text-gray-500 mt-1 text-sm">
-          A few details to set up your SAFAL-AI workspace.
-        </p>
-      </div>
-
-      {info && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 flex items-start gap-2">
-          <CheckCircle size={16} className="text-green-600 flex-shrink-0 mt-0.5" />
-          <span>{info}</span>
-        </div>
-      )}
-
-      {errors.form && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-          {errors.form}
-        </div>
-      )}
-
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <Input
-            type="text"
-            label="First Name"
-            placeholder="John"
-            icon={<User className="w-4 h-4" />}
-            value={profile.firstName}
-            onChange={(e) =>
-              setProfile({ ...profile, firstName: e.target.value })
-            }
-            error={errors.firstName}
-            required
-          />
-          <Input
-            type="text"
-            label="Last Name"
-            placeholder="Doe"
-            value={profile.lastName}
-            onChange={(e) =>
-              setProfile({ ...profile, lastName: e.target.value })
-            }
-            error={errors.lastName}
-            required
-          />
-        </div>
-
-        {email && (
-          <Input
-            type="email"
-            label="Email Address"
-            value={email}
-            readOnly
-            icon={<Mail className="w-4 h-4" />}
-            className="bg-gray-50"
-          />
-        )}
-
-        {phone && (
-          <Input
-            type="tel"
-            label="Phone Number"
-            value={phone}
-            readOnly
-            icon={<Phone className="w-4 h-4" />}
-            className="bg-gray-50"
-          />
-        )}
-
-        <Select
-          label="SafalVir Product"
-          options={productOptions}
-          value={profile.product}
-          onChange={(e) => setProfile({ ...profile, product: e.target.value })}
-          placeholder="Select a product"
-          error={errors.product}
-          required
-        />
-        <p className="text-xs text-gray-400 -mt-2">
-          All SafalVir products are launching soon. You can change this later.
-        </p>
-
-        <Button type="submit" className="w-full" size="lg" isLoading={isLoading}>
-          Create Account
-          <ArrowRight className="w-4 h-4 ml-2" />
-        </Button>
-      </form>
     </>
   );
 }
