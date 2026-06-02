@@ -52,12 +52,12 @@ export default function LandingPage() {
     { label: "Contact", href: "#contact" },
   ];
 
-  // What is Safal-AI benefit cards (SAI-LP-005)
+  // Four simple value cards
   const benefitCards = [
-    { icon: MessageSquare, title: "Type a prompt", desc: "Describe what you need in plain words." },
-    { icon: Upload, title: "Upload a file", desc: "Share documents and let AI read them." },
-    { icon: Plug, title: "Connect your AI model", desc: "Use ChatGPT, Claude, Gemini, and more." },
-    { icon: Zap, title: "Complete tasks faster", desc: "Get work done from one simple place." },
+    { icon: Plug, title: "Connect AI Models", desc: "Use ChatGPT, Claude, Gemini, or your own LLM." },
+    { icon: Package, title: "Use SafalVir Products", desc: "Connect SafalMyBuy and other SafalVir apps." },
+    { icon: Upload, title: "Upload Files", desc: "Upload PDFs, receipts, documents, or images." },
+    { icon: Zap, title: "Automate Tasks", desc: "Type a prompt and let Safal-AI prepare the action." },
   ];
 
   // Key features (SAI-LP-006)
@@ -298,7 +298,7 @@ export default function LandingPage() {
                   href="/auth/register"
                   className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
                 >
-                  Get Started <ArrowRight size={18} />
+                  Start Free <ArrowRight size={18} />
                 </Link>
                 <a
                   href="#pricing"
@@ -557,6 +557,89 @@ export default function LandingPage() {
                 <p className="text-xs text-gray-500">{item.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Before / After + Best For (sales section) */}
+      <section className="py-16 md:py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Why Safal-AI</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Bring everything into one simple place and finish work faster.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {/* Before */}
+            <div className="bg-white border border-gray-100 rounded-2xl p-6">
+              <div className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 mb-4">
+                <span className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center">
+                  <X size={16} className="text-gray-400" />
+                </span>
+                Before Safal-AI
+              </div>
+              <ul className="space-y-3">
+                {[
+                  "Too many apps and tools to switch between",
+                  "Manual work across files and records",
+                  "AI models scattered in different places",
+                  "Hard to connect products and APIs",
+                ].map((line) => (
+                  <li key={line} className="flex items-start gap-2 text-sm text-gray-600">
+                    <X size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
+                    {line}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* After */}
+            <div className="bg-gradient-to-br from-green-50 to-purple-50 border border-green-100 rounded-2xl p-6">
+              <div className="inline-flex items-center gap-2 text-sm font-semibold text-green-700 mb-4">
+                <span className="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center">
+                  <CheckCircle size={16} className="text-green-600" />
+                </span>
+                After Safal-AI
+              </div>
+              <ul className="space-y-3">
+                {[
+                  "One place for models, apps, files, and APIs",
+                  "Type a prompt and let AI prepare the work",
+                  "ChatGPT, Claude, Gemini in a single chat",
+                  "Connect products and workflows in minutes",
+                ].map((line) => (
+                  <li key={line} className="flex items-start gap-2 text-sm text-gray-700">
+                    <CheckCircle size={16} className="text-green-600 flex-shrink-0 mt-0.5" />
+                    {line}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Best for */}
+          <div className="mt-12 max-w-4xl mx-auto text-center">
+            <h3 className="text-xl font-semibold mb-6">Best for</h3>
+            <div className="flex flex-wrap justify-center gap-3">
+              {[
+                "Individuals",
+                "Teams",
+                "SMEs",
+                "Developers",
+                "SafalVir users",
+                "Business owners",
+              ].map((aud) => (
+                <span
+                  key={aud}
+                  className="inline-flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-2 text-sm text-gray-700"
+                >
+                  <CheckCircle size={14} className="text-green-600" />
+                  {aud}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </section>

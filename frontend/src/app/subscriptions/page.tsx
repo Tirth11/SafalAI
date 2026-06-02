@@ -14,6 +14,7 @@ import {
   CheckCircle,
   Star,
   Receipt,
+  AlertTriangle,
 } from "lucide-react";
 
 const plans = [
@@ -164,6 +165,7 @@ export default function SubscriptionsPage() {
     100,
     Math.round((used / totalAllotted) * 100) || 0
   );
+  const lowTokens = balance <= totalAllotted * 0.2;
 
   return (
     <DashboardLayout
@@ -173,6 +175,24 @@ export default function SubscriptionsPage() {
       headerSubtitle="Plans, Safal Tokens, top-ups, and billing"
     >
       <div className="p-4 lg:p-6 max-w-4xl mx-auto space-y-6">
+        {/* Low token alert */}
+        {lowTokens && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-yellow-800">
+                You are running low on Safal Tokens
+              </p>
+              <p className="text-xs text-yellow-700 mt-0.5">
+                Top up or upgrade to continue using advanced AI features.
+              </p>
+            </div>
+            <Button size="sm" className="flex-shrink-0">
+              Buy Top-Up
+            </Button>
+          </div>
+        )}
+
         {/* Balance + plan summary */}
         <div className="grid sm:grid-cols-2 gap-4">
           <Card className="bg-gradient-to-r from-green-600 to-green-500 text-white !border-0">
@@ -196,7 +216,7 @@ export default function SubscriptionsPage() {
                 />
               </div>
               <p className="text-[11px] text-green-100 mt-1.5">
-                {usagePercent}% of this period&apos;s allowance used
+                {used} / {totalAllotted} Safal Tokens used
               </p>
             </div>
           </Card>
