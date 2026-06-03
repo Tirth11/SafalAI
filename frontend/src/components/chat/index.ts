@@ -8,3 +8,4 @@ export { PreviewCard } from "./PreviewCard";
 export { ProductConnect } from "./ProductConnect";
 export { TopActions } from "./TopActions";
 export { FollowUpActions } from "./FollowUpActions";
+export { OnboardingChecklist } from "./OnboardingChecklist";
