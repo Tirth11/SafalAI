@@ -15,6 +15,7 @@ interface ProductConnectProps {
   onConnect: () => void;
   isConnecting?: boolean;
   status?: "Live" | "Launching Soon";
+  logo?: string;
 }
 
 export function ProductConnect({
@@ -23,11 +24,16 @@ export function ProductConnect({
   onConnect,
   isConnecting = false,
   status = "Live",
+  logo,
 }: ProductConnectProps) {
   return (
     <div className="flex flex-col items-center justify-center h-full px-4 py-12 animate-fade-in">
-      <div className="w-16 h-16 rounded-2xl bg-green-100 flex items-center justify-center mb-6">
-        <Package className="w-8 h-8 text-green-600" />
+      <div className="w-20 h-20 rounded-2xl bg-white shadow-sm border border-gray-100 flex items-center justify-center mb-6 p-2">
+        {logo ? (
+          <img src={logo} alt={productName} className="w-full h-full object-contain" />
+        ) : (
+          <Package className="w-10 h-10 text-gray-400" />
+        )}
       </div>
 
       <div className="flex items-center gap-2 mb-2">
@@ -51,7 +57,11 @@ export function ProductConnect({
         disabled={status === "Launching Soon"}
         className="my-4"
       >
-        <Package className="w-4 h-4 mr-2" />
+        {logo ? (
+          <img src={logo} alt="" className="w-4 h-4 mr-2 object-contain filter grayscale opacity-70" />
+        ) : (
+          <Package className="w-4 h-4 mr-2" />
+        )}
         {status === "Launching Soon" ? "Coming Soon" : `Login with ${productName}`}
         {status === "Live" && <ExternalLink className="w-4 h-4 ml-2" />}
       </Button>

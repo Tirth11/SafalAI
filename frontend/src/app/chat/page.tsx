@@ -14,15 +14,15 @@ import {
 import type { SafalProductId } from "@/types";
 import { CheckCircle, RotateCcw } from "lucide-react";
 
-const productCatalogue: Record<SafalProductId, { name: string; status: "Live" | "Launching Soon" }> = {
-  safalmybuy: { name: "SafalMyBuy", status: "Live" },
-  safalirdrainmate: { name: "SafalIRDrainMate", status: "Live" },
-  safalvendors: { name: "SafalVendors", status: "Launching Soon" },
-  safalcalendar: { name: "SafalCalendar", status: "Launching Soon" },
-  safalsubscriptions: { name: "SafalSubscriptions", status: "Launching Soon" },
-  safalreviews: { name: "SafalReviews", status: "Launching Soon" },
-  safaldrive: { name: "SafalDrive", status: "Launching Soon" },
-  safalutilities: { name: "SafalUtilities", status: "Launching Soon" },
+const productCatalogue: Record<SafalProductId, { name: string; status: "Live" | "Launching Soon"; logo: string }> = {
+  safalmybuy: { name: "SafalMyBuy", status: "Live", logo: "/logos/safalmybuy.png" },
+  safalirdrainmate: { name: "SafalIRDrainMate", status: "Live", logo: "/logos/safalirdrainmate.png" },
+  safalvendors: { name: "SafalVendors", status: "Launching Soon", logo: "/logos/safalvendors.svg" },
+  safalcalendar: { name: "SafalCalendar", status: "Launching Soon", logo: "/logos/safalcalendar.svg" },
+  safalsubscriptions: { name: "SafalSubscriptions", status: "Launching Soon", logo: "/logos/safalsubscriptions.png" },
+  safalreviews: { name: "SafalReviews", status: "Launching Soon", logo: "/logos/safalreviews.svg" },
+  safaldrive: { name: "SafalDrive", status: "Launching Soon", logo: "/logos/safaldrive.png" },
+  safalutilities: { name: "SafalUtilities", status: "Launching Soon", logo: "/logos/safalutilities.svg" },
 };
 
 function isSafalProductId(value: string | null): value is SafalProductId {
@@ -59,6 +59,7 @@ function ChatPageInner() {
 
   const productName = productId ? productCatalogue[productId].name : "Custom";
   const productStatus = productId ? productCatalogue[productId].status : "Live";
+  const productLogo = productId ? productCatalogue[productId].logo : undefined;
   const isProductConnected = productId
     ? !!connections[productId]?.connected
     : false;
@@ -140,6 +141,7 @@ function ChatPageInner() {
             onConnect={handleConnect}
             isConnecting={isConnecting}
             status={productStatus}
+            logo={productLogo}
           />
         )}
       </div>

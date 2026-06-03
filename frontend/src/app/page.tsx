@@ -123,14 +123,14 @@ export default function LandingPage() {
 
   // SafalVir products (SAI-LP-009)
   const products = [
-    { name: "SafalMyBuy", status: "Live", text: "Manage expenses, purchases, receipts, warranties, budgets, events, reports, and reminders through SAFAL-AI." },
-    { name: "SafalIRDrainMate", status: "Live", text: "Use SAFAL-AI to support inspection, reporting, task tracking, and workflow automation for IR drainage-related operations." },
-    { name: "SafalVendors", status: "Launching Soon", text: "Manage vendors, vendor records, communication, and related workflows." },
-    { name: "SafalCalendar", status: "Launching Soon", text: "Manage schedules, reminders, events, and AI-assisted calendar tasks." },
-    { name: "SafalSubscriptions", status: "Launching Soon", text: "Track subscriptions, renewals, payments, and alerts in one place." },
-    { name: "SafalReviews", status: "Launching Soon", text: "Manage reviews, feedback, ratings, and customer response workflows." },
-    { name: "SafalDrive", status: "Launching Soon", text: "Store, organize, search, and manage files using AI-powered assistance." },
-    { name: "SafalUtilities", status: "Launching Soon", text: "Access useful utility tools and automation features through SAFAL-AI." },
+    { name: "SafalMyBuy", status: "Live", logo: "/logos/safalmybuy.png", text: "Manage expenses, purchases, receipts, warranties, budgets, events, reports, and reminders through SAFAL-AI." },
+    { name: "SafalIRDrainMate", status: "Live", logo: "/logos/safalirdrainmate.png", text: "Use SAFAL-AI to support inspection, reporting, task tracking, and workflow automation for IR drainage-related operations." },
+    { name: "SafalVendors", status: "Launching Soon", logo: "/logos/safalvendors.svg", text: "Manage vendors, vendor records, communication, and related workflows." },
+    { name: "SafalCalendar", status: "Launching Soon", logo: "/logos/safalcalendar.svg", text: "Manage schedules, reminders, events, and AI-assisted calendar tasks." },
+    { name: "SafalSubscriptions", status: "Launching Soon", logo: "/logos/safalsubscriptions.png", text: "Track subscriptions, renewals, payments, and alerts in one place." },
+    { name: "SafalReviews", status: "Launching Soon", logo: "/logos/safalreviews.svg", text: "Manage reviews, feedback, ratings, and customer response workflows." },
+    { name: "SafalDrive", status: "Launching Soon", logo: "/logos/safaldrive.png", text: "Store, organize, search, and manage files using AI-powered assistance." },
+    { name: "SafalUtilities", status: "Launching Soon", logo: "/logos/safalutilities.svg", text: "Access useful utility tools and automation features through SAFAL-AI." },
   ];
 
   // How it works (SAI-LP-011)
@@ -353,13 +353,13 @@ export default function LandingPage() {
                       <Package size={28} className="text-white" />
                     </div>
                     {[
-                      { name: "SafalMyBuy", top: "5%", left: "10%", delay: "" },
-                      { name: "SafalDrive", top: "0%", right: "15%", delay: "animate-float-slow" },
-                      { name: "SafalCalendar", top: "35%", left: "-2%", delay: "animate-float-delay" },
-                      { name: "SafalSubscriptions", top: "35%", right: "-2%", delay: "animate-float" },
-                      { name: "SafalVendors", bottom: "15%", left: "8%", delay: "animate-float-slow" },
-                      { name: "SafalReviews", bottom: "10%", right: "10%", delay: "animate-float-delay" },
-                      { name: "SafalUtilities", bottom: "0%", left: "38%", delay: "animate-float" },
+                      { name: "SafalMyBuy", top: "5%", left: "10%", delay: "", logo: "/logos/safalmybuy.png" },
+                      { name: "SafalDrive", top: "0%", right: "15%", delay: "animate-float-slow", logo: "/logos/safaldrive.png" },
+                      { name: "SafalCalendar", top: "35%", left: "-2%", delay: "animate-float-delay", logo: "/logos/safalcalendar.svg" },
+                      { name: "SafalSubscriptions", top: "35%", right: "-2%", delay: "animate-float", logo: "/logos/safalsubscriptions.png" },
+                      { name: "SafalVendors", bottom: "15%", left: "8%", delay: "animate-float-slow", logo: "/logos/safalvendors.svg" },
+                      { name: "SafalReviews", bottom: "10%", right: "10%", delay: "animate-float-delay", logo: "/logos/safalreviews.svg" },
+                      { name: "SafalUtilities", bottom: "0%", left: "38%", delay: "animate-float", logo: "/logos/safalutilities.svg" },
                     ].map((p) => (
                       <div
                         key={p.name}
@@ -367,7 +367,7 @@ export default function LandingPage() {
                         style={{ top: p.top, left: p.left, right: p.right, bottom: p.bottom }}
                       >
                         <div className="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
-                          <Package size={14} className="text-green-600" />
+                          <img src={p.logo} alt={p.name} className="w-4 h-4 object-contain" />
                         </div>
                         <span className="text-xs font-medium text-gray-700 whitespace-nowrap">{p.name}</span>
                       </div>
@@ -728,8 +728,8 @@ export default function LandingPage() {
                 className="bg-white border border-gray-100 rounded-xl p-6 flex flex-col items-start gap-3 hover:shadow-lg transition-all"
               >
                 <div className="flex items-center gap-3 w-full">
-                  <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
-                    <Package size={20} className="text-green-600" />
+                  <div className="w-12 h-12 rounded-lg bg-white shadow-sm border border-gray-100 flex items-center justify-center flex-shrink-0 p-1">
+                    <img src={product.logo} alt={product.name} className="w-full h-full object-contain" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold truncate">{product.name}</h3>
