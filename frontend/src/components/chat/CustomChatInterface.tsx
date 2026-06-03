@@ -16,7 +16,7 @@ import {
   Shield,
 } from "lucide-react";
 import Link from "next/link";
-import { useAuthStore, useLLMStore } from "@/lib/store";
+import { useAuthStore, useLLMStore, useOnboardingStore } from "@/lib/store";
 import type { CustomChatModelOption, LLMApiConfig } from "@/types";
 
 interface ChatTurn {
