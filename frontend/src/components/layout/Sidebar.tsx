@@ -20,15 +20,15 @@ import {
 } from "@/lib/store";
 import type { SafalProductId } from "@/types";
 
-const allProducts: { id: SafalProductId; name: string }[] = [
-  { id: "safalmybuy", name: "SafalMyBuy" },
-  { id: "safalirdrainmate", name: "SafalIRDrainMate" },
-  { id: "safalvendors", name: "SafalVendors" },
-  { id: "safalcalendar", name: "SafalCalendar" },
-  { id: "safalsubscriptions", name: "SafalSubscriptions" },
-  { id: "safalreviews", name: "SafalReviews" },
-  { id: "safaldrive", name: "SafalDrive" },
-  { id: "safalutilities", name: "SafalUtilities" },
+const allProducts: { id: SafalProductId; name: string; status: "Live" | "Launching Soon" }[] = [
+  { id: "safalmybuy", name: "SafalMyBuy", status: "Live" },
+  { id: "safalirdrainmate", name: "SafalIRDrainMate", status: "Live" },
+  { id: "safalvendors", name: "SafalVendors", status: "Launching Soon" },
+  { id: "safalcalendar", name: "SafalCalendar", status: "Launching Soon" },
+  { id: "safalsubscriptions", name: "SafalSubscriptions", status: "Launching Soon" },
+  { id: "safalreviews", name: "SafalReviews", status: "Launching Soon" },
+  { id: "safaldrive", name: "SafalDrive", status: "Launching Soon" },
+  { id: "safalutilities", name: "SafalUtilities", status: "Launching Soon" },
 ];
 
 interface SidebarProps {
@@ -168,9 +168,16 @@ export function Sidebar({ activeKey = "", onNavigate }: SidebarProps) {
                   <Circle className="w-4 h-4 text-gray-300 flex-shrink-0" />
                 )}
                 {sidebarOpen && (
-                  <span className="flex-1 text-left truncate text-xs">
-                    {p.name}
-                  </span>
+                  <div className="flex-1 flex items-center justify-between min-w-0">
+                    <span className="text-left truncate text-xs">
+                      {p.name}
+                    </span>
+                    {p.status === "Launching Soon" && (
+                      <span className="text-[8px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 whitespace-nowrap ml-2">
+                        Soon
+                      </span>
+                    )}
+                  </div>
                 )}
               </button>
             );

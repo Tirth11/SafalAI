@@ -14,15 +14,15 @@ import {
 import type { SafalProductId } from "@/types";
 import { CheckCircle, RotateCcw } from "lucide-react";
 
-const productCatalogue: Record<SafalProductId, { name: string }> = {
-  safalmybuy: { name: "SafalMyBuy" },
-  safalirdrainmate: { name: "SafalIRDrainMate" },
-  safalvendors: { name: "SafalVendors" },
-  safalcalendar: { name: "SafalCalendar" },
-  safalsubscriptions: { name: "SafalSubscriptions" },
-  safalreviews: { name: "SafalReviews" },
-  safaldrive: { name: "SafalDrive" },
-  safalutilities: { name: "SafalUtilities" },
+const productCatalogue: Record<SafalProductId, { name: string; status: "Live" | "Launching Soon" }> = {
+  safalmybuy: { name: "SafalMyBuy", status: "Live" },
+  safalirdrainmate: { name: "SafalIRDrainMate", status: "Live" },
+  safalvendors: { name: "SafalVendors", status: "Launching Soon" },
+  safalcalendar: { name: "SafalCalendar", status: "Launching Soon" },
+  safalsubscriptions: { name: "SafalSubscriptions", status: "Launching Soon" },
+  safalreviews: { name: "SafalReviews", status: "Launching Soon" },
+  safaldrive: { name: "SafalDrive", status: "Launching Soon" },
+  safalutilities: { name: "SafalUtilities", status: "Launching Soon" },
 };
 
 function isSafalProductId(value: string | null): value is SafalProductId {
@@ -58,6 +58,7 @@ function ChatPageInner() {
   }, [isCustom, productParam]);
 
   const productName = productId ? productCatalogue[productId].name : "Custom";
+  const productStatus = productId ? productCatalogue[productId].status : "Live";
   const isProductConnected = productId
     ? !!connections[productId]?.connected
     : false;
@@ -138,6 +139,7 @@ function ChatPageInner() {
             productName={productName}
             onConnect={handleConnect}
             isConnecting={isConnecting}
+            status={productStatus}
           />
         )}
       </div>

@@ -14,6 +14,7 @@ interface ProductConnectProps {
   description?: string;
   onConnect: () => void;
   isConnecting?: boolean;
+  status?: "Live" | "Launching Soon";
 }
 
 export function ProductConnect({
@@ -21,6 +22,7 @@ export function ProductConnect({
   description,
   onConnect,
   isConnecting = false,
+  status = "Live",
 }: ProductConnectProps) {
   return (
     <div className="flex flex-col items-center justify-center h-full px-4 py-12 animate-fade-in">
@@ -28,9 +30,15 @@ export function ProductConnect({
         <Package className="w-8 h-8 text-green-600" />
       </div>
 
-      <h2 className="text-xl font-semibold text-gray-900 mb-2 text-center">
-        Connect your {productName} account
-      </h2>
+      <div className="flex items-center gap-2 mb-2">
+        <h2 className="text-xl font-semibold text-gray-900 text-center">
+          Connect your {productName} account
+        </h2>
+        <span className={`px-2 py-0.5 rounded text-[10px] font-medium uppercase ${status === 'Live' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+          {status}
+        </span>
+      </div>
+      
       <p className="text-sm text-gray-500 text-center max-w-sm mb-6">
         {description ||
           `Please login with ${productName} to connect this product. After authorization, Safal-AI can securely access your ${productName} data.`}
@@ -40,11 +48,12 @@ export function ProductConnect({
         onClick={onConnect}
         size="lg"
         isLoading={isConnecting}
+        disabled={status === "Launching Soon"}
         className="my-4"
       >
         <Package className="w-4 h-4 mr-2" />
-        Login with {productName}
-        <ExternalLink className="w-4 h-4 ml-2" />
+        {status === "Launching Soon" ? "Coming Soon" : `Login with ${productName}`}
+        {status === "Live" && <ExternalLink className="w-4 h-4 ml-2" />}
       </Button>
 
       <div className="max-w-sm space-y-3 mt-2">

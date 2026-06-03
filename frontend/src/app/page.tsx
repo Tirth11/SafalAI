@@ -121,16 +121,16 @@ export default function LandingPage() {
     { name: "API-based AI tools", color: "bg-indigo-500", desc: "Tools integrated via API" },
   ];
 
-  // SafalVir products (SAI-LP-009) - show product names only
+  // SafalVir products (SAI-LP-009)
   const products = [
-    { name: "SafalMyBuy", text: "Connect and use through SAFAL-AI" },
-    { name: "SafalIRDrainMate", text: "Connect and use through SAFAL-AI" },
-    { name: "SafalVendors", text: "Connect and use through SAFAL-AI" },
-    { name: "SafalCalendar", text: "Connect and use through SAFAL-AI" },
-    { name: "SafalSubscriptions", text: "Connect and use through SAFAL-AI" },
-    { name: "SafalReviews", text: "Connect and use through SAFAL-AI" },
-    { name: "SafalDrive", text: "Connect and use through SAFAL-AI" },
-    { name: "SafalUtilities", text: "Connect and use through SAFAL-AI" },
+    { name: "SafalMyBuy", status: "Live", text: "Manage expenses, purchases, receipts, warranties, budgets, events, reports, and reminders through SAFAL-AI." },
+    { name: "SafalIRDrainMate", status: "Live", text: "Use SAFAL-AI to support inspection, reporting, task tracking, and workflow automation for IR drainage-related operations." },
+    { name: "SafalVendors", status: "Launching Soon", text: "Manage vendors, vendor records, communication, and related workflows." },
+    { name: "SafalCalendar", status: "Launching Soon", text: "Manage schedules, reminders, events, and AI-assisted calendar tasks." },
+    { name: "SafalSubscriptions", status: "Launching Soon", text: "Track subscriptions, renewals, payments, and alerts in one place." },
+    { name: "SafalReviews", status: "Launching Soon", text: "Manage reviews, feedback, ratings, and customer response workflows." },
+    { name: "SafalDrive", status: "Launching Soon", text: "Store, organize, search, and manage files using AI-powered assistance." },
+    { name: "SafalUtilities", status: "Launching Soon", text: "Access useful utility tools and automation features through SAFAL-AI." },
   ];
 
   // How it works (SAI-LP-011)
@@ -721,19 +721,32 @@ export default function LandingPage() {
               SafalVir products are part of the SAFAL-AI ecosystem. Users can connect these applications and perform product-specific actions through SAFAL-AI after authentication.
             </p>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 mb-12">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
             {products.map((product) => (
               <div
                 key={product.name}
-                className="bg-white border border-gray-100 rounded-xl p-6 flex flex-col items-center text-center gap-3 hover:shadow-lg transition-all"
+                className="bg-white border border-gray-100 rounded-xl p-6 flex flex-col items-start gap-3 hover:shadow-lg transition-all"
               >
-                <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
-                  <Package size={20} className="text-green-600" />
+                <div className="flex items-center gap-3 w-full">
+                  <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
+                    <Package size={20} className="text-green-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold truncate">{product.name}</h3>
+                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium uppercase mt-0.5 ${product.status === 'Live' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                      {product.status}
+                    </span>
+                  </div>
                 </div>
-                <h3 className="font-semibold">{product.name}</h3>
-                <p className="text-xs text-gray-500">{product.text}</p>
+                <p className="text-sm text-gray-600 text-left">{product.text}</p>
               </div>
             ))}
+          </div>
+
+          <div className="max-w-4xl mx-auto bg-gray-50 border border-gray-200 rounded-xl p-4 mb-12">
+            <p className="text-xs text-gray-500 leading-relaxed text-center">
+              <strong>Product Availability Notice:</strong> SafalMyBuy and SafalIRDrainMate are live applications. Other applications displayed are planned as part of the SafalVir ecosystem and may currently be in pilot, development, planning, or concept stages. Product availability, features, roadmaps, and release timelines are subject to change.
+            </p>
           </div>
 
           {/* Product access by plan (SAI-LP-010) */}
