@@ -561,7 +561,7 @@ export function ChatInterface() {
       )}
 
       <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4">
-        {!hasMessages ? (
+        {!hasMessages && !pendingRecord && confirmMode === null && !isTyping && !showFollowUp ? (
           <AIGreeting user={user} onQuickAction={handleQuickAction} />
         ) : (
           <div className="max-w-2xl mx-auto space-y-5">

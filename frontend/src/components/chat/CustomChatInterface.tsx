@@ -324,7 +324,7 @@ export function CustomChatInterface() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4">
         <div className="max-w-2xl mx-auto space-y-5">
-          {messages.length === 0 && (
+          {messages.length === 0 && confirmMode === null && (
             <div className="flex flex-col items-center justify-center text-center py-12">
               <div className="w-12 h-12 rounded-2xl bg-purple-100 flex items-center justify-center mb-4">
                 <Sparkles className="w-6 h-6 text-purple-600" />
