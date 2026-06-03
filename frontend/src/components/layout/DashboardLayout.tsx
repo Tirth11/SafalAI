@@ -17,6 +17,8 @@ interface DashboardLayoutProps {
   headerSubtitle?: string;
   /** Right-side controls injected into the header */
   headerRight?: React.ReactNode;
+  /** Optional logo to display next to the title */
+  headerLogo?: string;
 }
 
 export function DashboardLayout({
@@ -27,6 +29,7 @@ export function DashboardLayout({
   headerTitle,
   headerSubtitle,
   headerRight,
+  headerLogo,
 }: DashboardLayoutProps) {
   const { sidebarOpen } = useUIStore();
 
@@ -44,6 +47,7 @@ export function DashboardLayout({
             title={headerTitle}
             subtitle={headerSubtitle}
             rightSlot={headerRight}
+            logo={headerLogo}
           />
         )}
         <div className="flex-1 min-h-0">{children}</div>

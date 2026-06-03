@@ -119,6 +119,7 @@ function ChatPageInner() {
       headerTitle={headerTitle}
       headerSubtitle={headerSubtitle}
       headerRight={headerRight}
+      headerLogo={productLogo}
     >
       <div className="flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto pt-4 relative">
         <OnboardingChecklist />

@@ -20,15 +20,15 @@ import {
 } from "@/lib/store";
 import type { SafalProductId } from "@/types";
 
-const allProducts: { id: SafalProductId; name: string; status: "Live" | "Launching Soon" }[] = [
-  { id: "safalmybuy", name: "SafalMyBuy", status: "Live" },
-  { id: "safalirdrainmate", name: "SafalIRDrainMate", status: "Live" },
-  { id: "safalvendors", name: "SafalVendors", status: "Launching Soon" },
-  { id: "safalcalendar", name: "SafalCalendar", status: "Launching Soon" },
-  { id: "safalsubscriptions", name: "SafalSubscriptions", status: "Launching Soon" },
-  { id: "safalreviews", name: "SafalReviews", status: "Launching Soon" },
-  { id: "safaldrive", name: "SafalDrive", status: "Launching Soon" },
-  { id: "safalutilities", name: "SafalUtilities", status: "Launching Soon" },
+const allProducts: { id: SafalProductId; name: string; status: "Live" | "Launching Soon"; logo: string }[] = [
+  { id: "safalmybuy", name: "SafalMyBuy", status: "Live", logo: "/logos/safalmybuy.png" },
+  { id: "safalirdrainmate", name: "SafalIRDrainMate", status: "Live", logo: "/logos/safalirdrainmate.png" },
+  { id: "safalvendors", name: "SafalVendors", status: "Launching Soon", logo: "/logos/safalvendors.svg" },
+  { id: "safalcalendar", name: "SafalCalendar", status: "Launching Soon", logo: "/logos/safalcalendar.svg" },
+  { id: "safalsubscriptions", name: "SafalSubscriptions", status: "Launching Soon", logo: "/logos/safalsubscriptions.png" },
+  { id: "safalreviews", name: "SafalReviews", status: "Launching Soon", logo: "/logos/safalreviews.svg" },
+  { id: "safaldrive", name: "SafalDrive", status: "Launching Soon", logo: "/logos/safaldrive.png" },
+  { id: "safalutilities", name: "SafalUtilities", status: "Launching Soon", logo: "/logos/safalutilities.svg" },
 ];
 
 interface SidebarProps {
@@ -162,11 +162,16 @@ export function Sidebar({ activeKey = "", onNavigate }: SidebarProps) {
                 )}
                 title={p.name}
               >
-                {connected ? (
-                  <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                ) : (
-                  <Circle className="w-4 h-4 text-gray-300 flex-shrink-0" />
-                )}
+                <div className="relative flex-shrink-0">
+                  <img 
+                    src={p.logo} 
+                    alt={p.name} 
+                    className={`w-4 h-4 object-contain ${!connected && p.status === 'Live' ? 'grayscale opacity-70' : ''}`} 
+                  />
+                  {connected && (
+                    <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-green-500 rounded-full border border-white" />
+                  )}
+                </div>
                 {sidebarOpen && (
                   <div className="flex-1 flex items-center justify-between min-w-0">
                     <span className="text-left truncate text-xs">

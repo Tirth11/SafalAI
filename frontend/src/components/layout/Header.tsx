@@ -11,9 +11,11 @@ interface HeaderProps {
   subtitle?: string;
   /** Optional right-side action(s) — placed before the Safal Tokens chip */
   rightSlot?: React.ReactNode;
+  /** Optional logo to display next to the title */
+  logo?: string;
 }
 
-export function Header({ title, subtitle, rightSlot }: HeaderProps) {
+export function Header({ title, subtitle, rightSlot, logo }: HeaderProps) {
   const { user } = useAuthStore();
   const tokens = user?.subscription?.creditsBalance ?? 0;
 
@@ -37,9 +39,14 @@ export function Header({ title, subtitle, rightSlot }: HeaderProps) {
         {(title || subtitle) && (
           <div className="min-w-0">
             {title && (
-              <h1 className="text-sm font-semibold text-gray-900 truncate">
-                {title}
-              </h1>
+              <div className="flex items-center gap-2">
+                {logo && (
+                  <img src={logo} alt={title} className="w-5 h-5 object-contain" />
+                )}
+                <h1 className="text-sm font-semibold text-gray-900 truncate">
+                  {title}
+                </h1>
+              </div>
             )}
             {subtitle && (
               <p className="text-xs text-gray-500 truncate">{subtitle}</p>
