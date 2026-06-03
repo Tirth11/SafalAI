@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { User, ChatMessage, Notification } from "@/types";
+import type { User, ChatMessage, Notification, CreditTransaction } from "@/types";
 
 // Auth Store
 interface AuthState {
@@ -8,10 +8,13 @@ interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  tokenHistory: CreditTransaction[];
   setUser: (user: User | null) => void;
   setToken: (token: string | null) => void;
   login: (user: User, token: string) => void;
   logout: () => void;
+  addTokenHistory: (tx: CreditTransaction) => void;
+  applyTokenUsage: (tokensUsed: number, action?: string, description?: string) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -21,15 +24,51 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       isAuthenticated: false,
       isLoading: true,
+      tokenHistory: [],
       setUser: (user) => set({ user, isAuthenticated: !!user }),
       setToken: (token) => set({ token }),
       login: (user, token) => set({ user, token, isAuthenticated: true, isLoading: false }),
-      logout: () => set({ user: null, token: null, isAuthenticated: false, isLoading: false }),
+      logout: () =>
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          isLoading: false,
+          tokenHistory: [],
+        }),
+      addTokenHistory: (tx) =>
+        set((state) => ({
+          tokenHistory: [tx, ...state.tokenHistory],
+        })),
+      applyTokenUsage: (tokensUsed, action, description) =>
+        set((state) => {
+          if (!state.user?.subscription) return state;
+          const balance = Math.max(
+            0,
+            state.user.subscription.creditsBalance - tokensUsed
+          );
+          const used = state.user.subscription.creditsUsed + tokensUsed;
+          return {
+            user: {
+              ...state.user,
+              subscription: {
+                ...state.user.subscription,
+                creditsBalance: balance,
+                creditsUsed: used,
+              },
+            },
+          };
+        }),
     }),
     {
       name: "safal-auth",
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ user: state.user, token: state.token, isAuthenticated: state.isAuthenticated }),
+      partialize: (state) => ({
+        user: state.user,
+        token: state.token,
+        isAuthenticated: state.isAuthenticated,
+        tokenHistory: state.tokenHistory,
+      }),
     }
   )
 );

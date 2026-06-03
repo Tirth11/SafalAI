@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import {
   Menu,
@@ -35,12 +35,48 @@ import {
   ShieldCheck,
   Mail,
   Phone,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  HardDrive,
+  CreditCard,
+  Wrench,
+  Star,
+  Receipt,
+  ClipboardList,
+  PieChart,
 } from "lucide-react";
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [contactSent, setContactSent] = useState(false);
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const [carouselPaused, setCarouselPaused] = useState(false);
+  const totalSlides = 5;
+  const carouselTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const goToSlide = useCallback((index: number) => {
+    setCarouselIndex((index + totalSlides) % totalSlides);
+  }, []);
+
+  const nextSlide = useCallback(() => {
+    setCarouselIndex((prev) => (prev + 1) % totalSlides);
+  }, []);
+
+  const prevSlide = useCallback(() => {
+    setCarouselIndex((prev) => (prev - 1 + totalSlides) % totalSlides);
+  }, []);
+
+  useEffect(() => {
+    if (carouselPaused) return;
+    carouselTimerRef.current = setInterval(() => {
+      nextSlide();
+    }, 5000);
+    return () => {
+      if (carouselTimerRef.current) clearInterval(carouselTimerRef.current);
+    };
+  }, [carouselPaused, nextSlide]);
 
   const navLinks = [
     { label: "Features", href: "#features" },
@@ -62,18 +98,16 @@ export default function LandingPage() {
 
   // Key features (SAI-LP-006)
   const features = [
-    { icon: MessageSquare, title: "AI Chat Workspace", desc: "Complete tasks through a simple, smart chat." },
-    { icon: Zap, title: "Prompt-Based Automation", desc: "Type what you want and let Safal-AI do it." },
-    { icon: Globe, title: "Connect AI Models", desc: "Use ChatGPT, Claude, Gemini, and other LLMs." },
-    { icon: Key, title: "Bring Your Own API Key", desc: "Connect supported models with your own key." },
-    { icon: Package, title: "SafalVir App Integration", desc: "Work with SafalVir products in one place." },
-    { icon: Upload, title: "File Upload & Understanding", desc: "Upload files and let AI extract details." },
-    { icon: Mic, title: "Voice Commands", desc: "Speak your request and complete tasks." },
-    { icon: Workflow, title: "Workflow Automation", desc: "Automate repetitive tasks and processes." },
-    { icon: Layers, title: "Multi-Chat Support", desc: "Run many AI chats for different tasks." },
-    { icon: Coins, title: "Safal Tokens", desc: "Simple usage units for every AI action." },
-    { icon: BarChart3, title: "Reports & Insights", desc: "Generate reports and clear insights." },
-    { icon: ShieldCheck, title: "Secure Authorization", desc: "Actions run only with your permission." },
+    { icon: Package, title: "SafalVir Product Integration", desc: "Connect SafalVir products in one place." },
+    { icon: Bot, title: "AI Agent Integration", desc: "Use specialized AI agents for different tasks." },
+    { icon: Globe, title: "Custom LLM Models", desc: "Add your own custom language models." },
+    { icon: Key, title: "External Model Support", desc: "Support for external models and APIs." },
+    { icon: Upload, title: "File Upload and Understanding", desc: "Upload and let AI understand files." },
+    { icon: Zap, title: "Prompt-Based Automation", desc: "Automate tasks using simple language." },
+    { icon: MessageSquare, title: "Custom Chat", desc: "Chat directly with your own AI models." },
+    { icon: Plug, title: "Integration Hub", desc: "Connect third-party APIs and tools." },
+    { icon: Coins, title: "Safal Tokens", desc: "Transparent token usage for AI actions." },
+    { icon: ShieldCheck, title: "Secure Access", desc: "Keep control before every action." },
   ];
 
   // AI models (SAI-LP-007)
@@ -81,29 +115,32 @@ export default function LandingPage() {
     { name: "ChatGPT", color: "bg-green-500", desc: "OpenAI GPT models" },
     { name: "Claude", color: "bg-purple-500", desc: "Anthropic Claude models" },
     { name: "Gemini", color: "bg-blue-500", desc: "Google Gemini models" },
-    { name: "Custom LLMs", color: "bg-orange-500", desc: "Other supported models" },
+    { name: "Custom LLMs", color: "bg-orange-500", desc: "Your custom large language models" },
+    { name: "Private LLMs", color: "bg-red-500", desc: "Self-hosted private models" },
+    { name: "Third-party AI agents", color: "bg-teal-500", desc: "External specialized AI agents" },
+    { name: "API-based AI tools", color: "bg-indigo-500", desc: "Tools integrated via API" },
   ];
 
   // SafalVir products (SAI-LP-009) - show product names only
   const products = [
-    { name: "SafalMyBuy" },
-    { name: "SafalIRDrainMate" },
-    { name: "SafalVendors" },
-    { name: "SafalCalendar" },
-    { name: "SafalSubscriptions" },
-    { name: "SafalReviews" },
-    { name: "SafalDrive" },
-    { name: "SafalUtilities" },
+    { name: "SafalMyBuy", text: "Connect and use through SAFAL-AI" },
+    { name: "SafalIRDrainMate", text: "Connect and use through SAFAL-AI" },
+    { name: "SafalVendors", text: "Connect and use through SAFAL-AI" },
+    { name: "SafalCalendar", text: "Connect and use through SAFAL-AI" },
+    { name: "SafalSubscriptions", text: "Connect and use through SAFAL-AI" },
+    { name: "SafalReviews", text: "Connect and use through SAFAL-AI" },
+    { name: "SafalDrive", text: "Connect and use through SAFAL-AI" },
+    { name: "SafalUtilities", text: "Connect and use through SAFAL-AI" },
   ];
 
   // How it works (SAI-LP-011)
   const steps = [
-    { step: "1", title: "Sign up or sign in", desc: "Create your account in minutes." },
-    { step: "2", title: "Choose a product", desc: "Pick a SafalVir product to work with." },
-    { step: "3", title: "Connect a model", desc: "Add an AI model if your plan allows." },
-    { step: "4", title: "Prompt or upload", desc: "Type a prompt or upload a file." },
-    { step: "5", title: "Review the result", desc: "Check what Safal-AI prepared for you." },
-    { step: "6", title: "Confirm & complete", desc: "Approve the action and you are done." },
+    { step: "1", title: "Sign In", desc: "Create your SAFAL-AI account or sign in securely." },
+    { step: "2", title: "Connect Product or Model", desc: "Connect SafalVir products, AI agents, custom LLMs, or third-party APIs." },
+    { step: "3", title: "Type a Prompt or Upload a File", desc: "Ask SAFAL-AI what you want to do." },
+    { step: "4", title: "Review Token Usage", desc: "SAFAL-AI shows how many Safal Tokens may be used." },
+    { step: "5", title: "Confirm or Modify", desc: "Confirm the prompt, modify it, or cancel." },
+    { step: "6", title: "Get the Result", desc: "SAFAL-AI completes the task after confirmation." },
   ];
 
   // Use cases (SAI-LP-012)
@@ -122,11 +159,11 @@ export default function LandingPage() {
 
   // Pricing plans (SAI-LP-013) - Safal Tokens
   const pricingPlans = [
-    { name: "Free", price: "$0", period: "forever", tokens: "Limited Safal Tokens", productCount: "1 product", aiModels: false, cta: "Start Free", popular: false },
-    { name: "Basic", price: "$5.99", period: "/month", tokens: "More Safal Tokens", productCount: "2 products", aiModels: false, cta: "Choose Basic", popular: false },
-    { name: "Advanced", price: "$7.99", period: "/month", tokens: "Higher Safal Tokens", productCount: "4 products", aiModels: false, cta: "Choose Advanced", popular: true },
-    { name: "Premium", price: "$9.99", period: "/month", tokens: "Premium Safal Tokens", productCount: "6 products", aiModels: true, cta: "Choose Premium", popular: false },
-    { name: "Premium Plus", price: "$15.99", period: "/month", tokens: "Highest Safal Tokens", productCount: "All products", aiModels: true, cta: "Choose Premium Plus", popular: false },
+    { name: "Free", price: "$0", period: "forever", tokens: "Basic access", productCount: "Basic access", aiModels: false, cta: "Start Free", popular: false },
+    { name: "Basic", price: "$5.99", period: "/month", tokens: "Simple AI usage", productCount: "Simple AI usage", aiModels: false, cta: "Choose Basic", popular: false },
+    { name: "Advanced", price: "$7.99", period: "/month", tokens: "More automation", productCount: "More automation", aiModels: false, cta: "Choose Advanced", popular: true },
+    { name: "Premium", price: "$9.99", period: "/month", tokens: "AI model integration", productCount: "AI model integration", aiModels: true, cta: "Choose Premium", popular: false },
+    { name: "Premium Plus", price: "$15.99", period: "/month", tokens: "Full access and all models", productCount: "Full access", aiModels: true, cta: "Choose Premium Plus", popular: false },
   ];
 
   // Pricing comparison (SAI-LP-014)
@@ -157,10 +194,10 @@ export default function LandingPage() {
 
   // Top-up packs (SAI-LP-017) - Safal Tokens
   const topUpPacks = [
-    { name: "Starter Top-Up", tokens: "100", price: "$1.99" },
-    { name: "Growth Top-Up", tokens: "300", price: "$4.99" },
-    { name: "Power Top-Up", tokens: "750", price: "$9.99" },
-    { name: "Business Top-Up", tokens: "2,000", price: "$19.99" },
+    { name: "Starter", tokens: "100", price: "$1.99" },
+    { name: "Growth", tokens: "300", price: "$4.99" },
+    { name: "Power", tokens: "750", price: "$9.99" },
+    { name: "Business", tokens: "2,000", price: "$19.99" },
   ];
 
   // Security & trust (SAI-LP-020)
@@ -272,112 +309,378 @@ export default function LandingPage() {
         )}
       </header>
 
-      {/* Hero Section (SAI-LP-003, SAI-LP-004) */}
+      {/* Hero Carousel Section (SAI-LP-003, SAI-LP-004) */}
       <section className="pt-24 pb-16 md:pt-32 md:pb-24 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-green-50 via-white to-purple-50 opacity-70" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <span className="inline-flex items-center gap-2 bg-white/70 border border-gray-200 rounded-full px-3 py-1 text-xs font-medium text-gray-600">
-                <Sparkles size={14} className="text-green-600" /> One platform, endless possibilities
-              </span>
-              <h1 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                Single AI Platform for{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-purple-600">
-                  Everything
-                </span>
-              </h1>
-              <p className="mt-6 text-lg text-gray-600 leading-relaxed">
-                Connect AI models, integrate applications, upload files, and complete tasks through simple prompts.
-              </p>
-              <p className="mt-3 text-sm text-gray-500">
-                Safal-AI helps you automate manual work across SafalVir products, external AI models, files, and workflows from one simple platform.
-              </p>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Link
-                  href="/auth/register"
-                  className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
-                >
-                  Start Free <ArrowRight size={18} />
-                </Link>
-                <a
-                  href="#pricing"
-                  className="inline-flex items-center gap-2 border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:border-green-600 hover:text-green-600 transition-colors"
-                >
-                  View Pricing
-                </a>
-                <a
-                  href="#ai-models"
-                  className="inline-flex items-center gap-2 border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:border-green-600 hover:text-green-600 transition-colors"
-                >
-                  <Plug size={18} /> Connect AI Model
-                </a>
-              </div>
-            </div>
-
-            {/* Hero Visual */}
-            <div className="relative">
-              <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-3 h-3 rounded-full bg-red-400" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                  <div className="w-3 h-3 rounded-full bg-green-400" />
-                  <span className="ml-2 text-xs text-gray-400">Safal-AI Chat</span>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <Bot size={16} className="text-green-600" />
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700">
-                      Hi! Connect a model, upload a file, or type a prompt. What would you like to do?
+          {/* Carousel container */}
+          <div
+            className="overflow-hidden relative group"
+            onMouseEnter={() => setCarouselPaused(true)}
+            onMouseLeave={() => setCarouselPaused(false)}
+          >
+            <div
+              className="flex transition-transform duration-600 ease-in-out"
+              style={{ transform: `translateX(-${carouselIndex * 100}%)` }}
+            >
+              {/* ===== Slide 1: SafalVir Ecosystem ===== */}
+              <div className="w-full flex-shrink-0">
+                <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[420px]">
+                  <div>
+                    <span className="inline-flex items-center gap-2 bg-white/70 border border-gray-200 rounded-full px-3 py-1 text-xs font-medium text-gray-600">
+                      <Sparkles size={14} className="text-green-600" /> Connect SafalVir products, AI agents, custom LLM models, APIs, files, and workflows — all inside one intelligent workspace.
+                    </span>
+                    <h1 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                      SAFAL-AI: One AI Platform for{" "}
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-purple-600">
+                        Smarter Work
+                      </span>
+                    </h1>
+                    <p className="mt-6 text-lg text-gray-600 leading-relaxed">
+                      SAFAL-AI helps users reduce manual work by turning prompts, uploads, and integrations into real actions. Users can connect SafalVir applications first, and then extend the platform with AI models like ChatGPT, Claude, Gemini, custom/private LLMs, and third-party APIs.
+                    </p>
+                    <div className="mt-8 flex flex-wrap gap-3">
+                      <Link
+                        href="/auth/register"
+                        className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                      >
+                        Get Started
+                      </Link>
+                      <a
+                        href="#products"
+                        className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                      >
+                        Explore SAFAL-AI
+                      </a>
+                      <a
+                        href="#ai-models"
+                        className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                      >
+                        Connect AI Model <ArrowRight size={18} />
+                      </a>
                     </div>
                   </div>
-                  <div className="flex items-start gap-3 justify-end">
-                    <div className="bg-green-600 text-white rounded-lg p-3 text-sm">
-                      Summarize this report and create a task list
+                  {/* Illustration: Central hub with radiating product cards */}
+                  <div className="relative flex items-center justify-center min-h-[340px]">
+                    {/* Central hub */}
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-500 to-green-600 shadow-xl flex items-center justify-center z-10">
+                      <Sparkles size={28} className="text-white" />
                     </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <Bot size={16} className="text-green-600" />
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700">
-                      Done! I summarized the report and created 5 tasks. Want me to save them?
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center gap-2 border border-gray-200 rounded-lg p-2">
-                  <input
-                    type="text"
-                    placeholder="Type your prompt..."
-                    aria-label="Prompt preview"
-                    className="flex-1 text-sm bg-transparent outline-none text-gray-500"
-                    readOnly
-                  />
-                  <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                    <Send size={14} className="text-white" />
+                    {/* Radiating product cards */}
+                    {[
+                      { name: "SafalMyBuy", top: "5%", left: "10%", delay: "" },
+                      { name: "SafalDrive", top: "0%", right: "15%", delay: "animate-float-slow" },
+                      { name: "SafalCalendar", top: "35%", left: "-2%", delay: "animate-float-delay" },
+                      { name: "SafalSubscriptions", top: "35%", right: "-2%", delay: "animate-float" },
+                      { name: "SafalVendors", bottom: "15%", left: "8%", delay: "animate-float-slow" },
+                      { name: "SafalReviews", bottom: "10%", right: "10%", delay: "animate-float-delay" },
+                      { name: "SafalUtilities", bottom: "0%", left: "38%", delay: "animate-float" },
+                    ].map((p) => (
+                      <div
+                        key={p.name}
+                        className={`absolute bg-white rounded-xl shadow-lg border border-gray-100 px-3 py-2 flex items-center gap-2 ${p.delay}`}
+                        style={{ top: p.top, left: p.left, right: p.right, bottom: p.bottom }}
+                      >
+                        <div className="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
+                          <Package size={14} className="text-green-600" />
+                        </div>
+                        <span className="text-xs font-medium text-gray-700 whitespace-nowrap">{p.name}</span>
+                      </div>
+                    ))}
+                    {/* Subtle connection lines (circles) */}
+                    <div className="absolute w-44 h-44 rounded-full border-2 border-dashed border-green-200 opacity-40" />
+                    <div className="absolute w-72 h-72 rounded-full border border-dashed border-purple-200 opacity-30" />
                   </div>
                 </div>
               </div>
 
-              {/* Floating model badges */}
-              <div className="absolute -top-3 -right-3 bg-white shadow-lg rounded-full px-3 py-1.5 text-xs font-medium border border-gray-100 flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-green-500" /> ChatGPT
+              {/* ===== Slide 2: SAFAL-AI ===== */}
+              <div className="w-full flex-shrink-0">
+                <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[420px]">
+                  <div>
+                    <span className="inline-flex items-center gap-2 bg-white/70 border border-gray-200 rounded-full px-3 py-1 text-xs font-medium text-gray-600">
+                      <Sparkles size={14} className="text-purple-600" /> Powered by AI
+                    </span>
+                    <h1 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                      Work with SafalVir{" "}
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-purple-600">
+                        Products Through AI
+                      </span>
+                    </h1>
+                    <p className="mt-6 text-lg text-gray-600 leading-relaxed">
+                      Connect AI models, SafalVir apps, files, APIs, and workflows — and complete tasks through simple prompts.
+                    </p>
+                    <div className="mt-8 flex flex-wrap gap-3">
+                      <Link
+                        href="/auth/register"
+                        className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                      >
+                        Start with SAFAL-AI <ArrowRight size={18} />
+                      </Link>
+                    </div>
+                  </div>
+                  {/* Illustration: Chat UI mockup with floating badges */}
+                  <div className="relative">
+                    <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-6">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="w-3 h-3 rounded-full bg-red-400" />
+                        <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                        <div className="w-3 h-3 rounded-full bg-green-400" />
+                        <span className="ml-2 text-xs text-gray-400">Safal-AI Chat</span>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                            <Bot size={16} className="text-green-600" />
+                          </div>
+                          <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700">
+                            Hi! Connect a model, upload a file, or type a prompt.
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3 justify-end">
+                          <div className="bg-green-600 text-white rounded-lg p-3 text-sm">
+                            Summarize this report and create a task list
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                            <Bot size={16} className="text-green-600" />
+                          </div>
+                          <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700">
+                            Done! Report summarized and 5 tasks created.
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-4 flex items-center gap-2 border border-gray-200 rounded-lg p-2">
+                        <input type="text" placeholder="Type your prompt..." aria-label="Prompt preview" className="flex-1 text-sm bg-transparent outline-none text-gray-500" readOnly />
+                        <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+                          <Send size={14} className="text-white" />
+                        </div>
+                      </div>
+                    </div>
+                    {/* Floating badges */}
+                    <div className="absolute -top-3 -right-3 bg-white shadow-lg rounded-full px-3 py-1.5 text-xs font-medium border border-gray-100 flex items-center gap-1.5 animate-float">
+                      <div className="w-2 h-2 rounded-full bg-green-500" /> AI Models
+                    </div>
+                    <div className="absolute top-1/4 -left-4 bg-white shadow-lg rounded-full px-3 py-1.5 text-xs font-medium border border-gray-100 flex items-center gap-1.5 animate-float-slow">
+                      <Upload size={12} className="text-purple-500" /> Files
+                    </div>
+                    <div className="absolute bottom-1/4 -right-4 bg-white shadow-lg rounded-full px-3 py-1.5 text-xs font-medium border border-gray-100 flex items-center gap-1.5 animate-float-delay">
+                      <Unplug size={12} className="text-blue-500" /> APIs
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="absolute top-1/4 -left-4 bg-white shadow-lg rounded-full px-3 py-1.5 text-xs font-medium border border-gray-100 flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-purple-500" /> Claude
+
+              {/* ===== Slide 3: SafalMyBuy ===== */}
+              <div className="w-full flex-shrink-0">
+                <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[420px]">
+                  <div>
+                    <span className="inline-flex items-center gap-2 bg-white/70 border border-gray-200 rounded-full px-3 py-1 text-xs font-medium text-gray-600">
+                      <Sparkles size={14} className="text-green-600" /> SafalMyBuy
+                    </span>
+                    <h1 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                      Use the AI Model That{" "}
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-purple-600">
+                        Fits Your Task
+                      </span>
+                    </h1>
+                    <p className="mt-6 text-lg text-gray-600 leading-relaxed">
+                      Connect SafalMyBuy with SAFAL-AI to manage expenses, purchase items, receipts, warranties, budgets, events, and reports through chat.
+                    </p>
+                    <div className="mt-8 flex flex-wrap gap-3">
+                      <Link
+                        href="/chat?product=safalmybuy"
+                        className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                      >
+                        Connect SafalMyBuy <ArrowRight size={18} />
+                      </Link>
+                    </div>
+                  </div>
+                  {/* Illustration: Dashboard-style cards */}
+                  <div className="relative flex items-center justify-center min-h-[340px]">
+                    {/* Expense card */}
+                    <div className="absolute top-4 left-4 bg-white rounded-xl shadow-lg border border-gray-100 p-4 w-48 animate-float">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center">
+                          <CreditCard size={16} className="text-green-600" />
+                        </div>
+                        <span className="text-xs font-semibold text-gray-700">Expenses</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-xs"><span className="text-gray-500">Groceries</span><span className="font-medium text-gray-700">$84.50</span></div>
+                        <div className="flex justify-between text-xs"><span className="text-gray-500">Software</span><span className="font-medium text-gray-700">$29.99</span></div>
+                        <div className="flex justify-between text-xs"><span className="text-gray-500">Travel</span><span className="font-medium text-gray-700">$156.00</span></div>
+                      </div>
+                    </div>
+                    {/* Receipt card */}
+                    <div className="absolute top-4 right-4 bg-white rounded-xl shadow-lg border border-gray-100 p-4 w-40 animate-float-slow">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
+                          <Receipt size={16} className="text-purple-600" />
+                        </div>
+                        <span className="text-xs font-semibold text-gray-700">Receipts</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="h-2 bg-gray-100 rounded-full w-full" />
+                        <div className="h-2 bg-gray-100 rounded-full w-3/4" />
+                        <div className="h-2 bg-green-100 rounded-full w-1/2" />
+                      </div>
+                    </div>
+                    {/* Report chart card */}
+                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-lg border border-gray-100 p-4 w-56 animate-float-delay">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                          <PieChart size={16} className="text-blue-600" />
+                        </div>
+                        <span className="text-xs font-semibold text-gray-700">Monthly Report</span>
+                      </div>
+                      <div className="flex items-end gap-1.5 h-12">
+                        {[40, 65, 45, 80, 55, 70, 90].map((h, i) => (
+                          <div key={i} className="flex-1 bg-gradient-to-t from-green-500 to-green-300 rounded-t" style={{ height: `${h}%` }} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="absolute bottom-1/4 -right-4 bg-white shadow-lg rounded-full px-3 py-1.5 text-xs font-medium border border-gray-100 flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-blue-500" /> Gemini
+
+              {/* ===== Slide 4: Coming Soon Products ===== */}
+              <div className="w-full flex-shrink-0">
+                <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[420px]">
+                  <div>
+                    <span className="inline-flex items-center gap-2 bg-white/70 border border-gray-200 rounded-full px-3 py-1 text-xs font-medium text-gray-600">
+                      <Sparkles size={14} className="text-purple-600" /> Coming Soon
+                    </span>
+                    <h1 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                      Type a Prompt. Review.{" "}
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-purple-600">
+                        Confirm. Done.
+                      </span>
+                    </h1>
+                    <p className="mt-6 text-lg text-gray-600 leading-relaxed">
+                      SafalVir products are designed to simplify daily work by bringing important records, reminders, subscriptions, files, and tools into one connected experience.
+                    </p>
+                    <div className="mt-8 flex flex-wrap gap-3">
+                      <a
+                        href="#products"
+                        className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                      >
+                        View Coming Soon Products <ArrowRight size={18} />
+                      </a>
+                    </div>
+                  </div>
+                  {/* Illustration: 2x2 product grid */}
+                  <div className="relative flex items-center justify-center min-h-[340px]">
+                    <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
+                      {[
+                        { name: "SafalDrive", icon: HardDrive, color: "bg-blue-50", iconColor: "text-blue-600", anim: "animate-float" },
+                        { name: "SafalCalendar", icon: Calendar, color: "bg-green-50", iconColor: "text-green-600", anim: "animate-float-slow" },
+                        { name: "SafalSubscriptions", icon: CreditCard, color: "bg-purple-50", iconColor: "text-purple-600", anim: "animate-float-delay" },
+                        { name: "SafalUtilities", icon: Wrench, color: "bg-orange-50", iconColor: "text-orange-600", anim: "animate-float" },
+                      ].map((product) => (
+                        <div key={product.name} className={`bg-white rounded-xl shadow-lg border border-gray-100 p-5 text-center ${product.anim}`}>
+                          <div className={`w-12 h-12 rounded-xl ${product.color} flex items-center justify-center mx-auto mb-3`}>
+                            <product.icon size={22} className={product.iconColor} />
+                          </div>
+                          <h3 className="text-sm font-semibold text-gray-700 mb-2">{product.name}</h3>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-full px-2 py-0.5">
+                            Coming Soon
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="absolute -bottom-2 left-4 bg-white shadow-md rounded-lg px-3 py-1.5 text-xs font-medium border border-gray-100">
-                File Understood
-              </div>
-              <div className="absolute -bottom-2 right-12 bg-white shadow-md rounded-lg px-3 py-1.5 text-xs font-medium border border-gray-100">
-                Task Completed
+
+              {/* ===== Slide 5: AI Model Integration ===== */}
+              <div className="w-full flex-shrink-0">
+                <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[420px]">
+                  <div>
+                    <span className="inline-flex items-center gap-2 bg-white/70 border border-gray-200 rounded-full px-3 py-1 text-xs font-medium text-gray-600">
+                      <Sparkles size={14} className="text-green-600" /> AI Models
+                    </span>
+                    <h1 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                      Upload Files and Let{" "}
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-purple-600">
+                        AI Understand Them
+                      </span>
+                    </h1>
+                    <p className="mt-6 text-lg text-gray-600 leading-relaxed">
+                      Use ChatGPT, Claude, Gemini, custom LLMs, and third-party APIs inside SAFAL-AI to create one unified automation workspace.
+                    </p>
+                    <div className="mt-8 flex flex-wrap gap-3">
+                      <a
+                        href="#ai-models"
+                        className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                      >
+                        <Plug size={18} /> Connect AI Model
+                      </a>
+                    </div>
+                  </div>
+                  {/* Illustration: Floating model cards connected to central node */}
+                  <div className="relative flex items-center justify-center min-h-[340px]">
+                    {/* Central SAFAL-AI node */}
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-green-500 to-purple-500 shadow-xl flex items-center justify-center z-10">
+                      <Bot size={28} className="text-white" />
+                    </div>
+                    {/* Connection orbit rings */}
+                    <div className="absolute w-48 h-48 rounded-full border-2 border-dashed border-green-200 opacity-30" />
+                    <div className="absolute w-80 h-80 rounded-full border border-dashed border-purple-200 opacity-20" />
+                    {/* Model cards */}
+                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-lg border border-gray-100 px-4 py-2.5 flex items-center gap-2 animate-float">
+                      <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center"><Bot size={12} className="text-white" /></div>
+                      <span className="text-xs font-semibold text-gray-700">ChatGPT</span>
+                    </div>
+                    <div className="absolute top-1/3 -left-2 bg-white rounded-xl shadow-lg border border-gray-100 px-4 py-2.5 flex items-center gap-2 animate-float-slow">
+                      <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center"><Bot size={12} className="text-white" /></div>
+                      <span className="text-xs font-semibold text-gray-700">Claude</span>
+                    </div>
+                    <div className="absolute top-1/3 -right-2 bg-white rounded-xl shadow-lg border border-gray-100 px-4 py-2.5 flex items-center gap-2 animate-float-delay">
+                      <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center"><Bot size={12} className="text-white" /></div>
+                      <span className="text-xs font-semibold text-gray-700">Gemini</span>
+                    </div>
+                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-lg border border-gray-100 px-4 py-2.5 flex items-center gap-2 animate-float">
+                      <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center"><Bot size={12} className="text-white" /></div>
+                      <span className="text-xs font-semibold text-gray-700">Custom LLM</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
+
+            {/* Navigation Arrows */}
+            <button
+              onClick={prevSlide}
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/60 hover:bg-white shadow-lg border border-gray-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20"
+              aria-label="Previous slide"
+            >
+              <ChevronLeft size={20} className="text-gray-700" />
+            </button>
+            <button
+              onClick={nextSlide}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/60 hover:bg-white shadow-lg border border-gray-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20"
+              aria-label="Next slide"
+            >
+              <ChevronRight size={20} className="text-gray-700" />
+            </button>
+          </div>
+
+          {/* Dot indicators */}
+          <div className="flex items-center justify-center gap-2 mt-8">
+            {Array.from({ length: totalSlides }).map((_, i) => (
+              <button
+                key={i}
+                onClick={() => goToSlide(i)}
+                className={`rounded-full transition-all duration-300 ${
+                  carouselIndex === i
+                    ? "w-8 h-2.5 bg-green-600"
+                    : "w-2.5 h-2.5 bg-gray-300 hover:bg-gray-400"
+                }`}
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            ))}
           </div>
         </div>
       </section>
@@ -385,20 +688,12 @@ export default function LandingPage() {
       {/* What is Safal-AI Section (SAI-LP-005) */}
       <section className="py-16 md:py-20 bg-gray-50">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">What is Safal-AI?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">What is SAFAL-AI?</h2>
           <p className="text-lg text-gray-600 leading-relaxed max-w-3xl mx-auto">
-            Safal-AI is a smart AI platform that helps you complete tasks using prompts, voice commands, file uploads, and integrations. It works with SafalVir applications, external AI models, custom LLMs, and other business tools.
+            SAFAL-AI is an intelligent AI platform that helps users complete work through prompts, file uploads, AI agents, APIs, and connected applications. Instead of switching between many tools, users can work from one place. They can connect SafalVir products, add their own AI models, upload files, automate tasks, and manage workflows using simple language.
           </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-10">
-            {benefitCards.map((card) => (
-              <div key={card.title} className="bg-white border border-gray-100 rounded-xl p-6 text-center">
-                <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
-                  <card.icon size={22} className="text-green-600" />
-                </div>
-                <h3 className="font-semibold mb-1">{card.title}</h3>
-                <p className="text-sm text-gray-500">{card.desc}</p>
-              </div>
-            ))}
+          <div className="mt-6 inline-block bg-white border border-gray-100 rounded-xl p-4 shadow-sm text-center max-w-3xl mx-auto">
+            <p className="text-sm font-medium text-green-700">SAFAL-AI helps users connect products, models, files, and APIs into one AI workspace to complete tasks faster.</p>
           </div>
         </div>
       </section>
@@ -407,10 +702,7 @@ export default function LandingPage() {
       <section id="features" className="py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Key Features</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Everything you need to automate tasks, connect AI models, and manage work from one platform.
-            </p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Everything You Need in One AI Workspace</h2>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {features.map((feature) => (
@@ -433,9 +725,9 @@ export default function LandingPage() {
       <section id="ai-models" className="py-16 md:py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">AI Model Integrations</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Connect AI Agents and Models</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Use your preferred AI model. Connect supported models through API keys and run your work from one platform.
+              SAFAL-AI allows users to connect their preferred AI agents and LLM models. Users can add API keys and use different models for different types of work. Use the right AI model for the right task from one platform.
             </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -472,21 +764,22 @@ export default function LandingPage() {
       <section id="products" className="py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">SafalVir Products</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Connected SafalVir Applications</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Connect and manage SafalVir applications through Safal-AI. Product access depends on your plan.
+              SafalVir products are part of the SAFAL-AI ecosystem. Users can connect these applications and perform product-specific actions through SAFAL-AI after authentication.
             </p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 mb-12">
             {products.map((product) => (
               <div
                 key={product.name}
-                className="bg-white border border-gray-100 rounded-xl p-6 flex items-center gap-3 hover:shadow-lg transition-all"
+                className="bg-white border border-gray-100 rounded-xl p-6 flex flex-col items-center text-center gap-3 hover:shadow-lg transition-all"
               >
                 <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
                   <Package size={20} className="text-green-600" />
                 </div>
                 <h3 className="font-semibold">{product.name}</h3>
+                <p className="text-xs text-gray-500">{product.text}</p>
               </div>
             ))}
           </div>
@@ -517,9 +810,6 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Simple steps to get started. We always review and confirm before important actions.
-            </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {steps.map((item) => (
@@ -535,111 +825,106 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Use Cases Section (SAI-LP-012) */}
-      <section id="use-cases" className="py-16 md:py-24">
+      {/* Why SAFAL-AI Section */}
+      <section className="py-16 md:py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Use Cases</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Why Use SAFAL-AI?</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Real ways Safal-AI helps with business and personal work every day.
+              Most users work across many tools, files, apps, and AI platforms. This creates repeated work, manual entry, and wasted time. SAFAL-AI solves this by creating one smart workspace where users can type what they want, select a model or product, review the result, and complete the task.
             </p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-            {useCases.map((item) => (
-              <div
-                key={item.title}
-                className="bg-white border border-gray-100 rounded-xl p-5 hover:shadow-lg transition-all"
-              >
-                <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center mb-3">
-                  <item.icon size={20} className="text-purple-600" />
-                </div>
-                <h3 className="font-semibold text-sm mb-1">{item.title}</h3>
-                <p className="text-xs text-gray-500">{item.desc}</p>
-              </div>
-            ))}
+          <div className="max-w-4xl mx-auto bg-gradient-to-br from-green-50 to-purple-50 border border-green-100 rounded-2xl p-8">
+            <div className="grid md:grid-cols-2 gap-6">
+              <ul className="space-y-4">
+                {[
+                  "Reduce manual work",
+                  "Connect SafalVir products in one place",
+                  "Use AI agents and custom LLM models",
+                  "Upload and understand files",
+                ].map((line) => (
+                  <li key={line} className="flex items-start gap-3 text-sm text-gray-700">
+                    <CheckCircle size={18} className="text-green-600 flex-shrink-0 mt-0.5" />
+                    {line}
+                  </li>
+                ))}
+              </ul>
+              <ul className="space-y-4">
+                {[
+                  "Automate daily and business tasks",
+                  "Keep control before every important action",
+                  "Use Safal Tokens transparently",
+                ].map((line) => (
+                  <li key={line} className="flex items-start gap-3 text-sm text-gray-700">
+                    <CheckCircle size={18} className="text-green-600 flex-shrink-0 mt-0.5" />
+                    {line}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Before / After + Best For (sales section) */}
-      <section className="py-16 md:py-24">
+      {/* Custom Chat Section */}
+      <section className="py-16 md:py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Why Safal-AI</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Custom Chat with Your Own AI Models</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Bring everything into one simple place and finish work faster.
+              Custom Chat allows users to chat with their own connected AI models. Users can choose Auto Mode or select a specific model from the dropdown.
             </p>
           </div>
-
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {/* Before */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-6">
-              <div className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 mb-4">
-                <span className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center">
-                  <X size={16} className="text-gray-400" />
-                </span>
-                Before Safal-AI
-              </div>
-              <ul className="space-y-3">
-                {[
-                  "Too many apps and tools to switch between",
-                  "Manual work across files and records",
-                  "AI models scattered in different places",
-                  "Hard to connect products and APIs",
-                ].map((line) => (
-                  <li key={line} className="flex items-start gap-2 text-sm text-gray-600">
-                    <X size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                    {line}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* After */}
-            <div className="bg-gradient-to-br from-green-50 to-purple-50 border border-green-100 rounded-2xl p-6">
-              <div className="inline-flex items-center gap-2 text-sm font-semibold text-green-700 mb-4">
-                <span className="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center">
-                  <CheckCircle size={16} className="text-green-600" />
-                </span>
-                After Safal-AI
-              </div>
-              <ul className="space-y-3">
-                {[
-                  "One place for models, apps, files, and APIs",
-                  "Type a prompt and let AI prepare the work",
-                  "ChatGPT, Claude, Gemini in a single chat",
-                  "Connect products and workflows in minutes",
-                ].map((line) => (
-                  <li key={line} className="flex items-start gap-2 text-sm text-gray-700">
-                    <CheckCircle size={16} className="text-green-600 flex-shrink-0 mt-0.5" />
-                    {line}
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg border border-gray-100 p-6 flex flex-col items-center">
+             <div className="flex items-center gap-3 mb-4 w-full justify-between">
+                <span className="font-semibold text-gray-700">Model Selection:</span>
+                <select className="border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-700 bg-gray-50" aria-label="Select AI Model">
+                  <option>Auto Mode</option>
+                  <option>ChatGPT</option>
+                  <option>Claude</option>
+                  <option>Gemini</option>
+                  <option>Custom LLM</option>
+                  <option>Private LLM</option>
+                  <option>Other connected models</option>
+                </select>
+             </div>
+             <p className="text-sm text-gray-500 bg-blue-50 border border-blue-100 p-3 rounded-lg w-full text-center">
+               <strong className="text-blue-700">Auto Mode:</strong> Auto Mode can automatically choose the best available model based on the task, user settings, token usage, and availability.
+             </p>
           </div>
+        </div>
+      </section>
 
-          {/* Best for */}
-          <div className="mt-12 max-w-4xl mx-auto text-center">
-            <h3 className="text-xl font-semibold mb-6">Best for</h3>
-            <div className="flex flex-wrap justify-center gap-3">
-              {[
-                "Individuals",
-                "Teams",
-                "SMEs",
-                "Developers",
-                "SafalVir users",
-                "Business owners",
-              ].map((aud) => (
-                <span
-                  key={aud}
-                  className="inline-flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-2 text-sm text-gray-700"
-                >
-                  <CheckCircle size={14} className="text-green-600" />
-                  {aud}
-                </span>
-              ))}
-            </div>
+      {/* Integration Hub Section */}
+      <section className="py-16 md:py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Connect APIs and Tools</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              SAFAL-AI can connect with third-party APIs and tools to create a unified automation workspace. Users can add API keys, endpoints, usernames, passwords, or other connection details where required.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {[
+              { icon: Plug, title: "Add new integration" },
+              { icon: CheckCircle, title: "Test connection" },
+              { icon: ShieldCheck, title: "Manage credentials" },
+              { icon: Zap, title: "Enable or disable integration" },
+              { icon: MessageSquare, title: "Use integrations inside chat" },
+              { icon: Unplug, title: "Disconnect anytime" },
+            ].map((action, i) => (
+              <div key={i} className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl p-4">
+                <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
+                  <action.icon size={20} className="text-purple-600" />
+                </div>
+                <span className="text-sm font-medium text-gray-700">{action.title}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 max-w-2xl mx-auto bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-center">
+             <p className="text-sm text-yellow-800">
+               <strong className="text-yellow-900">Security Note:</strong> API keys and credentials should be encrypted, masked, and never stored in plain text.
+             </p>
           </div>
         </div>
       </section>
@@ -648,9 +933,9 @@ export default function LandingPage() {
       <section id="pricing" className="py-16 md:py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Pricing Plans</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple Plans for Every User</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Start free and upgrade when you need more products, Safal Tokens, AI model integrations, and automation power.
+              Start free and upgrade when you need more Safal Tokens, more product access, external AI models, custom LLMs, and advanced automation.
             </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -752,9 +1037,9 @@ export default function LandingPage() {
             <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
               <Coins size={28} className="text-green-600" />
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Safal Tokens</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Transparent Usage with Safal Tokens</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Safal Tokens are usage units inside Safal-AI. Different AI actions use different numbers of tokens based on the task, file processing, model usage, and workflow complexity.
+              Safal Tokens are used for AI actions inside SAFAL-AI. Before any prompt is executed, users can see how many Safal Tokens may be consumed. The prompt will not run until the user confirms.
             </p>
           </div>
 
@@ -781,13 +1066,13 @@ export default function LandingPage() {
                 </table>
               </div>
               <p className="text-xs text-gray-400 mt-3">
-                These values are examples only. Actual Safal Token usage may vary by task.
+                Short UI Message: This task may use 8 Safal Tokens. Do you want to continue?
               </p>
             </div>
 
             {/* Top-up packs */}
             <div>
-              <h3 className="text-lg font-semibold mb-4">Top-Up Packs</h3>
+              <h3 className="text-lg font-semibold mb-4">Need More Safal Tokens?</h3>
               <div className="grid sm:grid-cols-2 gap-4">
                 {topUpPacks.map((pack) => (
                   <div
@@ -805,7 +1090,7 @@ export default function LandingPage() {
                 ))}
               </div>
               <p className="text-xs text-gray-400 mt-3">
-                Top-ups are optional and used when your plan tokens are low or finished. Sign in to buy top-ups.
+                Users can buy extra Safal Tokens anytime when their monthly plan tokens are low or finished. Top up anytime and continue using SAFAL-AI without interruption.
               </p>
               <Link
                 href="/auth/register"
@@ -825,9 +1110,9 @@ export default function LandingPage() {
             <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
               <Shield size={28} className="text-green-600" />
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Security &amp; Trust</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Secure, Transparent, and User-Controlled</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              You stay in control. Safal-AI asks for confirmation before important actions and connects to products or models only with your permission.
+              SAFAL-AI keeps users in control. Products, AI models, APIs, and files are connected only with permission. Important actions are shown for review before execution.
             </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -971,6 +1256,27 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Final CTA Section */}
+      <section className="py-20 bg-green-600 text-white text-center">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">Start Working Smarter with SAFAL-AI</h2>
+          <p className="text-lg text-green-100 mb-8 max-w-2xl mx-auto">
+            Connect SafalVir products, AI agents, custom LLMs, APIs, files, and workflows in one platform. Type your prompt, review the token usage, confirm the action, and let SAFAL-AI complete the task.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <Link href="/auth/register" className="bg-white text-green-600 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors">
+              Start Free
+            </Link>
+            <Link href="#pricing" className="border border-green-400 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors">
+              View Pricing
+            </Link>
+            <Link href="#ai-models" className="border border-green-400 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors">
+              Connect AI Model
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Footer (SAI-LP-023) */}
       <footer className="bg-gray-900 text-gray-400 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -978,7 +1284,7 @@ export default function LandingPage() {
             <div>
               <h4 className="text-white font-semibold mb-4">Safal-AI</h4>
               <p className="text-sm leading-relaxed">
-                Single AI Platform for Everything. Connect AI models, use SafalVir products, upload files, and automate tasks through simple prompts.
+                SAFAL-AI — One workspace for products, AI agents, custom LLMs, APIs, files, and workflows.
               </p>
             </div>
             <div>

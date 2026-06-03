@@ -73,7 +73,7 @@ const topUpPacks = [
   { tokens: "2,000", price: "$19.99", name: "Business Top-Up" },
 ];
 
-const usageHistory = [
+const fallbackUsageHistory = [
   {
     id: "1",
     action: "Custom Chat (Auto Mode)",
@@ -135,7 +135,7 @@ const tokenCosts = [
 
 export default function SubscriptionsPage() {
   const router = useRouter();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, tokenHistory } = useAuthStore();
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -166,6 +166,18 @@ export default function SubscriptionsPage() {
     Math.round((used / totalAllotted) * 100) || 0
   );
   const lowTokens = balance <= totalAllotted * 0.2;
+
+  const usageHistory = tokenHistory.length
+    ? tokenHistory.map((tx) => ({
+        id: tx.id,
+        action: tx.action || tx.description,
+        tokens:
+          tx.type === "purchase" || tx.type === "bonus" || tx.type === "refund"
+            ? tx.amount
+            : -Math.abs(tx.amount),
+        time: tx.createdAt,
+      }))
+    : fallbackUsageHistory;
 
   return (
     <DashboardLayout

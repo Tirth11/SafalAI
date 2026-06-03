@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { generateId } from "@/lib/utils";
 import {
   Bot,
   Plus,
@@ -14,7 +15,7 @@ import {
   FileText,
 } from "lucide-react";
 import Link from "next/link";
-import { useLLMStore } from "@/lib/store";
+import { useAuthStore, useLLMStore } from "@/lib/store";
 import type { CustomChatModelOption, LLMApiConfig } from "@/types";
 
 interface ChatTurn {
@@ -25,6 +26,33 @@ interface ChatTurn {
 }
 
 const newId = () => `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+const DEFAULT_TOKEN_BALANCE = 120;
+
+const estimateTokens = (prompt: string, attachedFile?: string | null) => {
+  const clean = prompt.trim();
+  const base = Math.max(1, Math.ceil(clean.length / 45));
+  const fileTokens = attachedFile ? 5 : 0;
+  const complexity = clean.length > 200 ? 2 : 0;
+  return Math.min(60, base + fileTokens + complexity);
+};
+
+const summarizePrompt = (prompt: string, attachedFile?: string | null) => {
+  const clean = prompt.trim();
+  const summary =
+    clean.length > 120 ? `${clean.slice(0, 120)}...` : clean || "(No prompt)";
+  if (!attachedFile) return summary;
+  return `${summary} • 1 file attached`;
+};
+
+const getTaskType = (prompt: string) => {
+  const lower = prompt.toLowerCase();
+  if (lower.includes("report")) return "Report generation";
+  if (lower.includes("summarize") || lower.includes("summary")) return "Summary";
+  if (lower.includes("compare")) return "Comparison";
+  if (lower.includes("extract")) return "Data extraction";
+  return "Custom prompt";
+};
 
 // Prompt templates shown as quick-start chips.
 const promptTemplates = [
@@ -65,6 +93,7 @@ function fakeAssistantReply(prompt: string, modelLabel: string): string {
 }
 
 export function CustomChatInterface() {
+  const { user, addTokenHistory, applyTokenUsage } = useAuthStore();
   const { apis } = useLLMStore();
   const [selectedId, setSelectedId] = useState<string>("auto");
   const [draft, setDraft] = useState("");
@@ -72,7 +101,17 @@ export function CustomChatInterface() {
   const [isThinking, setIsThinking] = useState(false);
   const [improved, setImproved] = useState<string | null>(null);
   const [attachedFile, setAttachedFile] = useState<string | null>(null);
+  const [pendingPrompt, setPendingPrompt] = useState<{
+    text: string;
+    attachedFile: string | null;
+    modelLabel: string;
+    modelId: string;
+  } | null>(null);
+  const [confirmMode, setConfirmMode] = useState<"review" | "edit" | null>(null);
+  const [confirmDraft, setConfirmDraft] = useState("");
+  const [suggestedPrompt, setSuggestedPrompt] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const confirmTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const options = useMemo<CustomChatModelOption[]>(() => {
     const list: CustomChatModelOption[] = [
@@ -85,6 +124,7 @@ export function CustomChatInterface() {
   }, [apis]);
 
   const noModels = apis.length === 0;
+  const tokenBalance = user?.subscription?.creditsBalance ?? DEFAULT_TOKEN_BALANCE;
 
   const resolveModelLabel = (): { label: string; api: LLMApiConfig | null } => {
     if (selectedId === "auto") {
@@ -103,38 +143,120 @@ export function CustomChatInterface() {
     };
   };
 
-  const handleSend = async () => {
+  const handleSend = () => {
     const text = draft.trim();
     if (!text && !attachedFile) return;
+    startPromptReview(text, attachedFile);
+    setDraft("");
+    setImproved(null);
+  };
 
+  const startPromptReview = (text: string, file: string | null) => {
+    const trimmed = text.trim();
+    if (!trimmed && !file) return;
+    const { label } = resolveModelLabel();
+    setPendingPrompt({
+      text: trimmed,
+      attachedFile: file,
+      modelLabel: label,
+      modelId: selectedId,
+    });
+    setConfirmDraft(trimmed);
+    setSuggestedPrompt(null);
+    setConfirmMode("review");
+  };
+
+  const handleConfirmRun = async () => {
+    if (!pendingPrompt) return;
+    const finalText = confirmDraft.trim();
+    const tokensUsed = estimateTokens(finalText, pendingPrompt.attachedFile);
+    const taskType = getTaskType(finalText);
+    const modelLabel = pendingPrompt.modelLabel;
+    const file = pendingPrompt.attachedFile;
+
+    // Clear confirm state
+    setConfirmMode(null);
+    setPendingPrompt(null);
+    setConfirmDraft("");
+    setSuggestedPrompt(null);
+    setAttachedFile(null);
+
+    // Resolve model
     const { api, label } = resolveModelLabel();
-    const userContent = attachedFile
-      ? `${text || "(no prompt)"}\n\n📎 Attached: ${attachedFile}`
-      : text;
 
+    // Add user message
+    const userContent = file
+      ? `${finalText || "(no prompt)"}\n\n📎 Attached: ${file}`
+      : finalText;
     setMessages((prev) => [
       ...prev,
       { id: newId(), role: "user", content: userContent },
     ]);
-    setDraft("");
-    setImproved(null);
-    setAttachedFile(null);
     setIsThinking(true);
 
     await new Promise((r) => setTimeout(r, 700));
 
+    // Add assistant reply
     setMessages((prev) => [
       ...prev,
       {
         id: newId(),
         role: "assistant",
         content: api
-          ? fakeAssistantReply(text || "the attached file", label)
+          ? fakeAssistantReply(finalText || "the attached file", modelLabel)
           : "No LLM model API has been added yet. Add one in Settings → LLM Model APIs and try again.",
-        modelLabel: label,
+        modelLabel,
+      },
+    ]);
+
+    // Deduct tokens and log usage
+    applyTokenUsage(tokensUsed);
+    addTokenHistory({
+      id: generateId(),
+      userId: user?.id || "user",
+      amount: tokensUsed,
+      type: "usage",
+      action: taskType,
+      description: `Prompt executed (${modelLabel})`,
+      createdAt: new Date().toISOString(),
+    });
+
+    // Add token usage summary message
+    const remaining = Math.max(0, tokenBalance - tokensUsed);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: newId(),
+        role: "assistant",
+        content: `Task completed successfully.\nSafal Tokens used: ${tokensUsed}\nRemaining balance: ${remaining}\nModel used: ${modelLabel}\nTask type: ${taskType}`,
+        modelLabel,
       },
     ]);
     setIsThinking(false);
+  };
+
+  const handleModifyPrompt = () => {
+    if (!pendingPrompt) return;
+    setConfirmDraft(pendingPrompt.text);
+    const suggestion = improvePromptText(pendingPrompt.text);
+    setSuggestedPrompt(suggestion && suggestion !== pendingPrompt.text ? suggestion : null);
+    setConfirmMode("edit");
+  };
+
+  const handleReviewUpdatedPrompt = () => {
+    if (!pendingPrompt) return;
+    setPendingPrompt({
+      ...pendingPrompt,
+      text: confirmDraft.trim(),
+    });
+    setConfirmMode("review");
+  };
+
+  const handleCancelPrompt = () => {
+    setPendingPrompt(null);
+    setConfirmMode(null);
+    setConfirmDraft("");
+    setSuggestedPrompt(null);
   };
 
   const handleImprove = () => {
@@ -257,6 +379,173 @@ export function CustomChatInterface() {
             </div>
           ))}
 
+          {/* Token confirmation – review mode */}
+          {confirmMode === "review" && pendingPrompt && (
+            <div className="animate-fade-in">
+              <div className="border border-gray-200 bg-white rounded-xl p-4 shadow-sm">
+                <p className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">
+                  Review Before Running
+                </p>
+                <div className="mt-2 text-sm text-gray-700">
+                  <span className="font-medium text-gray-900">Prompt:</span>{" "}
+                  {summarizePrompt(confirmDraft || pendingPrompt.text, pendingPrompt.attachedFile)}
+                </div>
+                <div className="mt-3 grid sm:grid-cols-2 gap-2 text-xs text-gray-600">
+                  <div>
+                    <span className="text-gray-500">Model:</span>{" "}
+                    <span className="font-medium text-gray-800">{pendingPrompt.modelLabel}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Estimated Safal Tokens:</span>{" "}
+                    <span className="font-medium text-gray-800">
+                      {estimateTokens(confirmDraft || pendingPrompt.text, pendingPrompt.attachedFile)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Current Balance:</span>{" "}
+                    <span className="font-medium text-gray-800">{tokenBalance}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Balance After:</span>{" "}
+                    <span className="font-medium text-gray-800">
+                      {Math.max(
+                        0,
+                        tokenBalance -
+                          estimateTokens(
+                            confirmDraft || pendingPrompt.text,
+                            pendingPrompt.attachedFile
+                          )
+                      )}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    onClick={handleConfirmRun}
+                    className="text-xs font-medium px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700"
+                  >
+                    Confirm and Run
+                  </button>
+                  <button
+                    onClick={handleModifyPrompt}
+                    className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+                  >
+                    Modify Prompt
+                  </button>
+                  <button
+                    onClick={handleCancelPrompt}
+                    className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Token confirmation – edit mode */}
+          {confirmMode === "edit" && pendingPrompt && (
+            <div className="animate-fade-in">
+              <div className="border border-gray-200 bg-white rounded-xl p-4 shadow-sm">
+                <p className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">
+                  Modify Prompt
+                </p>
+                <textarea
+                  ref={confirmTextareaRef}
+                  value={confirmDraft}
+                  onChange={(e) => setConfirmDraft(e.target.value)}
+                  rows={3}
+                  placeholder="Edit your prompt..."
+                  className="mt-2 w-full resize-none border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-green-500"
+                />
+                {suggestedPrompt && (
+                  <div className="mt-3 bg-purple-50 border border-purple-100 rounded-lg p-3">
+                    <p className="text-[11px] uppercase tracking-wider text-purple-500 font-semibold">
+                      Suggested prompt
+                    </p>
+                    <p className="text-xs text-gray-700 mt-1">
+                      {suggestedPrompt}
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <button
+                        onClick={() => {
+                          setConfirmDraft(suggestedPrompt);
+                          handleReviewUpdatedPrompt();
+                        }}
+                        className="text-xs font-medium px-2.5 py-1 rounded-md bg-green-600 text-white hover:bg-green-700"
+                      >
+                        Use Improved Prompt
+                      </button>
+                      <button
+                        onClick={() => {
+                          setConfirmDraft(pendingPrompt.text);
+                          handleReviewUpdatedPrompt();
+                        }}
+                        className="text-xs font-medium px-2.5 py-1 rounded-md border border-gray-200 text-gray-700 hover:bg-gray-50"
+                      >
+                        Use Original Prompt
+                      </button>
+                      <button
+                        onClick={() => {
+                          confirmTextareaRef.current?.focus();
+                        }}
+                        className="text-xs font-medium px-2.5 py-1 rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50"
+                      >
+                        Edit Manually
+                      </button>
+                      <button
+                        onClick={handleCancelPrompt}
+                        className="text-xs font-medium px-2.5 py-1 rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <div className="mt-3 grid sm:grid-cols-2 gap-2 text-xs text-gray-600">
+                  <div>
+                    <span className="text-gray-500">Model:</span>{" "}
+                    <span className="font-medium text-gray-800">{pendingPrompt.modelLabel}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Estimated Safal Tokens:</span>{" "}
+                    <span className="font-medium text-gray-800">
+                      {estimateTokens(confirmDraft, pendingPrompt.attachedFile)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Current Balance:</span>{" "}
+                    <span className="font-medium text-gray-800">{tokenBalance}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Balance After:</span>{" "}
+                    <span className="font-medium text-gray-800">
+                      {Math.max(
+                        0,
+                        tokenBalance -
+                          estimateTokens(confirmDraft, pendingPrompt.attachedFile)
+                      )}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    onClick={handleReviewUpdatedPrompt}
+                    className="text-xs font-medium px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700"
+                  >
+                    Review Tokens
+                  </button>
+                  <button
+                    onClick={handleCancelPrompt}
+                    className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {isThinking && (
             <div className="flex gap-3">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-purple-500 flex items-center justify-center flex-shrink-0">
@@ -343,12 +632,17 @@ export function CustomChatInterface() {
                 }
               }}
               rows={1}
-              placeholder="Ask anything or upload a file..."
-              className="flex-1 resize-none border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500 max-h-32"
+              disabled={confirmMode !== null}
+              placeholder={
+                confirmMode
+                  ? "Review the token estimate above before sending..."
+                  : "Ask anything or upload a file..."
+              }
+              className="flex-1 resize-none border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500 max-h-32 disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <button
               onClick={handleSend}
-              disabled={(!draft.trim() && !attachedFile) || isThinking}
+              disabled={(!draft.trim() && !attachedFile) || isThinking || confirmMode !== null}
               className="w-10 h-10 rounded-xl bg-green-600 text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-700 transition-colors"
               aria-label="Send"
             >
@@ -381,7 +675,7 @@ export function CustomChatInterface() {
             </button>
             <button
               onClick={handleSend}
-              disabled={(!draft.trim() && !attachedFile) || isThinking}
+              disabled={(!draft.trim() && !attachedFile) || isThinking || confirmMode !== null}
               className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Play className="w-3.5 h-3.5" />

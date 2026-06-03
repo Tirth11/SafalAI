@@ -77,16 +77,62 @@ const actionLabels: Record<string, string> = {
   family_expense: "Family / Shared Expense",
 };
 
+const DEFAULT_TOKEN_BALANCE = 120;
+
+const estimateTokens = (prompt: string, attachments?: File[]) => {
+  const clean = prompt.trim();
+  const base = Math.max(1, Math.ceil(clean.length / 45));
+  const fileTokens = attachments && attachments.length > 0 ? attachments.length * 4 : 0;
+  const complexity = clean.length > 200 ? 2 : 0;
+  const attachmentBoost = attachments && attachments.length > 0 ? 2 : 0;
+  return Math.min(60, base + fileTokens + complexity + attachmentBoost);
+};
+
+const summarizePrompt = (prompt: string, attachments?: File[]) => {
+  const clean = prompt.trim();
+  const summary =
+    clean.length > 120 ? `${clean.slice(0, 120)}...` : clean || "(No prompt)";
+  if (!attachments || attachments.length === 0) return summary;
+  return `${summary} • ${attachments.length} file${attachments.length > 1 ? "s" : ""} attached`;
+};
+
+const getTaskType = (prompt: string) => {
+  const lower = prompt.toLowerCase();
+  if (lower.includes("report")) return "Report generation";
+  if (lower.includes("summarize") || lower.includes("summary")) return "Summary";
+  if (lower.includes("expense") || lower.includes("purchase")) return "Record update";
+  if (lower.includes("receipt") || lower.includes("upload")) return "File processing";
+  return "Prompt task";
+};
+
+const improvePromptText = (prompt: string): string => {
+  const trimmed = prompt.trim().replace(/\s+/g, " ");
+  if (!trimmed) return trimmed;
+  const base = trimmed.replace(/[.\s]+$/, "");
+  return `Please ${base.charAt(0).toLowerCase()}${base.slice(
+    1
+  )}. Provide a clear result with a short summary, the key points, and any action items. Use simple language and keep it well structured.`;
+};
+
 
 export function ChatInterface() {
-  const { user } = useAuthStore();
+  const { user, addTokenHistory, applyTokenUsage } = useAuthStore();
   const { chats, activeChatId, addMessage, renameChat, isTyping, setTyping, createChat } = useChatStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const confirmTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [isSending, setIsSending] = useState(false);
   const [pendingRecord, setPendingRecord] = useState<PendingRecord | null>(null);
   const [showFollowUp, setShowFollowUp] = useState(false);
   const [followUpType, setFollowUpType] = useState<"success" | "cancel">("success");
   const [activeOptions, setActiveOptions] = useState<NumberedOptions | null>(null);
+  const [pendingPrompt, setPendingPrompt] = useState<{
+    text: string;
+    attachments?: File[];
+    modelLabel: string;
+  } | null>(null);
+  const [confirmMode, setConfirmMode] = useState<"review" | "edit" | null>(null);
+  const [confirmDraft, setConfirmDraft] = useState("");
+  const [suggestedPrompt, setSuggestedPrompt] = useState<string | null>(null);
 
   // Get messages for active chat
   const activeChat = chats.find((c) => c.id === activeChatId);
@@ -102,9 +148,14 @@ export function ChatInterface() {
     setPendingRecord(null);
     setShowFollowUp(false);
     setActiveOptions(null);
+    setPendingPrompt(null);
+    setConfirmMode(null);
+    setConfirmDraft("");
+    setSuggestedPrompt(null);
   }, [activeChatId]);
 
   const userName = user?.name || "User";
+  const tokenBalance = user?.subscription?.creditsBalance ?? DEFAULT_TOKEN_BALANCE;
 
   // Auto-name the chat based on first meaningful action
   const autoNameChat = (text: string) => {
@@ -333,38 +384,136 @@ export function ChatInterface() {
   };
 
 
-  // Send handler
-  const handleSend = async (message: string, attachments?: File[]) => {
+  const startPromptReview = (message: string, attachments?: File[]) => {
+    const text = message.trim();
+    if (!text && (!attachments || attachments.length === 0)) return;
+    setPendingPrompt({
+      text,
+      attachments,
+      modelLabel: "Safal-AI Auto",
+    });
+    setConfirmDraft(text);
+    setSuggestedPrompt(null);
+    setConfirmMode("review");
+  };
+
+  const executePrompt = async (
+    message: string,
+    attachments: File[] | undefined,
+    tokensUsed: number,
+    modelLabel: string,
+    taskType: string
+  ) => {
     if (isSending) return;
     setIsSending(true);
     setShowFollowUp(false);
 
-    const userMsg: ChatMessageType = { id: generateId(), role: "user", content: message, timestamp: new Date().toISOString(), attachments: attachments?.map((file) => ({ id: generateId(), type: file.type.startsWith("image/") ? "image" as const : "document" as const, url: URL.createObjectURL(file), name: file.name })) };
+    const userMsg: ChatMessageType = {
+      id: generateId(),
+      role: "user",
+      content: message,
+      timestamp: new Date().toISOString(),
+      attachments: attachments?.map((file) => ({
+        id: generateId(),
+        type: file.type.startsWith("image/") ? ("image" as const) : ("document" as const),
+        url: URL.createObjectURL(file),
+        name: file.name,
+      })),
+    };
     addMessage(userMsg);
     setTyping(true);
     await new Promise((resolve) => setTimeout(resolve, 400 + Math.random() * 400));
 
     try {
       const { response, record } = processUserInput(message);
-      addMessage({ id: generateId(), role: "assistant", content: response, timestamp: new Date().toISOString() });
+      addMessage({
+        id: generateId(),
+        role: "assistant",
+        content: response,
+        timestamp: new Date().toISOString(),
+      });
       if (record) setPendingRecord(record);
+
+      applyTokenUsage(tokensUsed);
+      addTokenHistory({
+        id: generateId(),
+        userId: user?.id || "user",
+        amount: tokensUsed,
+        type: "usage",
+        action: taskType,
+        description: `Prompt executed (${modelLabel})`,
+        createdAt: new Date().toISOString(),
+      });
+
+      const remaining = Math.max(0, tokenBalance - tokensUsed);
+      addMessage({
+        id: generateId(),
+        role: "assistant",
+        content: `Task completed successfully.\nSafal Tokens used: ${tokensUsed}\nRemaining balance: ${remaining}\nModel used: ${modelLabel}\nTask type: ${taskType}`,
+        timestamp: new Date().toISOString(),
+      });
     } catch {
-      addMessage({ id: generateId(), role: "assistant", content: "Sorry, something went wrong. Please try again.", timestamp: new Date().toISOString() });
-    } finally { setTyping(false); setIsSending(false); }
+      addMessage({
+        id: generateId(),
+        role: "assistant",
+        content: "Sorry, something went wrong. Please try again.",
+        timestamp: new Date().toISOString(),
+      });
+    } finally {
+      setTyping(false);
+      setIsSending(false);
+    }
+  };
+
+  const handleConfirmRun = async () => {
+    if (!pendingPrompt) return;
+    const finalText = confirmDraft.trim();
+    const tokensUsed = estimateTokens(finalText, pendingPrompt.attachments);
+    const taskType = getTaskType(finalText);
+    const modelLabel = pendingPrompt.modelLabel;
+    const attachments = pendingPrompt.attachments;
+
+    setConfirmMode(null);
+    setPendingPrompt(null);
+    setConfirmDraft("");
+    setSuggestedPrompt(null);
+
+    await executePrompt(finalText, attachments, tokensUsed, modelLabel, taskType);
+  };
+
+  const handleModifyPrompt = () => {
+    if (!pendingPrompt) return;
+    setConfirmDraft(pendingPrompt.text);
+    const suggestion = improvePromptText(pendingPrompt.text);
+    setSuggestedPrompt(suggestion && suggestion !== pendingPrompt.text ? suggestion : null);
+    setConfirmMode("edit");
+  };
+
+  const handleReviewUpdatedPrompt = () => {
+    if (!pendingPrompt) return;
+    setPendingPrompt({
+      ...pendingPrompt,
+      text: confirmDraft.trim(),
+    });
+    setConfirmMode("review");
+  };
+
+  const handleCancelPrompt = () => {
+    setPendingPrompt(null);
+    setConfirmMode(null);
+    setConfirmDraft("");
+    setSuggestedPrompt(null);
   };
 
   const handleQuickAction = (actionId: string) => {
     setShowFollowUp(false);
     setActiveOptions(null);
-    addMessage({ id: generateId(), role: "user", content: actionLabels[actionId] || actionId, timestamp: new Date().toISOString() });
-    setTimeout(() => {
-      addMessage({ id: generateId(), role: "assistant", content: guidedResponses[actionId] || "How can I help?", timestamp: new Date().toISOString() });
-    }, 300);
+    startPromptReview(actionLabels[actionId] || actionId);
   };
 
   const handlePreviewAction = (action: string) => {
-    if (action === "confirm") handleSend("Save it.");
-    else if (action === "cancel") handleSend("Cancel");
+    if (action === "confirm") startPromptReview("Save it.");
+    else if (action === "cancel") startPromptReview("Cancel");
     else if (action === "edit") {
       addMessage({ id: generateId(), role: "assistant", content: "What would you like to change?\n\n1. Change amount\n2. Change category\n3. Change date\n4. Add store name\n5. Mark as reimbursable\n6. Other change\n\nType a number or describe what to change.", timestamp: new Date().toISOString() });
       setActiveOptions({ context: "edit_field", options: [
@@ -387,7 +536,16 @@ export function ChatInterface() {
     addMessage({ id: generateId(), role: "assistant", content: prompts[field] || `Please provide the value for "${field}".`, timestamp: new Date().toISOString() });
   };
 
-  const handleNewChat = () => { createChat(); setPendingRecord(null); setShowFollowUp(false); setActiveOptions(null); };
+  const handleNewChat = () => {
+    createChat();
+    setPendingRecord(null);
+    setShowFollowUp(false);
+    setActiveOptions(null);
+    setPendingPrompt(null);
+    setConfirmMode(null);
+    setConfirmDraft("");
+    setSuggestedPrompt(null);
+  };
 
 
   const hasMessages = messages.length > 0;
@@ -413,6 +571,169 @@ export function ChatInterface() {
                 <PreviewCard type={pendingRecord.type} fields={pendingRecord.fields} onAction={handlePreviewAction} onFieldAction={handleFieldAction} />
               </div>
             )}
+            {confirmMode === "review" && pendingPrompt && (
+              <div className="animate-fade-in">
+                <div className="border border-gray-200 bg-white rounded-xl p-4 shadow-sm">
+                  <p className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">
+                    Review Before Running
+                  </p>
+                  <div className="mt-2 text-sm text-gray-700">
+                    <span className="font-medium text-gray-900">Prompt:</span>{" "}
+                    {summarizePrompt(confirmDraft || pendingPrompt.text, pendingPrompt.attachments)}
+                  </div>
+                  <div className="mt-3 grid sm:grid-cols-2 gap-2 text-xs text-gray-600">
+                    <div>
+                      <span className="text-gray-500">Model:</span>{" "}
+                      <span className="font-medium text-gray-800">{pendingPrompt.modelLabel}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Estimated Safal Tokens:</span>{" "}
+                      <span className="font-medium text-gray-800">
+                        {estimateTokens(confirmDraft || pendingPrompt.text, pendingPrompt.attachments)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Current Balance:</span>{" "}
+                      <span className="font-medium text-gray-800">{tokenBalance}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Balance After:</span>{" "}
+                      <span className="font-medium text-gray-800">
+                        {Math.max(
+                          0,
+                          tokenBalance -
+                            estimateTokens(
+                              confirmDraft || pendingPrompt.text,
+                              pendingPrompt.attachments
+                            )
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      onClick={handleConfirmRun}
+                      className="text-xs font-medium px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700"
+                    >
+                      Confirm and Run
+                    </button>
+                    <button
+                      onClick={handleModifyPrompt}
+                      className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+                    >
+                      Modify Prompt
+                    </button>
+                    <button
+                      onClick={handleCancelPrompt}
+                      className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {confirmMode === "edit" && pendingPrompt && (
+              <div className="animate-fade-in">
+                <div className="border border-gray-200 bg-white rounded-xl p-4 shadow-sm">
+                  <p className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">
+                    Modify Prompt
+                  </p>
+                  <textarea
+                    ref={confirmTextareaRef}
+                    value={confirmDraft}
+                    onChange={(e) => setConfirmDraft(e.target.value)}
+                    rows={3}
+                    placeholder="Edit your prompt..."
+                    className="mt-2 w-full resize-none border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-green-500"
+                  />
+                  {suggestedPrompt && (
+                    <div className="mt-3 bg-purple-50 border border-purple-100 rounded-lg p-3">
+                      <p className="text-[11px] uppercase tracking-wider text-purple-500 font-semibold">
+                        Suggested prompt
+                      </p>
+                      <p className="text-xs text-gray-700 mt-1">
+                        {suggestedPrompt}
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <button
+                          onClick={() => {
+                            setConfirmDraft(suggestedPrompt);
+                            handleReviewUpdatedPrompt();
+                          }}
+                          className="text-xs font-medium px-2.5 py-1 rounded-md bg-green-600 text-white hover:bg-green-700"
+                        >
+                          Use Improved Prompt
+                        </button>
+                        <button
+                          onClick={() => {
+                            setConfirmDraft(pendingPrompt.text);
+                            handleReviewUpdatedPrompt();
+                          }}
+                          className="text-xs font-medium px-2.5 py-1 rounded-md border border-gray-200 text-gray-700 hover:bg-gray-50"
+                        >
+                          Use Original Prompt
+                        </button>
+                        <button
+                          onClick={() => {
+                            confirmTextareaRef.current?.focus();
+                          }}
+                          className="text-xs font-medium px-2.5 py-1 rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50"
+                        >
+                          Edit Manually
+                        </button>
+                        <button
+                          onClick={handleCancelPrompt}
+                          className="text-xs font-medium px-2.5 py-1 rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  <div className="mt-3 grid sm:grid-cols-2 gap-2 text-xs text-gray-600">
+                    <div>
+                      <span className="text-gray-500">Model:</span>{" "}
+                      <span className="font-medium text-gray-800">{pendingPrompt.modelLabel}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Estimated Safal Tokens:</span>{" "}
+                      <span className="font-medium text-gray-800">
+                        {estimateTokens(confirmDraft, pendingPrompt.attachments)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Current Balance:</span>{" "}
+                      <span className="font-medium text-gray-800">{tokenBalance}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Balance After:</span>{" "}
+                      <span className="font-medium text-gray-800">
+                        {Math.max(
+                          0,
+                          tokenBalance -
+                            estimateTokens(confirmDraft, pendingPrompt.attachments)
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      onClick={handleReviewUpdatedPrompt}
+                      className="text-xs font-medium px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700"
+                    >
+                      Review Tokens
+                    </button>
+                    <button
+                      onClick={handleCancelPrompt}
+                      className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
             {showFollowUp && !pendingRecord && (
               <div className="animate-fade-in">
                 <FollowUpActions onAction={handleQuickAction} onNewChat={handleNewChat} type={followUpType} />
@@ -435,7 +756,19 @@ export function ChatInterface() {
 
       <div className="flex-shrink-0 bg-white border-t border-gray-100 p-4 lg:px-6">
         <div className="max-w-2xl mx-auto">
-          <ChatInput onSend={handleSend} disabled={isSending || isTyping} placeholder={pendingRecord ? "Edit details, type a number, say 'Save it' or 'Cancel'..." : activeOptions ? "Type a number to select..." : "Type your request or describe what you need..."} />
+          <ChatInput
+            onSend={startPromptReview}
+            disabled={isSending || isTyping || confirmMode !== null}
+            placeholder={
+              pendingRecord
+                ? "Edit details, type a number, say 'Save it' or 'Cancel'..."
+                : activeOptions
+                  ? "Type a number to select..."
+                  : confirmMode
+                    ? "Review the token estimate above before sending..."
+                    : "Type your request or describe what you need..."
+            }
+          />
         </div>
       </div>
     </div>
