@@ -191,7 +191,40 @@ export const useUIStore = create<UIState>()(
     }
   )
 );
+// Onboarding Store
+export interface OnboardingState {
+  hasStartedCustomChat: boolean;
+  hasUploadedFile: boolean;
+  hasViewedTokens: boolean;
+  isDemoMode: boolean;
+  isOnboardingDismissed: boolean;
+  markCustomChatStarted: () => void;
+  markFileUploaded: () => void;
+  markTokensViewed: () => void;
+  setDemoMode: (demo: boolean) => void;
+  dismissOnboarding: () => void;
+}
 
+export const useOnboardingStore = create<OnboardingState>()(
+  persist(
+    (set) => ({
+      hasStartedCustomChat: false,
+      hasUploadedFile: false,
+      hasViewedTokens: false,
+      isDemoMode: false,
+      isOnboardingDismissed: false,
+      markCustomChatStarted: () => set({ hasStartedCustomChat: true }),
+      markFileUploaded: () => set({ hasUploadedFile: true }),
+      markTokensViewed: () => set({ hasViewedTokens: true }),
+      setDemoMode: (demo) => set({ isDemoMode: demo, isOnboardingDismissed: true }),
+      dismissOnboarding: () => set({ isOnboardingDismissed: true }),
+    }),
+    {
+      name: "safal-onboarding",
+      storage: createJSONStorage(() => localStorage),
+    }
+  )
+);
 
 // =====================================================================
 // Safal-AI workspace stores (post-login)

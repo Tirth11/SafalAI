@@ -13,6 +13,7 @@ import {
   Play,
   X,
   FileText,
+  Shield,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuthStore, useLLMStore } from "@/lib/store";
@@ -95,6 +96,7 @@ function fakeAssistantReply(prompt: string, modelLabel: string): string {
 export function CustomChatInterface() {
   const { user, addTokenHistory, applyTokenUsage } = useAuthStore();
   const { apis } = useLLMStore();
+  const { isDemoMode } = useOnboardingStore();
   const [selectedId, setSelectedId] = useState<string>("auto");
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<ChatTurn[]>([]);
@@ -202,7 +204,7 @@ export function CustomChatInterface() {
       {
         id: newId(),
         role: "assistant",
-        content: api
+        content: (api || isDemoMode)
           ? fakeAssistantReply(finalText || "the attached file", modelLabel)
           : "No LLM model API has been added yet. Add one in Settings → LLM Model APIs and try again.",
         modelLabel,
@@ -541,6 +543,12 @@ export function CustomChatInterface() {
                   >
                     Cancel
                   </button>
+                </div>
+                <div className="mt-3 pt-3 border-t border-purple-100 flex items-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5 text-purple-500" />
+                  <p className="text-[10px] text-purple-600 font-medium">
+                    SAFAL-AI asks before running paid tasks. You are always in control.
+                  </p>
                 </div>
               </div>
             </div>

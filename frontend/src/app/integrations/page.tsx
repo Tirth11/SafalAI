@@ -21,6 +21,7 @@ import {
   RefreshCw,
   Pencil,
   Power,
+  Shield,
 } from "lucide-react";
 
 const authOptions: { value: IntegrationAuthType; label: string }[] = [
@@ -223,6 +224,16 @@ export default function IntegrationsPage() {
               Add API Integration
             </Button>
           )}
+        </div>
+
+        <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-6 flex items-start gap-2.5">
+          <Shield className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-blue-900">Secure Integration</p>
+            <p className="text-xs text-blue-700 mt-0.5">
+              Products connect only after user authentication. You can disconnect models and products anytime. All credentials are encrypted.
+            </p>
+          </div>
         </div>
 
         {/* Form */}

@@ -10,6 +10,7 @@ import { FollowUpActions } from "./FollowUpActions";
 import { useAuthStore, useChatStore } from "@/lib/store";
 import type { ChatMessage as ChatMessageType } from "@/types";
 import { generateId } from "@/lib/utils";
+import { Shield } from "lucide-react";
 
 const categoryMap: Record<string, { category: string; subcategory: string }> = {
   car: { category: "Vehicle / Automobile", subcategory: "Car Repair" },
@@ -629,6 +630,12 @@ export function ChatInterface() {
                     >
                       Cancel
                     </button>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-purple-100 flex items-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5 text-purple-500" />
+                    <p className="text-[10px] text-purple-600 font-medium">
+                      SAFAL-AI asks before running paid tasks. You are always in control.
+                    </p>
                   </div>
                 </div>
               </div>

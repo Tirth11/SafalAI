@@ -399,47 +399,52 @@ export default function SubscriptionsPage() {
         {/* Usage history */}
         <Card>
           <h3 className="font-semibold text-gray-900 mb-3">
-            Recent Token Activity
+            Safal Token Usage
           </h3>
-          <div className="divide-y divide-gray-100">
-            {usageHistory.map((tx) => (
-              <div
-                key={tx.id}
-                className="flex items-center justify-between py-2.5"
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={
-                      tx.tokens > 0
-                        ? "w-7 h-7 rounded-full bg-green-100 text-green-600 flex items-center justify-center"
-                        : "w-7 h-7 rounded-full bg-red-100 text-red-600 flex items-center justify-center"
-                    }
-                  >
-                    {tx.tokens > 0 ? (
-                      <ArrowUpRight className="w-3.5 h-3.5" />
-                    ) : (
-                      <ArrowDownRight className="w-3.5 h-3.5" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-900">{tx.action}</p>
-                    <p className="text-[11px] text-gray-400">
-                      {formatRelativeTime(tx.time)}
-                    </p>
-                  </div>
-                </div>
-                <span
-                  className={
-                    tx.tokens > 0
-                      ? "text-sm font-medium text-green-600"
-                      : "text-sm font-medium text-red-600"
-                  }
-                >
-                  {tx.tokens > 0 ? "+" : ""}
-                  {tx.tokens}
-                </span>
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-gray-100 text-[11px] uppercase tracking-wider text-gray-500">
+                  <th className="py-2.5 font-medium">Date</th>
+                  <th className="py-2.5 font-medium">Action</th>
+                  <th className="py-2.5 font-medium">Model</th>
+                  <th className="py-2.5 font-medium text-right">Tokens Used</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 text-sm">
+                {usageHistory.map((tx) => {
+                  const modelMatch = tx.action?.match(/\(([^)]+)\)$/);
+                  const model = modelMatch ? modelMatch[1] : "Auto Mode";
+                  const action = tx.action?.replace(/\s*\([^)]+\)$/, "") || tx.action;
+                  
+                  return (
+                    <tr key={tx.id} className="hover:bg-gray-50/50">
+                      <td className="py-3 text-gray-500 whitespace-nowrap">
+                        {formatRelativeTime(tx.time)}
+                      </td>
+                      <td className="py-3 text-gray-900 font-medium">
+                        {action}
+                      </td>
+                      <td className="py-3 text-gray-600">
+                        {tx.tokens > 0 ? "—" : model}
+                      </td>
+                      <td className="py-3 text-right">
+                        <span
+                          className={
+                            tx.tokens > 0
+                              ? "font-medium text-green-600"
+                              : "font-medium text-red-600"
+                          }
+                        >
+                          {tx.tokens > 0 ? "+" : ""}
+                          {tx.tokens}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </Card>
 

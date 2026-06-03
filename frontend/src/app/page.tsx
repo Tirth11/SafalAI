@@ -323,50 +323,35 @@ export default function LandingPage() {
               className="flex transition-transform duration-600 ease-in-out"
               style={{ transform: `translateX(-${carouselIndex * 100}%)` }}
             >
-              {/* ===== Slide 1: SafalVir Ecosystem ===== */}
+              {/* ===== Slide 1: SafalVir Product Ecosystem ===== */}
               <div className="w-full flex-shrink-0">
                 <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[420px]">
                   <div>
                     <span className="inline-flex items-center gap-2 bg-white/70 border border-gray-200 rounded-full px-3 py-1 text-xs font-medium text-gray-600">
-                      <Sparkles size={14} className="text-green-600" /> Connect SafalVir products, AI agents, custom LLM models, APIs, files, and workflows — all inside one intelligent workspace.
+                      <Package size={14} className="text-green-600" /> The SafalVir Ecosystem
                     </span>
                     <h1 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                      SAFAL-AI: One AI Platform for{" "}
+                      One Connected Ecosystem for{" "}
                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-purple-600">
-                        Smarter Work
+                        Work & Life
                       </span>
                     </h1>
                     <p className="mt-6 text-lg text-gray-600 leading-relaxed">
-                      SAFAL-AI helps users reduce manual work by turning prompts, uploads, and integrations into real actions. Users can connect SafalVir applications first, and then extend the platform with AI models like ChatGPT, Claude, Gemini, custom/private LLMs, and third-party APIs.
+                      SafalVir builds intelligent products that simplify your daily tasks. Safal-AI connects them all together in one unified platform.
                     </p>
                     <div className="mt-8 flex flex-wrap gap-3">
                       <Link
                         href="/auth/register"
-                        className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                        className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors shadow-sm shadow-green-200"
                       >
-                        Get Started
+                        Explore the Ecosystem <ArrowRight size={18} />
                       </Link>
-                      <a
-                        href="#products"
-                        className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-                      >
-                        Explore SAFAL-AI
-                      </a>
-                      <a
-                        href="#ai-models"
-                        className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-                      >
-                        Connect AI Model <ArrowRight size={18} />
-                      </a>
                     </div>
                   </div>
-                  {/* Illustration: Central hub with radiating product cards */}
                   <div className="relative flex items-center justify-center min-h-[340px]">
-                    {/* Central hub */}
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-500 to-green-600 shadow-xl flex items-center justify-center z-10">
-                      <Sparkles size={28} className="text-white" />
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 shadow-xl flex items-center justify-center z-10">
+                      <Package size={28} className="text-white" />
                     </div>
-                    {/* Radiating product cards */}
                     {[
                       { name: "SafalMyBuy", top: "5%", left: "10%", delay: "" },
                       { name: "SafalDrive", top: "0%", right: "15%", delay: "animate-float-slow" },
@@ -378,7 +363,7 @@ export default function LandingPage() {
                     ].map((p) => (
                       <div
                         key={p.name}
-                        className={`absolute bg-white rounded-xl shadow-lg border border-gray-100 px-3 py-2 flex items-center gap-2 ${p.delay}`}
+                        className={`absolute bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-100 px-3 py-2 flex items-center gap-2 ${p.delay}`}
                         style={{ top: p.top, left: p.left, right: p.right, bottom: p.bottom }}
                       >
                         <div className="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
@@ -387,7 +372,6 @@ export default function LandingPage() {
                         <span className="text-xs font-medium text-gray-700 whitespace-nowrap">{p.name}</span>
                       </div>
                     ))}
-                    {/* Subtle connection lines (circles) */}
                     <div className="absolute w-44 h-44 rounded-full border-2 border-dashed border-green-200 opacity-40" />
                     <div className="absolute w-72 h-72 rounded-full border border-dashed border-purple-200 opacity-30" />
                   </div>
@@ -399,34 +383,33 @@ export default function LandingPage() {
                 <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[420px]">
                   <div>
                     <span className="inline-flex items-center gap-2 bg-white/70 border border-gray-200 rounded-full px-3 py-1 text-xs font-medium text-gray-600">
-                      <Sparkles size={14} className="text-purple-600" /> Powered by AI
+                      <Sparkles size={14} className="text-purple-600" /> A Single AI Platform
                     </span>
                     <h1 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                      Work with SafalVir{" "}
+                      Connect Products, Models, and{" "}
                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-purple-600">
-                        Products Through AI
+                        Workflows
                       </span>
                     </h1>
                     <p className="mt-6 text-lg text-gray-600 leading-relaxed">
-                      Connect AI models, SafalVir apps, files, APIs, and workflows — and complete tasks through simple prompts.
+                      SAFAL-AI works as a central hub connecting SafalVir products, external AI models, APIs, and file uploads into one automated workspace.
                     </p>
                     <div className="mt-8 flex flex-wrap gap-3">
                       <Link
                         href="/auth/register"
                         className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
                       >
-                        Start with SAFAL-AI <ArrowRight size={18} />
+                        Start Automating <ArrowRight size={18} />
                       </Link>
                     </div>
                   </div>
-                  {/* Illustration: Chat UI mockup with floating badges */}
-                  <div className="relative">
-                    <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-6">
+                  <div className="relative flex items-center justify-center min-h-[340px]">
+                    <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-100 p-6 w-full max-w-sm">
                       <div className="flex items-center gap-2 mb-4">
                         <div className="w-3 h-3 rounded-full bg-red-400" />
                         <div className="w-3 h-3 rounded-full bg-yellow-400" />
                         <div className="w-3 h-3 rounded-full bg-green-400" />
-                        <span className="ml-2 text-xs text-gray-400">Safal-AI Chat</span>
+                        <span className="ml-2 text-xs text-gray-400">Safal-AI Hub</span>
                       </div>
                       <div className="space-y-3">
                         <div className="flex items-start gap-3">
@@ -434,39 +417,21 @@ export default function LandingPage() {
                             <Bot size={16} className="text-green-600" />
                           </div>
                           <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700">
-                            Hi! Connect a model, upload a file, or type a prompt.
+                            Upload a file or type a prompt to start an automated workflow.
                           </div>
                         </div>
                         <div className="flex items-start gap-3 justify-end">
                           <div className="bg-green-600 text-white rounded-lg p-3 text-sm">
-                            Summarize this report and create a task list
+                            Extract expenses from this receipt and update SafalMyBuy.
                           </div>
-                        </div>
-                        <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                            <Bot size={16} className="text-green-600" />
-                          </div>
-                          <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700">
-                            Done! Report summarized and 5 tasks created.
-                          </div>
-                        </div>
-                      </div>
-                      <div className="mt-4 flex items-center gap-2 border border-gray-200 rounded-lg p-2">
-                        <input type="text" placeholder="Type your prompt..." aria-label="Prompt preview" className="flex-1 text-sm bg-transparent outline-none text-gray-500" readOnly />
-                        <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                          <Send size={14} className="text-white" />
                         </div>
                       </div>
                     </div>
-                    {/* Floating badges */}
                     <div className="absolute -top-3 -right-3 bg-white shadow-lg rounded-full px-3 py-1.5 text-xs font-medium border border-gray-100 flex items-center gap-1.5 animate-float">
-                      <div className="w-2 h-2 rounded-full bg-green-500" /> AI Models
+                      <div className="w-2 h-2 rounded-full bg-green-500" /> AI Connected
                     </div>
-                    <div className="absolute top-1/4 -left-4 bg-white shadow-lg rounded-full px-3 py-1.5 text-xs font-medium border border-gray-100 flex items-center gap-1.5 animate-float-slow">
-                      <Upload size={12} className="text-purple-500" /> Files
-                    </div>
-                    <div className="absolute bottom-1/4 -right-4 bg-white shadow-lg rounded-full px-3 py-1.5 text-xs font-medium border border-gray-100 flex items-center gap-1.5 animate-float-delay">
-                      <Unplug size={12} className="text-blue-500" /> APIs
+                    <div className="absolute bottom-1/4 -left-4 bg-white shadow-lg rounded-full px-3 py-1.5 text-xs font-medium border border-gray-100 flex items-center gap-1.5 animate-float-slow">
+                      <Upload size={12} className="text-purple-500" /> Receipt.pdf
                     </div>
                   </div>
                 </div>
@@ -477,63 +442,55 @@ export default function LandingPage() {
                 <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[420px]">
                   <div>
                     <span className="inline-flex items-center gap-2 bg-white/70 border border-gray-200 rounded-full px-3 py-1 text-xs font-medium text-gray-600">
-                      <Sparkles size={14} className="text-green-600" /> SafalMyBuy
+                      <CreditCard size={14} className="text-blue-600" /> SafalMyBuy Example
                     </span>
                     <h1 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                      Use the AI Model That{" "}
-                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-purple-600">
-                        Fits Your Task
+                      Manage Purchases & Expenses{" "}
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-green-600">
+                        Effortlessly
                       </span>
                     </h1>
                     <p className="mt-6 text-lg text-gray-600 leading-relaxed">
-                      Connect SafalMyBuy with SAFAL-AI to manage expenses, purchase items, receipts, warranties, budgets, events, and reports through chat.
+                      With SafalMyBuy connected, use AI to instantly record expenses, save purchase items, track warranties, and generate monthly reports.
                     </p>
                     <div className="mt-8 flex flex-wrap gap-3">
-                      <Link
-                        href="/chat?product=safalmybuy"
-                        className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                      <a
+                        href="#products"
+                        className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                       >
-                        Connect SafalMyBuy <ArrowRight size={18} />
-                      </Link>
+                        View SafalMyBuy <ArrowRight size={18} />
+                      </a>
                     </div>
                   </div>
-                  {/* Illustration: Dashboard-style cards */}
                   <div className="relative flex items-center justify-center min-h-[340px]">
-                    {/* Expense card */}
-                    <div className="absolute top-4 left-4 bg-white rounded-xl shadow-lg border border-gray-100 p-4 w-48 animate-float">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center">
-                          <CreditCard size={16} className="text-green-600" />
-                        </div>
-                        <span className="text-xs font-semibold text-gray-700">Expenses</span>
-                      </div>
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between text-xs"><span className="text-gray-500">Groceries</span><span className="font-medium text-gray-700">$84.50</span></div>
-                        <div className="flex justify-between text-xs"><span className="text-gray-500">Software</span><span className="font-medium text-gray-700">$29.99</span></div>
-                        <div className="flex justify-between text-xs"><span className="text-gray-500">Travel</span><span className="font-medium text-gray-700">$156.00</span></div>
-                      </div>
-                    </div>
-                    {/* Receipt card */}
-                    <div className="absolute top-4 right-4 bg-white rounded-xl shadow-lg border border-gray-100 p-4 w-40 animate-float-slow">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
-                          <Receipt size={16} className="text-purple-600" />
-                        </div>
-                        <span className="text-xs font-semibold text-gray-700">Receipts</span>
-                      </div>
-                      <div className="space-y-1.5">
-                        <div className="h-2 bg-gray-100 rounded-full w-full" />
-                        <div className="h-2 bg-gray-100 rounded-full w-3/4" />
-                        <div className="h-2 bg-green-100 rounded-full w-1/2" />
-                      </div>
-                    </div>
-                    {/* Report chart card */}
-                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-lg border border-gray-100 p-4 w-56 animate-float-delay">
+                    <div className="absolute top-4 left-4 bg-white/95 rounded-xl shadow-lg border border-gray-100 p-4 w-48 animate-float">
                       <div className="flex items-center gap-2 mb-3">
                         <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                          <PieChart size={16} className="text-blue-600" />
+                          <CreditCard size={16} className="text-blue-600" />
                         </div>
-                        <span className="text-xs font-semibold text-gray-700">Monthly Report</span>
+                        <span className="text-xs font-semibold text-gray-700">Expenses Added</span>
+                      </div>
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between"><span className="text-gray-500">Laptop</span><span className="font-medium">$1200</span></div>
+                        <div className="flex justify-between"><span className="text-gray-500">Groceries</span><span className="font-medium">$85</span></div>
+                      </div>
+                    </div>
+                    <div className="absolute top-12 right-0 bg-white/95 rounded-xl shadow-lg border border-gray-100 p-4 w-44 animate-float-delay">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center">
+                          <CheckCircle size={16} className="text-orange-600" />
+                        </div>
+                        <span className="text-xs font-semibold text-gray-700">Warranty Saved</span>
+                      </div>
+                      <div className="h-2 bg-gray-100 rounded-full w-full mb-1" />
+                      <div className="h-2 bg-green-100 rounded-full w-2/3" />
+                    </div>
+                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white/95 rounded-xl shadow-lg border border-gray-100 p-4 w-56 animate-float-slow">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center">
+                          <PieChart size={16} className="text-green-600" />
+                        </div>
+                        <span className="text-xs font-semibold text-gray-700">Monthly Spending</span>
                       </div>
                       <div className="flex items-end gap-1.5 h-12">
                         {[40, 65, 45, 80, 55, 70, 90].map((h, i) => (
@@ -545,32 +502,31 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* ===== Slide 4: Coming Soon Products ===== */}
+              {/* ===== Slide 4: Other SafalVir Products ===== */}
               <div className="w-full flex-shrink-0">
                 <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[420px]">
                   <div>
                     <span className="inline-flex items-center gap-2 bg-white/70 border border-gray-200 rounded-full px-3 py-1 text-xs font-medium text-gray-600">
-                      <Sparkles size={14} className="text-purple-600" /> Coming Soon
+                      <Layers size={14} className="text-purple-600" /> More SafalVir Apps
                     </span>
                     <h1 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                      Type a Prompt. Review.{" "}
-                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-purple-600">
-                        Confirm. Done.
+                      A Suite of Apps to{" "}
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
+                        Power Your Workflow
                       </span>
                     </h1>
                     <p className="mt-6 text-lg text-gray-600 leading-relaxed">
-                      SafalVir products are designed to simplify daily work by bringing important records, reminders, subscriptions, files, and tools into one connected experience.
+                      Connect SafalDrive, SafalCalendar, SafalSubscriptions, and SafalUtilities to bring your files, schedules, and tools under one AI-driven roof.
                     </p>
                     <div className="mt-8 flex flex-wrap gap-3">
                       <a
                         href="#products"
-                        className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                        className="inline-flex items-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
                       >
-                        View Coming Soon Products <ArrowRight size={18} />
+                        Explore Products <ArrowRight size={18} />
                       </a>
                     </div>
                   </div>
-                  {/* Illustration: 2x2 product grid */}
                   <div className="relative flex items-center justify-center min-h-[340px]">
                     <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
                       {[
@@ -579,13 +535,13 @@ export default function LandingPage() {
                         { name: "SafalSubscriptions", icon: CreditCard, color: "bg-purple-50", iconColor: "text-purple-600", anim: "animate-float-delay" },
                         { name: "SafalUtilities", icon: Wrench, color: "bg-orange-50", iconColor: "text-orange-600", anim: "animate-float" },
                       ].map((product) => (
-                        <div key={product.name} className={`bg-white rounded-xl shadow-lg border border-gray-100 p-5 text-center ${product.anim}`}>
+                        <div key={product.name} className={`bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-100 p-5 text-center ${product.anim}`}>
                           <div className={`w-12 h-12 rounded-xl ${product.color} flex items-center justify-center mx-auto mb-3`}>
                             <product.icon size={22} className={product.iconColor} />
                           </div>
                           <h3 className="text-sm font-semibold text-gray-700 mb-2">{product.name}</h3>
-                          <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-full px-2 py-0.5">
-                            Coming Soon
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-gray-100 text-gray-600 rounded-full px-2 py-0.5">
+                            Connectable
                           </span>
                         </div>
                       ))}
@@ -594,56 +550,52 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* ===== Slide 5: AI Model Integration ===== */}
+              {/* ===== Slide 5: AI Model and API Integrations ===== */}
               <div className="w-full flex-shrink-0">
                 <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[420px]">
                   <div>
                     <span className="inline-flex items-center gap-2 bg-white/70 border border-gray-200 rounded-full px-3 py-1 text-xs font-medium text-gray-600">
-                      <Sparkles size={14} className="text-green-600" /> AI Models
+                      <Globe size={14} className="text-orange-600" /> AI Models & APIs
                     </span>
                     <h1 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                      Upload Files and Let{" "}
-                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-purple-600">
-                        AI Understand Them
+                      Bring Your Own{" "}
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500">
+                        AI Models
                       </span>
                     </h1>
                     <p className="mt-6 text-lg text-gray-600 leading-relaxed">
-                      Use ChatGPT, Claude, Gemini, custom LLMs, and third-party APIs inside SAFAL-AI to create one unified automation workspace.
+                      Integrate ChatGPT, Claude, Gemini, or your custom LLMs directly into SAFAL-AI. Use them interchangeably based on the task at hand.
                     </p>
                     <div className="mt-8 flex flex-wrap gap-3">
                       <a
                         href="#ai-models"
-                        className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                        className="inline-flex items-center gap-2 bg-orange-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-orange-700 transition-colors"
                       >
-                        <Plug size={18} /> Connect AI Model
+                        View Integrations <ArrowRight size={18} />
                       </a>
                     </div>
                   </div>
-                  {/* Illustration: Floating model cards connected to central node */}
                   <div className="relative flex items-center justify-center min-h-[340px]">
-                    {/* Central SAFAL-AI node */}
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-green-500 to-purple-500 shadow-xl flex items-center justify-center z-10">
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-400 to-red-500 shadow-xl flex items-center justify-center z-10">
                       <Bot size={28} className="text-white" />
                     </div>
-                    {/* Connection orbit rings */}
-                    <div className="absolute w-48 h-48 rounded-full border-2 border-dashed border-green-200 opacity-30" />
-                    <div className="absolute w-80 h-80 rounded-full border border-dashed border-purple-200 opacity-20" />
-                    {/* Model cards */}
-                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-lg border border-gray-100 px-4 py-2.5 flex items-center gap-2 animate-float">
+                    <div className="absolute w-48 h-48 rounded-full border-2 border-dashed border-orange-200 opacity-40" />
+                    <div className="absolute w-80 h-80 rounded-full border border-dashed border-red-200 opacity-20" />
+                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-white/95 rounded-xl shadow-lg border border-gray-100 px-4 py-2.5 flex items-center gap-2 animate-float">
                       <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center"><Bot size={12} className="text-white" /></div>
                       <span className="text-xs font-semibold text-gray-700">ChatGPT</span>
                     </div>
-                    <div className="absolute top-1/3 -left-2 bg-white rounded-xl shadow-lg border border-gray-100 px-4 py-2.5 flex items-center gap-2 animate-float-slow">
+                    <div className="absolute top-1/3 -left-2 bg-white/95 rounded-xl shadow-lg border border-gray-100 px-4 py-2.5 flex items-center gap-2 animate-float-slow">
                       <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center"><Bot size={12} className="text-white" /></div>
                       <span className="text-xs font-semibold text-gray-700">Claude</span>
                     </div>
-                    <div className="absolute top-1/3 -right-2 bg-white rounded-xl shadow-lg border border-gray-100 px-4 py-2.5 flex items-center gap-2 animate-float-delay">
+                    <div className="absolute top-1/3 -right-2 bg-white/95 rounded-xl shadow-lg border border-gray-100 px-4 py-2.5 flex items-center gap-2 animate-float-delay">
                       <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center"><Bot size={12} className="text-white" /></div>
                       <span className="text-xs font-semibold text-gray-700">Gemini</span>
                     </div>
-                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-lg border border-gray-100 px-4 py-2.5 flex items-center gap-2 animate-float">
+                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-white/95 rounded-xl shadow-lg border border-gray-100 px-4 py-2.5 flex items-center gap-2 animate-float">
                       <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center"><Bot size={12} className="text-white" /></div>
-                      <span className="text-xs font-semibold text-gray-700">Custom LLM</span>
+                      <span className="text-xs font-semibold text-gray-700">Custom LLMs</span>
                     </div>
                   </div>
                 </div>

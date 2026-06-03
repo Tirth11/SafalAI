@@ -3,12 +3,13 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { DashboardLayout } from "@/components/layout";
-import { ChatInterface, CustomChatInterface } from "@/components/chat";
+import { ChatInterface, CustomChatInterface, OnboardingChecklist } from "@/components/chat";
 import { ProductConnect } from "@/components/chat/ProductConnect";
 import {
   useAuthStore,
   useChatStore,
   useProductsStore,
+  useOnboardingStore
 } from "@/lib/store";
 import type { SafalProductId } from "@/types";
 import { CheckCircle, RotateCcw } from "lucide-react";
@@ -117,13 +118,14 @@ function ChatPageInner() {
       headerSubtitle={headerSubtitle}
       headerRight={headerRight}
     >
-      <div className="flex flex-col h-[calc(100vh-3.5rem)]">
+      <div className="flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto pt-4 relative">
+        <OnboardingChecklist />
         {isCustom ? (
           <CustomChatInterface />
         ) : isProductConnected ? (
           <>
             {/* Optional: tiny status strip showing connected state */}
-            <div className="flex-shrink-0 bg-green-50 border-b border-green-100 px-4 lg:px-6 py-2 flex items-center gap-2 text-xs text-green-700">
+            <div className="flex-shrink-0 bg-green-50 border-b border-green-100 px-4 lg:px-6 py-2 flex items-center gap-2 text-xs text-green-700 mt-auto">
               <CheckCircle className="w-3.5 h-3.5" />
               <span>{productName} connected</span>
             </div>
