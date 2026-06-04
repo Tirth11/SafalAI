@@ -400,9 +400,10 @@ export interface ProductConnection {
   connectedAs?: { name?: string; email?: string };
 }
 
-// Used by Custom Chat model dropdown
-export interface CustomChatModelOption {
-  id: string; // "auto" or LLMApiConfig.id
+// Used by AI Workspace model dropdown
+export interface AIWorkspaceModelOption {
+  id: string; // "auto" or "compare_all" or LLMApiConfig.id
   label: string;
   isAuto?: boolean;
+  isCompareAll?: boolean;
 }

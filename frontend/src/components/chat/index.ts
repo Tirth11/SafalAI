@@ -1,5 +1,5 @@
 export { ChatInterface } from "./ChatInterface";
-export { CustomChatInterface } from "./CustomChatInterface";
+export { AIWorkspaceInterface } from "./AIWorkspaceInterface";
 export { ChatMessage } from "./ChatMessage";
 export { ChatInput } from "./ChatInput";
 export { QuickActions } from "./QuickActions";

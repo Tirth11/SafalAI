@@ -76,7 +76,7 @@ const topUpPacks = [
 const fallbackUsageHistory = [
   {
     id: "1",
-    action: "Custom Chat (Auto Mode)",
+    action: "AI Workspace (Auto Mode)",
     tokens: -2,
     time: "2026-05-30T10:30:00Z",
   },

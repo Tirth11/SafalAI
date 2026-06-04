@@ -456,7 +456,7 @@ function SettingsPageInner() {
                   </h3>
                   <p className="text-xs text-gray-500 mt-1">
                     Add your own API keys for ChatGPT, Claude, Gemini, or any
-                    custom LLM. Added models become available in Custom Chat.
+                    custom LLM. Added models become available in AI Workspace.
                   </p>
                 </div>
                 {!showLLMForm && (
@@ -606,7 +606,7 @@ function SettingsPageInner() {
                     No LLM model APIs yet
                   </p>
                   <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
-                    Add your first model API to use it inside Custom Chat. Auto
+                    Add your first model API to use it inside AI Workspace. Auto
                     Mode will pick the best available model for each task.
                   </p>
                 </div>

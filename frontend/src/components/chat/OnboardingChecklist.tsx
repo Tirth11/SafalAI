@@ -27,7 +27,7 @@ export function OnboardingChecklist() {
   const steps = [
     { label: "Connect a SafalVir product", completed: hasConnectedProduct, href: "/integrations" },
     { label: "Add an AI model/API key", completed: hasAddedApi, href: "/integrations" },
-    { label: "Start Custom Chat", completed: hasStartedCustomChat, href: "/chat?product=custom" },
+    { label: "Start AI Workspace", completed: hasStartedCustomChat, href: "/chat?product=custom" },
     { label: "Upload your first file", completed: hasUploadedFile, href: null },
     { label: "Buy or view Safal Tokens", completed: hasViewedTokens, href: "/subscriptions" },
   ];

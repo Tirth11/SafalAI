@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { DashboardLayout } from "@/components/layout";
-import { ChatInterface, CustomChatInterface, OnboardingChecklist } from "@/components/chat";
+import { ChatInterface, AIWorkspaceInterface, OnboardingChecklist } from "@/components/chat";
 import { ProductConnect } from "@/components/chat/ProductConnect";
 import {
   useAuthStore,
@@ -90,7 +90,7 @@ function ChatPageInner() {
 
   // Header
   const headerTitle = isCustom
-    ? "Custom Chat"
+    ? "AI Workspace"
     : isProductConnected
       ? `${productName} Chat`
       : `${productName}`;
@@ -124,7 +124,7 @@ function ChatPageInner() {
       <div className="flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto pt-4 relative">
         <OnboardingChecklist />
         {isCustom ? (
-          <CustomChatInterface />
+          <AIWorkspaceInterface />
         ) : isProductConnected ? (
           <>
             {/* Optional: tiny status strip showing connected state */}

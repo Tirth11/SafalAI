@@ -123,7 +123,7 @@ export function Sidebar({ activeKey = "", onNavigate }: SidebarProps) {
           );
         })}
 
-        {/* Custom Chat — always available */}
+        {/* AI Workspace - always available */}
         <button
           onClick={() => navigate("product:custom", "/chat?product=custom")}
           className={cn(
@@ -134,7 +134,7 @@ export function Sidebar({ activeKey = "", onNavigate }: SidebarProps) {
         >
           <MessageSquare className="w-4 h-4 flex-shrink-0" />
           {sidebarOpen && (
-            <span className="flex-1 text-left truncate">Custom Chat</span>
+            <span className="flex-1 text-left truncate">AI Workspace</span>
           )}
         </button>
 
