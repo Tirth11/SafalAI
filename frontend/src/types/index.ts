@@ -258,11 +258,17 @@ export interface TrendData {
 // Chat/AI types
 export interface ChatMessage {
   id: string;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: string;
   action?: AIAction;
   attachments?: ChatAttachment[];
+  tokenUsage?: {
+    input: number;
+    output: number;
+    total: number;
+    remaining: number;
+  };
 }
 
 export interface ChatAttachment {

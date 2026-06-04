@@ -27,6 +27,12 @@ interface ChatTurn {
   content: string;
   modelLabel?: string;
   isCompareResult?: boolean;
+  tokenUsage?: {
+    input: number;
+    output: number;
+    total: number;
+    remaining: number;
+  };
 }
 
 const newId = () => `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;

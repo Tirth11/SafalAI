@@ -10,6 +10,50 @@ interface ChatMessageProps {
 
 export function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === "user";
+  const isSystem = message.role === "system";
+
+  if (isSystem) {
+    return (
+      <div className="flex justify-center my-4 animate-fade-in w-full">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-xs text-gray-600 max-w-md w-full">
+          {message.content && (
+            <div className="whitespace-pre-wrap mb-3 text-center text-sm font-medium">
+              {message.content}
+            </div>
+          )}
+          {message.tokenUsage && (
+            <div className="w-full rounded-lg border border-gray-200 overflow-hidden text-xs mt-2">
+              <table className="w-full text-left bg-white">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-3 py-2 font-medium text-gray-600">Token Type</th>
+                    <th className="px-3 py-2 font-medium text-gray-600 text-right">Safal Tokens</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 text-gray-700">
+                  <tr>
+                    <td className="px-3 py-2">Input Tokens Used</td>
+                    <td className="px-3 py-2 text-right">{message.tokenUsage.input}</td>
+                  </tr>
+                  <tr>
+                    <td className="px-3 py-2">Output Tokens Used</td>
+                    <td className="px-3 py-2 text-right">{message.tokenUsage.output}</td>
+                  </tr>
+                  <tr className="font-semibold text-gray-900 bg-gray-50">
+                    <td className="px-3 py-2">Total Tokens Deducted</td>
+                    <td className="px-3 py-2 text-right">{message.tokenUsage.total}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div className="px-3 py-2 bg-gray-50 text-right text-green-600 font-semibold border-t border-gray-200">
+                Remaining Balance: {message.tokenUsage.remaining}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`flex gap-3 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
@@ -33,8 +77,8 @@ export function ChatMessage({ message }: ChatMessageProps) {
         <div
           className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
             isUser
-              ? "bg-green-600 text-white rounded-br-md"
-              : "bg-gray-100 text-gray-900 rounded-bl-md"
+              ? "bg-green-600 text-white rounded-br-md shadow-sm"
+              : "bg-white border border-gray-200 text-gray-800 rounded-bl-md shadow-sm"
           }`}
         >
           {message.content}
@@ -56,7 +100,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
         )}
 
         {/* Timestamp */}
-        <span className="text-[10px] text-gray-400 px-1">
+        <span className="text-[10px] text-gray-400 px-1 mt-1">
           {formatRelativeTime(message.timestamp)}
         </span>
       </div>

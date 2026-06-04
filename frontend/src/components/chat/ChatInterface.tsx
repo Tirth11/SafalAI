@@ -86,7 +86,9 @@ const estimateTokens = (prompt: string, attachments?: File[]) => {
   const fileTokens = attachments && attachments.length > 0 ? attachments.length * 4 : 0;
   const complexity = clean.length > 200 ? 2 : 0;
   const attachmentBoost = attachments && attachments.length > 0 ? 2 : 0;
-  return Math.min(60, base + fileTokens + complexity + attachmentBoost);
+  const input = Math.min(60, base + fileTokens + complexity + attachmentBoost);
+  const output = input * 2 + 1;
+  return { input, output, total: input + output };
 };
 
 const summarizePrompt = (prompt: string, attachments?: File[]) => {
@@ -447,11 +449,18 @@ export function ChatInterface() {
       });
 
       const remaining = Math.max(0, tokenBalance - tokensUsed);
+      const estTokens = estimateTokens(message, attachments);
       addMessage({
         id: generateId(),
-        role: "assistant",
-        content: `Task completed successfully.\nSafal Tokens used: ${tokensUsed}\nRemaining balance: ${remaining}\nModel used: ${modelLabel}\nTask type: ${taskType}`,
+        role: "system",
+        content: `Task completed successfully. (Model: ${modelLabel})`,
         timestamp: new Date().toISOString(),
+        tokenUsage: {
+          input: estTokens.input,
+          output: estTokens.output,
+          total: tokensUsed,
+          remaining: remaining
+        }
       });
     } catch {
       addMessage({
@@ -469,7 +478,7 @@ export function ChatInterface() {
   const handleConfirmRun = async () => {
     if (!pendingPrompt) return;
     const finalText = confirmDraft.trim();
-    const tokensUsed = estimateTokens(finalText, pendingPrompt.attachments);
+    const est = estimateTokens(finalText, pendingPrompt.attachments);
     const taskType = getTaskType(finalText);
     const modelLabel = pendingPrompt.modelLabel;
     const attachments = pendingPrompt.attachments;
@@ -479,7 +488,7 @@ export function ChatInterface() {
     setConfirmDraft("");
     setSuggestedPrompt(null);
 
-    await executePrompt(finalText, attachments, tokensUsed, modelLabel, taskType);
+    await executePrompt(finalText, attachments, est.total, modelLabel, taskType);
   };
 
   const handleModifyPrompt = () => {
@@ -504,6 +513,12 @@ export function ChatInterface() {
     setConfirmMode(null);
     setConfirmDraft("");
     setSuggestedPrompt(null);
+    addMessage({
+      id: generateId(),
+      role: "system",
+      content: "Prompt cancelled. No Safal Tokens were used.",
+      timestamp: new Date().toISOString()
+    });
   };
 
   const handleQuickAction = (actionId: string) => {
@@ -582,35 +597,45 @@ export function ChatInterface() {
                     <span className="font-medium text-gray-900">Prompt:</span>{" "}
                     {summarizePrompt(confirmDraft || pendingPrompt.text, pendingPrompt.attachments)}
                   </div>
-                  <div className="mt-3 grid sm:grid-cols-2 gap-2 text-xs text-gray-600">
-                    <div>
-                      <span className="text-gray-500">Model:</span>{" "}
-                      <span className="font-medium text-gray-800">{pendingPrompt.modelLabel}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Estimated Safal Tokens:</span>{" "}
-                      <span className="font-medium text-gray-800">
-                        {estimateTokens(confirmDraft || pendingPrompt.text, pendingPrompt.attachments)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Current Balance:</span>{" "}
-                      <span className="font-medium text-gray-800">{tokenBalance}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Balance After:</span>{" "}
-                      <span className="font-medium text-gray-800">
-                        {Math.max(
-                          0,
-                          tokenBalance -
-                            estimateTokens(
-                              confirmDraft || pendingPrompt.text,
-                              pendingPrompt.attachments
-                            )
-                        )}
-                      </span>
-                    </div>
-                  </div>
+                  {(() => {
+                    const est = estimateTokens(confirmDraft || pendingPrompt.text, pendingPrompt.attachments);
+                    return (
+                      <>
+                        <div className="mt-3 mb-2 text-sm text-gray-700">
+                          <span className="text-gray-500">Model:</span>{" "}
+                          <span className="font-medium text-gray-800">{pendingPrompt.modelLabel}</span>
+                        </div>
+                        <div className="mt-2 w-full rounded-lg border border-gray-200 overflow-hidden text-xs">
+                          <table className="w-full text-left bg-white">
+                            <thead className="bg-gray-50 border-b border-gray-200">
+                              <tr>
+                                <th className="px-3 py-2 font-medium text-gray-600">Token Type</th>
+                                <th className="px-3 py-2 font-medium text-gray-600 text-right">Safal Tokens</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 text-gray-700">
+                              <tr>
+                                <td className="px-3 py-2">Input Prompt Tokens</td>
+                                <td className="px-3 py-2 text-right">{est.input}</td>
+                              </tr>
+                              <tr>
+                                <td className="px-3 py-2">Estimated Output Tokens</td>
+                                <td className="px-3 py-2 text-right">{est.output}</td>
+                              </tr>
+                              <tr className="font-semibold text-gray-900 bg-gray-50">
+                                <td className="px-3 py-2">Total Estimated Tokens</td>
+                                <td className="px-3 py-2 text-right">{est.total}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                          <div className="px-3 py-2 bg-gray-50 text-right font-semibold border-t border-gray-200 flex justify-between items-center">
+                            <span className="text-gray-500 font-normal">Balance After Task:</span>
+                            <span className="text-green-600 text-sm">{Math.max(0, tokenBalance - est.total)}</span>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
                   <div className="mt-4 flex flex-wrap gap-2">
                     <button
                       onClick={handleConfirmRun}
@@ -698,32 +723,45 @@ export function ChatInterface() {
                       </div>
                     </div>
                   )}
-                  <div className="mt-3 grid sm:grid-cols-2 gap-2 text-xs text-gray-600">
-                    <div>
-                      <span className="text-gray-500">Model:</span>{" "}
-                      <span className="font-medium text-gray-800">{pendingPrompt.modelLabel}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Estimated Safal Tokens:</span>{" "}
-                      <span className="font-medium text-gray-800">
-                        {estimateTokens(confirmDraft, pendingPrompt.attachments)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Current Balance:</span>{" "}
-                      <span className="font-medium text-gray-800">{tokenBalance}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Balance After:</span>{" "}
-                      <span className="font-medium text-gray-800">
-                        {Math.max(
-                          0,
-                          tokenBalance -
-                            estimateTokens(confirmDraft, pendingPrompt.attachments)
-                        )}
-                      </span>
-                    </div>
-                  </div>
+                  {(() => {
+                    const est = estimateTokens(confirmDraft, pendingPrompt.attachments);
+                    return (
+                      <>
+                        <div className="mt-3 mb-2 text-sm text-gray-700">
+                          <span className="text-gray-500">Model:</span>{" "}
+                          <span className="font-medium text-gray-800">{pendingPrompt.modelLabel}</span>
+                        </div>
+                        <div className="mt-2 w-full rounded-lg border border-gray-200 overflow-hidden text-xs">
+                          <table className="w-full text-left bg-white">
+                            <thead className="bg-gray-50 border-b border-gray-200">
+                              <tr>
+                                <th className="px-3 py-2 font-medium text-gray-600">Token Type</th>
+                                <th className="px-3 py-2 font-medium text-gray-600 text-right">Safal Tokens</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 text-gray-700">
+                              <tr>
+                                <td className="px-3 py-2">Input Prompt Tokens</td>
+                                <td className="px-3 py-2 text-right">{est.input}</td>
+                              </tr>
+                              <tr>
+                                <td className="px-3 py-2">Estimated Output Tokens</td>
+                                <td className="px-3 py-2 text-right">{est.output}</td>
+                              </tr>
+                              <tr className="font-semibold text-gray-900 bg-gray-50">
+                                <td className="px-3 py-2">Total Estimated Tokens</td>
+                                <td className="px-3 py-2 text-right">{est.total}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                          <div className="px-3 py-2 bg-gray-50 text-right font-semibold border-t border-gray-200 flex justify-between items-center">
+                            <span className="text-gray-500 font-normal">Balance After Task:</span>
+                            <span className="text-green-600 text-sm">{Math.max(0, tokenBalance - est.total)}</span>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
                   <div className="mt-4 flex flex-wrap gap-2">
                     <button
                       onClick={handleReviewUpdatedPrompt}
