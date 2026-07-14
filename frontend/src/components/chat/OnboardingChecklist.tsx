@@ -29,7 +29,7 @@ export function OnboardingChecklist() {
   const hasCreatedAgent = agents.length > 0;
 
   const steps = [
-    { label: "Connect a SafalVir product", desc: "Link an app to automate your tasks.", completed: hasConnectedProduct, href: "/chat?product=safalmybuy" },
+    { label: "Connect a SafalVir product", desc: "Link an app to automate your tasks.", completed: hasConnectedProduct, href: "/products" },
     { label: "Create AI Connections", desc: "Add your preferred AI models and APIs.", completed: hasAddedApi, href: "/ai-studio/connections" },
     { label: "Create Agent", desc: "Build a custom AI agent tailored to your needs.", completed: hasCreatedAgent, href: "/ai-studio/create-agent" },
     { label: "My Agents", desc: "View and manage your custom agents.", completed: false, href: "/ai-studio/my-agents" },
