@@ -37,6 +37,7 @@ function ChatPageInner() {
 
   const { isAuthenticated, user } = useAuthStore();
   const { connections, connect } = useProductsStore();
+  const { isOnboardingDismissed } = useOnboardingStore();
 
   const [hydrated, setHydrated] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -124,7 +125,7 @@ function ChatPageInner() {
     >
       <div className="flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto pt-4 relative">
         <OnboardingChecklist />
-        {isCustom ? (
+        {!isOnboardingDismissed ? null : isCustom ? (
           <AIWorkspaceInterface agentId={agentId} />
         ) : isProductConnected ? (
           <>
