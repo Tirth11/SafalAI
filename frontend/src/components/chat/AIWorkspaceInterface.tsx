@@ -164,7 +164,7 @@ export function AIWorkspaceInterface({ agentId }: { agentId?: string | null }) {
   const resolveModelLabel = (): { label: string; api: LLMApiConfig | null; isCompareAll: boolean } => {
     // If we have an active agent, use its LLM
     if (activeAgent) {
-      if (activeAgent.llmConnectionId) {
+      if ("llmConnectionId" in activeAgent && activeAgent.llmConnectionId) {
         // Find in storeLlms or apis
         const api = apis.find(a => a.id === activeAgent.llmConnectionId) || null;
         if (api) {
@@ -173,6 +173,8 @@ export function AIWorkspaceInterface({ agentId }: { agentId?: string | null }) {
           // It might be a custom string from marketplace
           return { api: null, label: (activeAgent as any).llmLabel || "Configured LLM", isCompareAll: false };
         }
+      } else if ("llmLabel" in activeAgent && activeAgent.llmLabel) {
+        return { api: null, label: activeAgent.llmLabel, isCompareAll: false };
       }
       return { api: null, label: "Agent Default Model", isCompareAll: false };
     }
@@ -541,7 +543,7 @@ export function AIWorkspaceInterface({ agentId }: { agentId?: string | null }) {
                       <Check className="w-4 h-4 text-green-500" />
                       <span>{resolveModelLabel().label}</span>
                     </li>
-                    {activeAgent.mcpSelections?.map((mcp: string) => (
+                    {(activeAgent as any).mcpSelections?.map((mcp: string) => (
                       <li key={mcp} className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-green-500" />
                         <span>{mcp}</span>
@@ -553,7 +555,7 @@ export function AIWorkspaceInterface({ agentId }: { agentId?: string | null }) {
                         <span>{mcp}</span>
                       </li>
                     ))}
-                    {activeAgent.apiSelections?.map((api: string) => (
+                    {(activeAgent as any).apiSelections?.map((api: string) => (
                       <li key={api} className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-green-500" />
                         <span>{api} API</span>
