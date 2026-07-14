@@ -124,7 +124,7 @@ export function OnboardingChecklist() {
                 <p className="text-xs text-gray-500 truncate mt-0.5">{step.desc}</p>
               </div>
               
-              {!step.completed && step.href && (
+              {step.href && (
                 <button 
                   onClick={() => router.push(step.href!)}
                   className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white px-4 py-2 rounded-lg transition-all duration-300 group-hover/item:pr-3"
