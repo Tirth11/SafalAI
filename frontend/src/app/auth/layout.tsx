@@ -25,7 +25,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       {/* Footer */}
       <footer className="py-4 text-center">
         <p className="text-xs text-gray-400">
-          &copy; {new Date().getFullYear()} Safal-AI. All rights reserved.
+          © SafalVir, Inc. 2026. All rights reserved.
         </p>
       </footer>
     </div>

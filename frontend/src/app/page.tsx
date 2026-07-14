@@ -45,38 +45,15 @@ import {
   Receipt,
   ClipboardList,
   PieChart,
+  Play,
+  Brain,
+  Server,
 } from "lucide-react";
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [contactSent, setContactSent] = useState(false);
-  const [carouselIndex, setCarouselIndex] = useState(0);
-  const [carouselPaused, setCarouselPaused] = useState(false);
-  const totalSlides = 5;
-  const carouselTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const goToSlide = useCallback((index: number) => {
-    setCarouselIndex((index + totalSlides) % totalSlides);
-  }, []);
-
-  const nextSlide = useCallback(() => {
-    setCarouselIndex((prev) => (prev + 1) % totalSlides);
-  }, []);
-
-  const prevSlide = useCallback(() => {
-    setCarouselIndex((prev) => (prev - 1 + totalSlides) % totalSlides);
-  }, []);
-
-  useEffect(() => {
-    if (carouselPaused) return;
-    carouselTimerRef.current = setInterval(() => {
-      nextSlide();
-    }, 5000);
-    return () => {
-      if (carouselTimerRef.current) clearInterval(carouselTimerRef.current);
-    };
-  }, [carouselPaused, nextSlide]);
 
   const navLinks = [
     { label: "Features", href: "#features" },
@@ -309,334 +286,98 @@ export default function LandingPage() {
         )}
       </header>
 
-      {/* Hero Carousel Section (SAI-LP-003, SAI-LP-004) */}
+      {/* Hero Section */}
       <section className="pt-24 pb-16 md:pt-32 md:pb-24 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-green-50 via-white to-purple-50 opacity-70" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Carousel container */}
-          <div
-            className="overflow-hidden relative group"
-            onMouseEnter={() => setCarouselPaused(true)}
-            onMouseLeave={() => setCarouselPaused(false)}
-          >
-            <div
-              className="flex transition-transform duration-600 ease-in-out"
-              style={{ transform: `translateX(-${carouselIndex * 100}%)` }}
-            >
-              {/* ===== Slide 1: SafalVir Product Ecosystem ===== */}
-              <div className="w-full flex-shrink-0">
-                <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[420px]">
-                  <div>
-                    <span className="inline-flex items-center gap-2 bg-white/70 border border-gray-200 rounded-full px-3 py-1 text-xs font-medium text-gray-600">
-                      <Package size={14} className="text-green-600" /> The SafalVir Ecosystem
-                    </span>
-                    <h1 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                      One Connected Ecosystem for{" "}
-                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-purple-600">
-                        Work & Life
-                      </span>
-                    </h1>
-                    <p className="mt-6 text-lg text-gray-600 leading-relaxed">
-                      SafalVir builds intelligent products that simplify your daily tasks. Safal-AI connects them all together in one unified platform.
-                    </p>
-                    <div className="mt-8 flex flex-wrap gap-3">
-                      <Link
-                        href="/auth/register"
-                        className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors shadow-sm shadow-green-200"
-                      >
-                        Explore the Ecosystem <ArrowRight size={18} />
-                      </Link>
-                    </div>
-                  </div>
-                  <div className="relative flex items-center justify-center min-h-[340px]">
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 shadow-xl flex items-center justify-center z-10">
-                      <Package size={28} className="text-white" />
-                    </div>
-                    {[
-                      { name: "SafalMyBuy", top: "5%", left: "10%", delay: "", logo: "/logos/safalmybuy.png" },
-                      { name: "SafalDrive", top: "0%", right: "15%", delay: "animate-float-slow", logo: "/logos/safaldrive.png" },
-                      { name: "SafalCalendar", top: "35%", left: "-2%", delay: "animate-float-delay", logo: "/logos/safalcalendar.svg" },
-                      { name: "SafalSubscriptions", top: "35%", right: "-2%", delay: "animate-float", logo: "/logos/safalsubscriptions.png" },
-                      { name: "SafalVendors", bottom: "15%", left: "8%", delay: "animate-float-slow", logo: "/logos/safalvendors.svg" },
-                      { name: "SafalReviews", bottom: "10%", right: "10%", delay: "animate-float-delay", logo: "/logos/safalreviews.svg" },
-                      { name: "SafalUtilities", bottom: "0%", left: "38%", delay: "animate-float", logo: "/logos/safalutilities.svg" },
-                    ].map((p) => (
-                      <div
-                        key={p.name}
-                        className={`absolute bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-100 px-3 py-2 flex items-center gap-2 ${p.delay}`}
-                        style={{ top: p.top, left: p.left, right: p.right, bottom: p.bottom }}
-                      >
-                        <div className="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
-                          <img src={p.logo} alt={p.name} className="w-4 h-4 object-contain" />
-                        </div>
-                        <span className="text-xs font-medium text-gray-700 whitespace-nowrap">{p.name}</span>
-                      </div>
-                    ))}
-                    <div className="absolute w-44 h-44 rounded-full border-2 border-dashed border-green-200 opacity-40" />
-                    <div className="absolute w-72 h-72 rounded-full border border-dashed border-purple-200 opacity-30" />
-                  </div>
-                </div>
-              </div>
-
-              {/* ===== Slide 2: SAFAL-AI ===== */}
-              <div className="w-full flex-shrink-0">
-                <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[420px]">
-                  <div>
-                    <span className="inline-flex items-center gap-2 bg-white/70 border border-gray-200 rounded-full px-3 py-1 text-xs font-medium text-gray-600">
-                      <Sparkles size={14} className="text-purple-600" /> A Single AI Platform
-                    </span>
-                    <h1 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                      Connect Products, Models, and{" "}
-                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-purple-600">
-                        Workflows
-                      </span>
-                    </h1>
-                    <p className="mt-6 text-lg text-gray-600 leading-relaxed">
-                      SAFAL-AI works as a central hub connecting SafalVir products, external AI models, APIs, and file uploads into one automated workspace.
-                    </p>
-                    <div className="mt-8 flex flex-wrap gap-3">
-                      <Link
-                        href="/auth/register"
-                        className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
-                      >
-                        Start Automating <ArrowRight size={18} />
-                      </Link>
-                    </div>
-                  </div>
-                  <div className="relative flex items-center justify-center min-h-[340px]">
-                    <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-100 p-6 w-full max-w-sm">
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="w-3 h-3 rounded-full bg-red-400" />
-                        <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                        <div className="w-3 h-3 rounded-full bg-green-400" />
-                        <span className="ml-2 text-xs text-gray-400">Safal-AI Hub</span>
-                      </div>
-                      <div className="space-y-3">
-                        <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                            <Bot size={16} className="text-green-600" />
-                          </div>
-                          <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700">
-                            Upload a file or type a prompt to start an automated workflow.
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-3 justify-end">
-                          <div className="bg-green-600 text-white rounded-lg p-3 text-sm">
-                            Extract expenses from this receipt and update SafalMyBuy.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="absolute -top-3 -right-3 bg-white shadow-lg rounded-full px-3 py-1.5 text-xs font-medium border border-gray-100 flex items-center gap-1.5 animate-float">
-                      <div className="w-2 h-2 rounded-full bg-green-500" /> AI Connected
-                    </div>
-                    <div className="absolute bottom-1/4 -left-4 bg-white shadow-lg rounded-full px-3 py-1.5 text-xs font-medium border border-gray-100 flex items-center gap-1.5 animate-float-slow">
-                      <Upload size={12} className="text-purple-500" /> Receipt.pdf
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* ===== Slide 3: SafalMyBuy ===== */}
-              <div className="w-full flex-shrink-0">
-                <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[420px]">
-                  <div>
-                    <span className="inline-flex items-center gap-2 bg-white/70 border border-gray-200 rounded-full px-3 py-1 text-xs font-medium text-gray-600">
-                      <CreditCard size={14} className="text-blue-600" /> SafalMyBuy Example
-                    </span>
-                    <h1 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                      Manage Purchases & Expenses{" "}
-                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-green-600">
-                        Effortlessly
-                      </span>
-                    </h1>
-                    <p className="mt-6 text-lg text-gray-600 leading-relaxed">
-                      With SafalMyBuy connected, use AI to instantly record expenses, save purchase items, track warranties, and generate monthly reports.
-                    </p>
-                    <div className="mt-8 flex flex-wrap gap-3">
-                      <a
-                        href="#products"
-                        className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                      >
-                        View SafalMyBuy <ArrowRight size={18} />
-                      </a>
-                    </div>
-                  </div>
-                  <div className="relative flex items-center justify-center min-h-[340px]">
-                    <div className="absolute top-4 left-4 bg-white/95 rounded-xl shadow-lg border border-gray-100 p-4 w-48 animate-float">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                          <CreditCard size={16} className="text-blue-600" />
-                        </div>
-                        <span className="text-xs font-semibold text-gray-700">Expenses Added</span>
-                      </div>
-                      <div className="space-y-2 text-xs">
-                        <div className="flex justify-between"><span className="text-gray-500">Laptop</span><span className="font-medium">$1200</span></div>
-                        <div className="flex justify-between"><span className="text-gray-500">Groceries</span><span className="font-medium">$85</span></div>
-                      </div>
-                    </div>
-                    <div className="absolute top-12 right-0 bg-white/95 rounded-xl shadow-lg border border-gray-100 p-4 w-44 animate-float-delay">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center">
-                          <CheckCircle size={16} className="text-orange-600" />
-                        </div>
-                        <span className="text-xs font-semibold text-gray-700">Warranty Saved</span>
-                      </div>
-                      <div className="h-2 bg-gray-100 rounded-full w-full mb-1" />
-                      <div className="h-2 bg-green-100 rounded-full w-2/3" />
-                    </div>
-                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white/95 rounded-xl shadow-lg border border-gray-100 p-4 w-56 animate-float-slow">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center">
-                          <PieChart size={16} className="text-green-600" />
-                        </div>
-                        <span className="text-xs font-semibold text-gray-700">Monthly Spending</span>
-                      </div>
-                      <div className="flex items-end gap-1.5 h-12">
-                        {[40, 65, 45, 80, 55, 70, 90].map((h, i) => (
-                          <div key={i} className="flex-1 bg-gradient-to-t from-green-500 to-green-300 rounded-t" style={{ height: `${h}%` }} />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* ===== Slide 4: Other SafalVir Products ===== */}
-              <div className="w-full flex-shrink-0">
-                <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[420px]">
-                  <div>
-                    <span className="inline-flex items-center gap-2 bg-white/70 border border-gray-200 rounded-full px-3 py-1 text-xs font-medium text-gray-600">
-                      <Layers size={14} className="text-purple-600" /> More SafalVir Apps
-                    </span>
-                    <h1 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                      A Suite of Apps to{" "}
-                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-                        Power Your Workflow
-                      </span>
-                    </h1>
-                    <p className="mt-6 text-lg text-gray-600 leading-relaxed">
-                      Connect SafalDrive, SafalCalendar, SafalSubscriptions, and SafalUtilities to bring your files, schedules, and tools under one AI-driven roof.
-                    </p>
-                    <div className="mt-8 flex flex-wrap gap-3">
-                      <a
-                        href="#products"
-                        className="inline-flex items-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
-                      >
-                        Explore Products <ArrowRight size={18} />
-                      </a>
-                    </div>
-                  </div>
-                  <div className="relative flex items-center justify-center min-h-[340px]">
-                    <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
-                      {[
-                        { name: "SafalDrive", icon: HardDrive, color: "bg-blue-50", iconColor: "text-blue-600", anim: "animate-float" },
-                        { name: "SafalCalendar", icon: Calendar, color: "bg-green-50", iconColor: "text-green-600", anim: "animate-float-slow" },
-                        { name: "SafalSubscriptions", icon: CreditCard, color: "bg-purple-50", iconColor: "text-purple-600", anim: "animate-float-delay" },
-                        { name: "SafalUtilities", icon: Wrench, color: "bg-orange-50", iconColor: "text-orange-600", anim: "animate-float" },
-                      ].map((product) => (
-                        <div key={product.name} className={`bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-100 p-5 text-center ${product.anim}`}>
-                          <div className={`w-12 h-12 rounded-xl ${product.color} flex items-center justify-center mx-auto mb-3`}>
-                            <product.icon size={22} className={product.iconColor} />
-                          </div>
-                          <h3 className="text-sm font-semibold text-gray-700 mb-2">{product.name}</h3>
-                          <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-gray-100 text-gray-600 rounded-full px-2 py-0.5">
-                            Connectable
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* ===== Slide 5: AI Model and API Integrations ===== */}
-              <div className="w-full flex-shrink-0">
-                <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[420px]">
-                  <div>
-                    <span className="inline-flex items-center gap-2 bg-white/70 border border-gray-200 rounded-full px-3 py-1 text-xs font-medium text-gray-600">
-                      <Globe size={14} className="text-orange-600" /> AI Models & APIs
-                    </span>
-                    <h1 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                      Bring Your Own{" "}
-                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500">
-                        AI Models
-                      </span>
-                    </h1>
-                    <p className="mt-6 text-lg text-gray-600 leading-relaxed">
-                      Integrate ChatGPT, Claude, Gemini, or your custom LLMs directly into SAFAL-AI. Use them interchangeably based on the task at hand.
-                    </p>
-                    <div className="mt-8 flex flex-wrap gap-3">
-                      <a
-                        href="#ai-models"
-                        className="inline-flex items-center gap-2 bg-orange-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-orange-700 transition-colors"
-                      >
-                        View Integrations <ArrowRight size={18} />
-                      </a>
-                    </div>
-                  </div>
-                  <div className="relative flex items-center justify-center min-h-[340px]">
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-400 to-red-500 shadow-xl flex items-center justify-center z-10">
-                      <Bot size={28} className="text-white" />
-                    </div>
-                    <div className="absolute w-48 h-48 rounded-full border-2 border-dashed border-orange-200 opacity-40" />
-                    <div className="absolute w-80 h-80 rounded-full border border-dashed border-red-200 opacity-20" />
-                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-white/95 rounded-xl shadow-lg border border-gray-100 px-4 py-2.5 flex items-center gap-2 animate-float">
-                      <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center"><Bot size={12} className="text-white" /></div>
-                      <span className="text-xs font-semibold text-gray-700">ChatGPT</span>
-                    </div>
-                    <div className="absolute top-1/3 -left-2 bg-white/95 rounded-xl shadow-lg border border-gray-100 px-4 py-2.5 flex items-center gap-2 animate-float-slow">
-                      <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center"><Bot size={12} className="text-white" /></div>
-                      <span className="text-xs font-semibold text-gray-700">Claude</span>
-                    </div>
-                    <div className="absolute top-1/3 -right-2 bg-white/95 rounded-xl shadow-lg border border-gray-100 px-4 py-2.5 flex items-center gap-2 animate-float-delay">
-                      <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center"><Bot size={12} className="text-white" /></div>
-                      <span className="text-xs font-semibold text-gray-700">Gemini</span>
-                    </div>
-                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-white/95 rounded-xl shadow-lg border border-gray-100 px-4 py-2.5 flex items-center gap-2 animate-float">
-                      <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center"><Bot size={12} className="text-white" /></div>
-                      <span className="text-xs font-semibold text-gray-700">Custom LLMs</span>
-                    </div>
-                  </div>
-                </div>
+          <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[420px]">
+            {/* Left Content */}
+            <div className="z-10 relative">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                One AI Platform for All Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-purple-600">Work</span>
+              </h1>
+              <p className="mt-4 text-xl font-medium text-gray-800">
+                Build, Connect, and Automate with AI
+              </p>
+              <p className="mt-6 text-lg text-gray-600 leading-relaxed">
+                Safal-AI brings together AI models, AI agents, MCP servers, APIs, files, and SafalVir products into one intelligent workspace. Create custom AI agents, automate workflows, and complete tasks faster from a single platform.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-4">
+                <Link
+                  href="/auth/register"
+                  className="inline-flex items-center justify-center gap-2 bg-green-600 text-white px-8 py-3.5 rounded-xl font-medium hover:bg-green-700 transition-all shadow-lg shadow-green-200/50 hover:shadow-green-300/50"
+                >
+                  <span className="w-2.5 h-2.5 bg-green-300 rounded-full animate-pulse" /> Start Free
+                </Link>
+                <Link
+                  href="#demo"
+                  className="inline-flex items-center justify-center gap-2 bg-white text-gray-800 border border-gray-200 px-8 py-3.5 rounded-xl font-medium hover:bg-gray-50 transition-all shadow-sm"
+                >
+                  <Play size={18} className="text-gray-500 fill-gray-500" /> Watch Demo
+                </Link>
               </div>
             </div>
+            
+            {/* Right Image/Illustration */}
+            <div className="relative flex items-center justify-center min-h-[400px]">
+              <div className="absolute inset-0 bg-gradient-to-tr from-green-100/40 to-purple-100/40 rounded-full blur-3xl" />
+              
+              {/* Central Hub */}
+              <div className="relative z-10 w-32 h-32 rounded-3xl bg-gradient-to-br from-green-500 to-purple-600 shadow-2xl flex items-center justify-center border-4 border-white/50 backdrop-blur-sm animate-float">
+                <Sparkles size={48} className="text-white" />
+                
+                {/* Connecting Lines */}
+                <svg className="absolute -inset-24 w-[calc(100%+192px)] h-[calc(100%+192px)] pointer-events-none -z-10">
+                  <circle cx="50%" cy="50%" r="45%" fill="none" stroke="currentColor" className="text-green-200 opacity-50" strokeWidth="2" strokeDasharray="6 6" />
+                  <circle cx="50%" cy="50%" r="30%" fill="none" stroke="currentColor" className="text-purple-200 opacity-50" strokeWidth="1" strokeDasharray="4 4" />
+                </svg>
+              </div>
 
-            {/* Navigation Arrows */}
-            <button
-              onClick={prevSlide}
-              className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/60 hover:bg-white shadow-lg border border-gray-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20"
-              aria-label="Previous slide"
-            >
-              <ChevronLeft size={20} className="text-gray-700" />
-            </button>
-            <button
-              onClick={nextSlide}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/60 hover:bg-white shadow-lg border border-gray-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20"
-              aria-label="Next slide"
-            >
-              <ChevronRight size={20} className="text-gray-700" />
-            </button>
-          </div>
+              {/* Orbiting Elements */}
+              <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-gray-100 p-3 flex items-center gap-3 animate-float-delay z-20">
+                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                  <Bot size={20} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-gray-800">AI Agents</p>
+                  <p className="text-[10px] text-gray-500">Custom Built</p>
+                </div>
+              </div>
+              
+              <div className="absolute bottom-4 left-0 bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-gray-100 p-3 flex items-center gap-3 animate-float z-20">
+                <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
+                  <Server size={20} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-gray-800">MCP Servers</p>
+                  <p className="text-[10px] text-gray-500">Connected</p>
+                </div>
+              </div>
 
-          {/* Dot indicators */}
-          <div className="flex items-center justify-center gap-2 mt-8">
-            {Array.from({ length: totalSlides }).map((_, i) => (
-              <button
-                key={i}
-                onClick={() => goToSlide(i)}
-                className={`rounded-full transition-all duration-300 ${
-                  carouselIndex === i
-                    ? "w-8 h-2.5 bg-green-600"
-                    : "w-2.5 h-2.5 bg-gray-300 hover:bg-gray-400"
-                }`}
-                aria-label={`Go to slide ${i + 1}`}
-              />
-            ))}
+              <div className="absolute top-1/2 -right-8 -translate-y-1/2 bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-gray-100 p-3 flex items-center gap-3 animate-float-slow z-20">
+                <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center text-orange-600">
+                  <Package size={20} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-gray-800">SafalVir Apps</p>
+                  <p className="text-[10px] text-gray-500">Synced</p>
+                </div>
+              </div>
+
+              <div className="absolute -top-6 right-16 bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-gray-100 p-3 flex items-center gap-3 animate-float z-20">
+                <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center text-green-600">
+                  <Brain size={20} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-gray-800">AI Models</p>
+                  <p className="text-[10px] text-gray-500">LLM APIs</p>
+                </div>
+              </div>
+
+            </div>
           </div>
         </div>
       </section>
-
       {/* What is Safal-AI Section (SAI-LP-005) */}
       <section className="py-16 md:py-20 bg-gray-50">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -862,39 +603,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Integration Hub Section */}
-      <section className="py-16 md:py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Connect APIs and Tools</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              SAFAL-AI can connect with third-party APIs and tools to create a unified automation workspace. Users can add API keys, endpoints, usernames, passwords, or other connection details where required.
-            </p>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {[
-              { icon: Plug, title: "Add new integration" },
-              { icon: CheckCircle, title: "Test connection" },
-              { icon: ShieldCheck, title: "Manage credentials" },
-              { icon: Zap, title: "Enable or disable integration" },
-              { icon: MessageSquare, title: "Use integrations inside chat" },
-              { icon: Unplug, title: "Disconnect anytime" },
-            ].map((action, i) => (
-              <div key={i} className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl p-4">
-                <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
-                  <action.icon size={20} className="text-purple-600" />
-                </div>
-                <span className="text-sm font-medium text-gray-700">{action.title}</span>
-              </div>
-            ))}
-          </div>
-          <div className="mt-8 max-w-2xl mx-auto bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-center">
-             <p className="text-sm text-yellow-800">
-               <strong className="text-yellow-900">Security Note:</strong> API keys and credentials should be encrypted, masked, and never stored in plain text.
-             </p>
-          </div>
-        </div>
-      </section>
 
       {/* Pricing Section (SAI-LP-013) */}
       <section id="pricing" className="py-16 md:py-24 bg-gray-50">
@@ -1282,7 +990,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="border-t border-gray-800 pt-8 text-center text-sm">
-            <p>&copy; {new Date().getFullYear()} Safal-AI. All rights reserved.</p>
+            <p>© SafalVir, Inc. 2026. All rights reserved.</p>
           </div>
         </div>
       </footer>

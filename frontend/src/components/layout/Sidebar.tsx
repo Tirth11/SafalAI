@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { cn, getInitials } from "@/lib/utils";
 import {
   Settings,
@@ -12,6 +13,10 @@ import {
   Sparkles,
   MessageSquare,
   Plug,
+  Plug2,
+  Bot,
+  Store,
+  PlusCircle,
 } from "lucide-react";
 import {
   useAuthStore,
@@ -20,15 +25,15 @@ import {
 } from "@/lib/store";
 import type { SafalProductId } from "@/types";
 
-const allProducts: { id: SafalProductId; name: string; status: "Live" | "Launching Soon"; logo: string }[] = [
+const allProducts: { id: SafalProductId; name: string; status: "Live" | "Coming Soon"; logo: string }[] = [
   { id: "safalmybuy", name: "SafalMyBuy", status: "Live", logo: "/logos/safalmybuy.png" },
   { id: "safalirdrainmate", name: "SafalIRDrainMate", status: "Live", logo: "/logos/safalirdrainmate.png" },
-  { id: "safalvendors", name: "SafalVendors", status: "Launching Soon", logo: "/logos/safalvendors.svg" },
-  { id: "safalcalendar", name: "SafalCalendar", status: "Launching Soon", logo: "/logos/safalcalendar.svg" },
-  { id: "safalsubscriptions", name: "SafalSubscriptions", status: "Launching Soon", logo: "/logos/safalsubscriptions.png" },
-  { id: "safalreviews", name: "SafalReviews", status: "Launching Soon", logo: "/logos/safalreviews.svg" },
-  { id: "safaldrive", name: "SafalDrive", status: "Launching Soon", logo: "/logos/safaldrive.png" },
-  { id: "safalutilities", name: "SafalUtilities", status: "Launching Soon", logo: "/logos/safalutilities.svg" },
+  { id: "safalvendors", name: "SafalVendors", status: "Coming Soon", logo: "/logos/safalvendors.svg" },
+  { id: "safalcalendar", name: "SafalCalendar", status: "Coming Soon", logo: "/logos/safalcalendar.svg" },
+  { id: "safalsubscriptions", name: "SafalSubscriptions", status: "Coming Soon", logo: "/logos/safalsubscriptions.png" },
+  { id: "safalreviews", name: "SafalReviews", status: "Coming Soon", logo: "/logos/safalreviews.svg" },
+  { id: "safaldrive", name: "SafalDrive", status: "Coming Soon", logo: "/logos/safaldrive.png" },
+  { id: "safalutilities", name: "SafalUtilities", status: "Coming Soon", logo: "/logos/safalutilities.svg" },
 ];
 
 interface SidebarProps {
@@ -44,6 +49,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ activeKey = "", onNavigate }: SidebarProps) {
+  const [showAllProducts, setShowAllProducts] = useState(false);
   const { user, logout } = useAuthStore();
   const { sidebarOpen, toggleSidebar } = useUIStore();
   const { connections } = useProductsStore();
@@ -147,7 +153,7 @@ export function Sidebar({ activeKey = "", onNavigate }: SidebarProps) {
           </p>
         )}
         <div className="space-y-0.5 mb-2">
-          {allProducts.map((p) => {
+          {(showAllProducts ? allProducts : allProducts.slice(0, 2)).map((p) => {
             const connected = connections[p.id]?.connected;
             const key = `product:${p.id}`;
             const isActive = activeKey === key;
@@ -177,7 +183,7 @@ export function Sidebar({ activeKey = "", onNavigate }: SidebarProps) {
                     <span className="text-left truncate text-xs">
                       {p.name}
                     </span>
-                    {p.status === "Launching Soon" && (
+                    {p.status === "Coming Soon" && (
                       <span className="text-[8px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 whitespace-nowrap ml-2">
                         Soon
                       </span>
@@ -187,21 +193,56 @@ export function Sidebar({ activeKey = "", onNavigate }: SidebarProps) {
               </button>
             );
           })}
+          {sidebarOpen && (
+            <button
+              onClick={() => setShowAllProducts(!showAllProducts)}
+              className={cn(itemBase, itemIdle, "py-1.5 mt-1 text-center justify-center")}
+            >
+              <span className="text-[10px] text-gray-500 font-medium">
+                {showAllProducts ? "Show Less ↑" : "View All Coming Soon Products (6)"}
+              </span>
+            </button>
+          )}
         </div>
 
         <div className="border-t border-gray-100 mx-3 my-2" />
 
+        {/* AI Studio */}
+        {sidebarOpen && (
+          <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold px-3 mb-2">
+            AI Studio
+          </p>
+        )}
+        {(
+          [
+            { key: "ai-studio:connections", label: "AI Connections", path: "/ai-studio/connections", icon: Plug2 },
+            { key: "ai-studio:create-agent", label: "Create Agent", path: "/ai-studio/create-agent", icon: PlusCircle },
+            { key: "ai-studio:my-agents", label: "My Agents", path: "/ai-studio/my-agents", icon: Bot },
+            { key: "ai-studio:marketplace", label: "Agent Marketplace", path: "/ai-studio/marketplace", icon: Store },
+          ] as const
+        ).map((item) => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.key}
+              onClick={() => navigate(item.key, item.path)}
+              className={cn(
+                itemBase,
+                activeKey === item.key ? itemActive : itemIdle,
+                "mb-1"
+              )}
+              title={item.label}
+            >
+              <Icon className="w-4 h-4 flex-shrink-0" />
+              {sidebarOpen && <span className="flex-1 text-left">{item.label}</span>}
+            </button>
+          );
+        })}
+
+        <div className="border-t border-gray-100 mx-3 my-2" />
+
         {/* Workspace sections */}
-        <button
-          onClick={() => navigate("integrations", "/integrations")}
-          className={cn(
-            itemBase,
-            activeKey === "integrations" ? itemActive : itemIdle
-          )}
-        >
-          <Plug className="w-4 h-4 flex-shrink-0" />
-          {sidebarOpen && <span className="flex-1 text-left">Integration</span>}
-        </button>
+
 
         <button
           onClick={() => navigate("subscriptions", "/subscriptions")}

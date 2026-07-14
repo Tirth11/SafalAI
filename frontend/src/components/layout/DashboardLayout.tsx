@@ -51,6 +51,9 @@ export function DashboardLayout({
           />
         )}
         <div className="flex-1 min-h-0">{children}</div>
+        <footer className="py-4 text-center text-xs text-gray-400 border-t border-gray-100">
+          © SafalVir, Inc. 2026. All rights reserved.
+        </footer>
       </main>
     </div>
   );

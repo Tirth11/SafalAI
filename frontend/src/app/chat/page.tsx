@@ -33,6 +33,7 @@ function ChatPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const productParam = searchParams.get("product") || "custom";
+  const agentId = searchParams.get("agentId");
 
   const { isAuthenticated, user } = useAuthStore();
   const { connections, connect } = useProductsStore();
@@ -124,7 +125,7 @@ function ChatPageInner() {
       <div className="flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto pt-4 relative">
         <OnboardingChecklist />
         {isCustom ? (
-          <AIWorkspaceInterface />
+          <AIWorkspaceInterface agentId={agentId} />
         ) : isProductConnected ? (
           <>
             {/* Optional: tiny status strip showing connected state */}

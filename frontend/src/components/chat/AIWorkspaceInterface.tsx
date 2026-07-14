@@ -16,9 +16,13 @@ import {
   Shield,
   Copy,
   CheckCircle2,
+  Database,
+  Lock,
+  Check,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuthStore, useLLMStore, useOnboardingStore } from "@/lib/store";
+import { useAIStudioStore } from "@/lib/ai-studio-store";
 import type { AIWorkspaceModelOption, LLMApiConfig } from "@/types";
 
 interface ChatTurn {
@@ -108,10 +112,22 @@ function fakeAssistantReply(prompt: string, modelLabel: string): string {
   ].join("\n");
 }
 
-export function AIWorkspaceInterface() {
+export function AIWorkspaceInterface({ agentId }: { agentId?: string | null }) {
   const { user, addTokenHistory, applyTokenUsage } = useAuthStore();
   const { apis } = useLLMStore();
+  const { agents, marketplace, llms: storeLlms } = useAIStudioStore();
   const { isDemoMode } = useOnboardingStore();
+
+  const activeAgent = useMemo(() => {
+    if (!agentId) return null;
+    if (agentId.startsWith("marketplace_")) {
+      return marketplace.find((a) => a.id === agentId.replace("marketplace_", "")) || null;
+    }
+    return agents.find((a) => a.id === agentId) || null;
+  }, [agentId, agents, marketplace]);
+
+  const isMarketplaceAgent = !!activeAgent && agentId?.startsWith("marketplace_");
+
   const [selectedId, setSelectedId] = useState<string>("auto");
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<ChatTurn[]>([]);
@@ -146,6 +162,21 @@ export function AIWorkspaceInterface() {
   const tokenBalance = user?.subscription?.creditsBalance ?? DEFAULT_TOKEN_BALANCE;
 
   const resolveModelLabel = (): { label: string; api: LLMApiConfig | null; isCompareAll: boolean } => {
+    // If we have an active agent, use its LLM
+    if (activeAgent) {
+      if (activeAgent.llmConnectionId) {
+        // Find in storeLlms or apis
+        const api = apis.find(a => a.id === activeAgent.llmConnectionId) || null;
+        if (api) {
+          return { api, label: `${api.providerLabel} — ${api.modelName}`, isCompareAll: false };
+        } else {
+          // It might be a custom string from marketplace
+          return { api: null, label: (activeAgent as any).llmLabel || "Configured LLM", isCompareAll: false };
+        }
+      }
+      return { api: null, label: "Agent Default Model", isCompareAll: false };
+    }
+
     if (selectedId === "auto") {
       const api = pickAutoModel(apis);
       return {
@@ -426,48 +457,62 @@ export function AIWorkspaceInterface() {
 
   return (
     <div className="flex flex-col h-full bg-white">
-      {/* Toolbar: model dropdown */}
+      {/* Toolbar: model dropdown or active agent header */}
       <div className="flex-shrink-0 bg-white border-b border-gray-100 px-4 lg:px-6 py-3">
-        <div className="max-w-3xl mx-auto flex items-center gap-3">
-          <Wand2 className="w-4 h-4 text-purple-600 flex-shrink-0" />
-          <select
-            value={selectedId}
-            onChange={(e) => setSelectedId(e.target.value)}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:border-green-500"
-            aria-label="LLM model"
-          >
-            {options.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-
-          <Link
-            href="/settings?tab=llm"
-            className="flex items-center gap-1 text-xs text-gray-500 hover:text-green-600"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Add model API
-          </Link>
-        </div>
+        {activeAgent ? (
+          <div className="max-w-3xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-lg shadow-sm border border-purple-100">
+                {activeAgent.icon}
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                  Chat with {activeAgent.name}
+                  {isMarketplaceAgent && (
+                    <span className="flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                      <Lock className="w-3 h-3" /> Read-Only
+                    </span>
+                  )}
+                </h3>
+                <p className="text-xs text-gray-500 line-clamp-1">{activeAgent.description}</p>
+              </div>
+            </div>
+            {!isMarketplaceAgent && (
+              <Link
+                href={`/ai-studio/create-agent?agentId=${activeAgent.id}&step=0`}
+                className="text-xs font-medium text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                Edit Configuration
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="max-w-3xl mx-auto flex items-center gap-3">
+            <Wand2 className="w-4 h-4 text-purple-600 flex-shrink-0" />
+            <select
+              value={selectedId}
+              onChange={(e) => setSelectedId(e.target.value)}
+              className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:border-green-500"
+              aria-label="LLM model"
+            >
+              {options.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+  
+            <Link
+              href="/ai-studio/connections"
+              className="flex items-center gap-1 text-xs text-gray-500 hover:text-green-600"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add model API
+            </Link>
+          </div>
+        )}
       </div>
 
-      {/* Banner if no models */}
-      {noModels && (
-        <div className="flex-shrink-0 bg-yellow-50 border-b border-yellow-100 px-4 lg:px-6 py-2.5">
-          <div className="max-w-3xl mx-auto flex items-start gap-2 text-xs text-yellow-800">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-            <span>
-              No AI model connected yet. Add one in{" "}
-              <Link href="/settings?tab=llm" className="underline font-medium">
-                Settings → LLM Model APIs
-              </Link>{" "}
-              to power AI Workspace. Auto Mode will pick the best available model.
-            </span>
-          </div>
-        </div>
-      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4">
@@ -477,11 +522,52 @@ export function AIWorkspaceInterface() {
               <div className="w-12 h-12 rounded-2xl bg-purple-100 flex items-center justify-center mb-4">
                 <Sparkles className="w-6 h-6 text-purple-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900">AI Workspace</h3>
-              <p className="text-sm text-gray-500 max-w-md mt-2">
-                Use your own integrated AI models from one place. Pick a model
-                from the dropdown, let Auto Mode choose for you, or Compare All Models.
+              <h3 className="text-xl font-bold text-gray-900">
+                {activeAgent ? `Welcome to ${activeAgent.name}` : "AI Workspace"}
+              </h3>
+              <p className="text-sm text-gray-500 max-w-md mt-2 mb-6">
+                {activeAgent
+                  ? "Start chatting with this specialized agent. Your conversation is powered by the tools and instructions configured below."
+                  : "Use your own integrated AI models from one place. Pick a model from the dropdown, let Auto Mode choose for you, or Compare All Models."}
               </p>
+
+              {activeAgent && (
+                <div className="text-left bg-gray-50 border border-gray-200 rounded-xl p-4 w-full max-w-sm mb-6">
+                  <p className="text-[10px] uppercase font-bold text-gray-400 mb-3 tracking-wider">
+                    Agent Capabilities
+                  </p>
+                  <ul className="space-y-2 text-sm text-gray-700">
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-green-500" />
+                      <span>{resolveModelLabel().label}</span>
+                    </li>
+                    {activeAgent.mcpSelections?.map((mcp: string) => (
+                      <li key={mcp} className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-green-500" />
+                        <span>{mcp}</span>
+                      </li>
+                    ))}
+                    {(activeAgent as any).mcpLabels?.map((mcp: string) => (
+                      <li key={mcp} className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-green-500" />
+                        <span>{mcp}</span>
+                      </li>
+                    ))}
+                    {activeAgent.apiSelections?.map((api: string) => (
+                      <li key={api} className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-green-500" />
+                        <span>{api} API</span>
+                      </li>
+                    ))}
+                    {(activeAgent as any).apiLabels?.map((api: string) => (
+                      <li key={api} className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-green-500" />
+                        <span>{api} API</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {/* Prompt templates */}
               <div className="mt-8 flex flex-wrap justify-center gap-2 max-w-xl">
