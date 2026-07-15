@@ -32,6 +32,8 @@ import {
   Trash2,
   Upload,
   Users,
+  MoreVertical,
+  CheckCircle2,
 } from "lucide-react";
 
 export default function MyAgentsPage() {
@@ -205,6 +207,13 @@ export default function MyAgentsPage() {
                     <Play className="w-4 h-4" />
                   </button>
                   <button
+                    title="View Details"
+                    onClick={() => setViewing(a)}
+                    className="p-2 text-gray-400 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
+                  <button
                     title="Edit"
                     onClick={() => router.push(`/ai-studio/create-agent?agentId=${a.id}&step=0`)}
                     className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
@@ -284,13 +293,43 @@ export default function MyAgentsPage() {
                 <MetaCell label="Total Runs" value={viewing.totalRuns.toLocaleString()} />
               </div>
               {viewing.deployed && (
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1">
-                    Agent URL
-                  </p>
-                  <code className="block text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 font-mono">
-                    {viewing.agentUrl}
-                  </code>
+                <div className="pt-4 border-t border-gray-100">
+                  <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-3">API Integration</p>
+                  <div className="space-y-4">
+                    <MetaCell
+                      label="Agent Chat URL"
+                      value={
+                        <code className="bg-gray-100 px-2 py-1 rounded text-xs text-gray-800 break-all">
+                          {viewing.agentUrl}
+                        </code>
+                      }
+                    />
+                    <MetaCell
+                      label="REST API Endpoint"
+                      value={
+                        <code className="bg-gray-100 px-2 py-1 rounded text-xs text-gray-800 break-all">
+                          POST https://api.safalvir.com/v1/agents/{viewing.id}/chat
+                        </code>
+                      }
+                    />
+                    <MetaCell
+                      label="API Key"
+                      value={
+                        <code className="bg-gray-100 px-2 py-1 rounded text-xs text-gray-800">
+                          ••••••••••••••••••••••••
+                        </code>
+                      }
+                    />
+                    <div>
+                      <span className="text-xs text-gray-500 font-medium mb-1.5 block">cURL Example</span>
+                      <div className="bg-gray-900 text-gray-100 p-3 rounded-lg text-[11px] font-mono overflow-x-auto whitespace-pre">
+{`curl -X POST https://api.safalvir.com/v1/agents/${viewing.id}/chat \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"message": "Hello"}'`}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
               <div>

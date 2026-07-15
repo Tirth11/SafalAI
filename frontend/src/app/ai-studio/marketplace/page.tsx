@@ -291,8 +291,8 @@ export default function MarketplacePage() {
                   >
                     <Play className="w-4 h-4" />
                   </Button>
-                  <Button size="sm" onClick={() => cloneToWorkspace(m)}>
-                    <Copy className="w-4 h-4 mr-1" /> Clone Agent
+                  <Button size="sm" variant="outline" onClick={() => setDetails(m)}>
+                    View Details
                   </Button>
                 </div>
               </Card>
@@ -338,6 +338,36 @@ export default function MarketplacePage() {
                       )
                     }
                   />
+                  <div className="col-span-2 pt-4 border-t border-gray-100">
+                    <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-3">API Integration</p>
+                    <div className="space-y-4">
+                      <MetaCell
+                        label="REST API Endpoint"
+                        value={
+                          <code className="bg-gray-100 px-2 py-1 rounded text-xs text-gray-800 break-all">
+                            POST https://api.safalvir.com/v1/agents/{details.id.startsWith("own_") ? details.id.replace("own_", "") : `marketplace_${details.id}`}/chat
+                          </code>
+                        }
+                      />
+                      <MetaCell
+                        label="API Key"
+                        value={
+                          <code className="bg-gray-100 px-2 py-1 rounded text-xs text-gray-800">
+                            ••••••••••••••••••••••••
+                          </code>
+                        }
+                      />
+                      <div>
+                        <span className="text-xs text-gray-500 font-medium mb-1.5 block">cURL Example</span>
+                        <div className="bg-gray-900 text-gray-100 p-3 rounded-lg text-[11px] font-mono overflow-x-auto whitespace-pre">
+{`curl -X POST https://api.safalvir.com/v1/agents/${details.id.startsWith("own_") ? details.id.replace("own_", "") : `marketplace_${details.id}`}/chat \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"message": "Hello"}'`}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </ModalBody>
               <ModalFooter>
@@ -350,12 +380,9 @@ export default function MarketplacePage() {
                 </Button>
                 <Button
                   size="sm"
-                  onClick={() => {
-                    cloneToWorkspace(details);
-                    setDetails(null);
-                  }}
+                  onClick={() => setDetails(null)}
                 >
-                  <Copy className="w-4 h-4 mr-1.5" /> Clone Agent
+                  Close
                 </Button>
               </ModalFooter>
             </>
