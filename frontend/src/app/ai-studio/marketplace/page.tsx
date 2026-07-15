@@ -14,6 +14,8 @@ import {
   BadgeCheck,
   Copy,
   Download,
+  Eye,
+  EyeOff,
   FileText,
   Play,
   Plus,
@@ -62,6 +64,7 @@ export default function MarketplacePage() {
   const [sort, setSort] = useState("popularity");
   const [filter, setFilter] = useState<"all" | "featured" | "new">("all");
   const [details, setDetails] = useState<MarketplaceAgent | null>(null);
+  const [showApiKey, setShowApiKey] = useState(false);
 
   useEffect(() => setMounted(true), []);
   useEffect(() => {
@@ -303,7 +306,7 @@ export default function MarketplacePage() {
         {/* Details modal */}
         <Modal
           isOpen={!!details}
-          onClose={() => setDetails(null)}
+          onClose={() => { setDetails(null); setShowApiKey(false); }}
           title={details ? `${details.icon} ${details.name}` : ""}
           description={details ? `by ${details.creator}` : ""}
           size="lg"
@@ -342,19 +345,61 @@ export default function MarketplacePage() {
                     <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-3">API Integration</p>
                     <div className="space-y-4">
                       <MetaCell
+                        label="Agent Chat URL"
+                        value={
+                          <div className="flex items-center gap-2">
+                            <code className="bg-gray-100 px-2 py-1.5 rounded text-xs text-gray-800 break-all flex-1">
+                              https://ai.safalvir.com/agents/{details.id.startsWith("own_") ? details.id.replace("own_", "") : `marketplace_${details.id}`}
+                            </code>
+                            <button
+                              onClick={() => { navigator.clipboard.writeText(`https://ai.safalvir.com/agents/${details.id.startsWith("own_") ? details.id.replace("own_", "") : `marketplace_${details.id}`}`); toast.success("Chat URL Copied"); }}
+                              className="p-1.5 text-gray-400 hover:text-gray-700 bg-gray-50 rounded"
+                              title="Copy URL"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        }
+                      />
+                      <MetaCell
                         label="REST API Endpoint"
                         value={
-                          <code className="bg-gray-100 px-2 py-1 rounded text-xs text-gray-800 break-all">
-                            POST https://api.safalvir.com/v1/agents/{details.id.startsWith("own_") ? details.id.replace("own_", "") : `marketplace_${details.id}`}/chat
-                          </code>
+                          <div className="flex items-center gap-2">
+                            <code className="bg-gray-100 px-2 py-1.5 rounded text-xs text-gray-800 break-all flex-1">
+                              POST https://api.safalvir.com/v1/agents/{details.id.startsWith("own_") ? details.id.replace("own_", "") : `marketplace_${details.id}`}/chat
+                            </code>
+                            <button
+                              onClick={() => { navigator.clipboard.writeText(`POST https://api.safalvir.com/v1/agents/${details.id.startsWith("own_") ? details.id.replace("own_", "") : `marketplace_${details.id}`}/chat`); toast.success("Endpoint Copied"); }}
+                              className="p-1.5 text-gray-400 hover:text-gray-700 bg-gray-50 rounded"
+                              title="Copy Endpoint"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         }
                       />
                       <MetaCell
                         label="API Key"
                         value={
-                          <code className="bg-gray-100 px-2 py-1 rounded text-xs text-gray-800">
-                            ••••••••••••••••••••••••
-                          </code>
+                          <div className="flex items-center gap-2">
+                            <code className="bg-gray-100 px-2 py-1.5 rounded text-xs text-gray-800 flex-1 whitespace-nowrap overflow-hidden text-ellipsis">
+                              {showApiKey ? "sk-live-51NxA..." : "••••••••••••••••••••••••••••••••"}
+                            </code>
+                            <button
+                              onClick={() => setShowApiKey(!showApiKey)}
+                              className="p-1.5 text-gray-400 hover:text-gray-700 bg-gray-50 rounded"
+                              title={showApiKey ? "Hide Key" : "Reveal Key"}
+                            >
+                              {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                            </button>
+                            <button
+                              onClick={() => { navigator.clipboard.writeText("sk-live-51NxA..."); toast.success("API Key Copied"); }}
+                              className="p-1.5 text-gray-400 hover:text-gray-700 bg-gray-50 rounded"
+                              title="Copy Key"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         }
                       />
                       <div>

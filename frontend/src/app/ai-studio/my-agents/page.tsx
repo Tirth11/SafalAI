@@ -21,6 +21,7 @@ import {
   Bot,
   Copy,
   Eye,
+  EyeOff,
   FileText,
   FlaskConical,
   Globe,
@@ -50,6 +51,7 @@ export default function MyAgentsPage() {
   const [viewing, setViewing] = useState<Agent | null>(null);
   const [logsFor, setLogsFor] = useState<Agent | null>(null);
   const [analyticsFor, setAnalyticsFor] = useState<Agent | null>(null);
+  const [showApiKey, setShowApiKey] = useState(false);
 
   useEffect(() => setMounted(true), []);
   useEffect(() => {
@@ -277,7 +279,7 @@ export default function MyAgentsPage() {
         {/* View modal */}
         <Modal
           isOpen={!!viewing}
-          onClose={() => setViewing(null)}
+          onClose={() => { setViewing(null); setShowApiKey(false); }}
           title={viewing ? `${viewing.icon} ${viewing.name}` : ""}
           description={viewing?.description}
           size="lg"
@@ -299,25 +301,59 @@ export default function MyAgentsPage() {
                     <MetaCell
                       label="Agent Chat URL"
                       value={
-                        <code className="bg-gray-100 px-2 py-1 rounded text-xs text-gray-800 break-all">
-                          {viewing.agentUrl}
-                        </code>
+                        <div className="flex items-center gap-2">
+                          <code className="bg-gray-100 px-2 py-1.5 rounded text-xs text-gray-800 break-all flex-1">
+                            {viewing.agentUrl}
+                          </code>
+                          <button
+                            onClick={() => { navigator.clipboard.writeText(viewing.agentUrl); toast.success("Chat URL Copied"); }}
+                            className="p-1.5 text-gray-400 hover:text-gray-700 bg-gray-50 rounded"
+                            title="Copy URL"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       }
                     />
                     <MetaCell
                       label="REST API Endpoint"
                       value={
-                        <code className="bg-gray-100 px-2 py-1 rounded text-xs text-gray-800 break-all">
-                          POST https://api.safalvir.com/v1/agents/{viewing.id}/chat
-                        </code>
+                        <div className="flex items-center gap-2">
+                          <code className="bg-gray-100 px-2 py-1.5 rounded text-xs text-gray-800 break-all flex-1">
+                            POST https://api.safalvir.com/v1/agents/{viewing.id}/chat
+                          </code>
+                          <button
+                            onClick={() => { navigator.clipboard.writeText(`POST https://api.safalvir.com/v1/agents/${viewing.id}/chat`); toast.success("Endpoint Copied"); }}
+                            className="p-1.5 text-gray-400 hover:text-gray-700 bg-gray-50 rounded"
+                            title="Copy Endpoint"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       }
                     />
                     <MetaCell
                       label="API Key"
                       value={
-                        <code className="bg-gray-100 px-2 py-1 rounded text-xs text-gray-800">
-                          ••••••••••••••••••••••••
-                        </code>
+                        <div className="flex items-center gap-2">
+                          <code className="bg-gray-100 px-2 py-1.5 rounded text-xs text-gray-800 flex-1 whitespace-nowrap overflow-hidden text-ellipsis">
+                            {showApiKey ? (viewing.apiKey || "sk-live-51NxA...") : "••••••••••••••••••••••••••••••••"}
+                          </code>
+                          <button
+                            onClick={() => setShowApiKey(!showApiKey)}
+                            className="p-1.5 text-gray-400 hover:text-gray-700 bg-gray-50 rounded"
+                            title={showApiKey ? "Hide Key" : "Reveal Key"}
+                          >
+                            {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                          </button>
+                          <button
+                            onClick={() => { navigator.clipboard.writeText(viewing.apiKey || "sk-live-51NxA..."); toast.success("API Key Copied"); }}
+                            className="p-1.5 text-gray-400 hover:text-gray-700 bg-gray-50 rounded"
+                            title="Copy Key"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       }
                     />
                     <div>
