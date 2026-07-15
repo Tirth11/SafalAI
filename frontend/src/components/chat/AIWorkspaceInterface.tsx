@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useAuthStore, useLLMStore, useOnboardingStore } from "@/lib/store";
-import { useAIStudioStore } from "@/lib/ai-studio-store";
+import { providerMeta, useAIStudioStore } from "@/lib/ai-studio-store";
 import type { AIWorkspaceModelOption, LLMApiConfig } from "@/types";
 
 interface ChatTurn {
@@ -115,7 +115,13 @@ function fakeAssistantReply(prompt: string, modelLabel: string): string {
 export function AIWorkspaceInterface({ agentId }: { agentId?: string | null }) {
   const { user, addTokenHistory, applyTokenUsage } = useAuthStore();
   const { apis } = useLLMStore();
-  const { agents, marketplace, llms: storeLlms } = useAIStudioStore();
+  const {
+    agents,
+    marketplace,
+    llms: storeLlms,
+    mcps: mcpServers,
+    apis: apiConnections,
+  } = useAIStudioStore();
   const { isDemoMode } = useOnboardingStore();
 
   const activeAgent = useMemo(() => {
@@ -127,6 +133,29 @@ export function AIWorkspaceInterface({ agentId }: { agentId?: string | null }) {
   }, [agentId, agents, marketplace]);
 
   const isMarketplaceAgent = !!activeAgent && agentId?.startsWith("marketplace_");
+
+  // Human-readable capability labels for the agent — resolved from the
+  // MCP/API connection objects rather than rendered directly, since
+  // mcpSelections/apiSelections on a real Agent are config objects, not strings.
+  const capabilityLabels = useMemo<string[]>(() => {
+    if (!activeAgent) return [];
+    if (isMarketplaceAgent) {
+      const m = activeAgent as (typeof marketplace)[number];
+      return [
+        ...(m.mcpLabels ?? []),
+        ...(m.apiLabels ?? []).map((a) => `${a} API`),
+      ];
+    }
+    const a = activeAgent as (typeof agents)[number];
+    const mcpLabels = (a.mcpSelections ?? [])
+      .map((sel) => mcpServers.find((s) => s.id === sel.mcpServerId)?.displayName)
+      .filter((x): x is string => !!x);
+    const apiLabels = (a.apiSelections ?? [])
+      .map((sel) => apiConnections.find((x) => x.id === sel.apiConnectionId)?.name)
+      .filter((x): x is string => !!x)
+      .map((name) => `${name} API`);
+    return [...mcpLabels, ...apiLabels];
+  }, [activeAgent, isMarketplaceAgent, marketplace, agents, mcpServers, apiConnections]);
 
   const [selectedId, setSelectedId] = useState<string>("auto");
   const [draft, setDraft] = useState("");
@@ -165,14 +194,17 @@ export function AIWorkspaceInterface({ agentId }: { agentId?: string | null }) {
     // If we have an active agent, use its LLM
     if (activeAgent) {
       if ("llmConnectionId" in activeAgent && activeAgent.llmConnectionId) {
-        // Find in storeLlms or apis
-        const api = apis.find(a => a.id === activeAgent.llmConnectionId) || null;
-        if (api) {
-          return { api, label: `${api.providerLabel} — ${api.modelName}`, isCompareAll: false };
-        } else {
-          // It might be a custom string from marketplace
-          return { api: null, label: (activeAgent as any).llmLabel || "Configured LLM", isCompareAll: false };
+        // A real Agent's llmConnectionId points at an AI Studio LLM connection,
+        // not an entry in the legacy useLLMStore `apis` list — look it up there.
+        const studioLLM = storeLlms.find((l) => l.id === activeAgent.llmConnectionId);
+        if (studioLLM) {
+          return {
+            api: null,
+            label: `${providerMeta(studioLLM.provider).label} — ${studioLLM.config.defaultModel}`,
+            isCompareAll: false,
+          };
         }
+        return { api: null, label: "Configured LLM", isCompareAll: false };
       } else if ("llmLabel" in activeAgent && activeAgent.llmLabel) {
         return { api: null, label: activeAgent.llmLabel, isCompareAll: false };
       }
@@ -543,28 +575,10 @@ export function AIWorkspaceInterface({ agentId }: { agentId?: string | null }) {
                       <Check className="w-4 h-4 text-green-500" />
                       <span>{resolveModelLabel().label}</span>
                     </li>
-                    {(activeAgent as any).mcpSelections?.map((mcp: string) => (
-                      <li key={mcp} className="flex items-center gap-2">
+                    {capabilityLabels.map((label) => (
+                      <li key={label} className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-green-500" />
-                        <span>{mcp}</span>
-                      </li>
-                    ))}
-                    {(activeAgent as any).mcpLabels?.map((mcp: string) => (
-                      <li key={mcp} className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-green-500" />
-                        <span>{mcp}</span>
-                      </li>
-                    ))}
-                    {(activeAgent as any).apiSelections?.map((api: string) => (
-                      <li key={api} className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-green-500" />
-                        <span>{api} API</span>
-                      </li>
-                    ))}
-                    {(activeAgent as any).apiLabels?.map((api: string) => (
-                      <li key={api} className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-green-500" />
-                        <span>{api} API</span>
+                        <span>{label}</span>
                       </li>
                     ))}
                   </ul>
