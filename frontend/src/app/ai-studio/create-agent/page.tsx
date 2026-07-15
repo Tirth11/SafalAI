@@ -1,18 +1,12 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { DashboardLayout } from "@/components/layout";
+import { Badge, Button, Card, Input, Select, Textarea } from "@/components/ui";
 import {
-  Badge,
-  Button,
-  Card,
-  Input,
-  Select,
-  Textarea,
-} from "@/components/ui";
-import {
+  fmtDate,
   HealthBadge,
   LogoAvatar,
   MetaCell,
@@ -21,15 +15,24 @@ import {
   Toggle,
   WizardProgress,
 } from "@/components/ai-studio/shared";
-import { providerMeta, useAIStudioStore } from "@/lib/ai-studio-store";
+import { EnvironmentBadge, PermissionBadge } from "@/components/ai-studio/MCPServersTab";
+import {
+  defaultAgentAPIConfig,
+  defaultAgentMCPConfig,
+  providerMeta,
+  useAIStudioStore,
+} from "@/lib/ai-studio-store";
 import { useAuthStore } from "@/lib/store";
 import type {
   Agent,
   AgentAPISelection,
   AgentChatMessage,
+  AgentMCPPermissionMode,
   AgentMCPSelection,
+  AgentResourceType,
   AgentVisibility,
-  DeploymentTarget,
+  DeploymentStatus,
+  MCPTool,
 } from "@/types/ai-studio";
 import { cn } from "@/lib/utils";
 import {
@@ -37,11 +40,15 @@ import {
   CheckCircle,
   Copy,
   Eraser,
-  EyeOff,
+  ExternalLink,
   Globe,
+  Lock,
+  MessageSquare,
+  PartyPopper,
   Rocket,
   Save,
   Send,
+  Server,
   Sparkles,
   Users,
 } from "lucide-react";
@@ -49,11 +56,10 @@ import {
 const STEPS = [
   "Agent Details",
   "Select LLM",
-  "MCP Servers",
-  "API Connections",
-  "Instructions",
+  "Connectivity",
   "Test Agent",
   "Deploy",
+  "Success",
 ];
 
 const AGENT_CATEGORIES = [
@@ -69,15 +75,12 @@ const AGENT_CATEGORIES = [
 
 const AGENT_ICONS = ["🤖", "🧠", "⚡", "🔍", "📊", "📝", "🛠️", "💬", "🌐", "🚀"];
 
-const DEPLOY_TARGETS: { value: DeploymentTarget; label: string; icon: React.ReactNode }[] = [
-  { value: "web-chat", label: "Web Chat", icon: <Globe className="w-4 h-4" /> },
-  { value: "rest-api", label: "REST API", icon: <Rocket className="w-4 h-4" /> },
-  { value: "embed-widget", label: "Embed Widget", icon: <Copy className="w-4 h-4" /> },
-  { value: "slack", label: "Slack", icon: <Send className="w-4 h-4" /> },
-  { value: "ms-teams", label: "Microsoft Teams", icon: <Users className="w-4 h-4" /> },
-];
+const TONES = ["Professional", "Friendly", "Technical", "Casual", "Custom"];
+
+const RESPONSE_FORMATS = ["Text", "Markdown", "JSON", "HTML"];
 
 interface Draft {
+  // Step 1 — details
   name: string;
   description: string;
   category: string;
@@ -85,23 +88,26 @@ interface Draft {
   icon: string;
   version: string;
   active: boolean;
-  llmConnectionId: string | null;
-  fallbackLLMConnectionId: string | null;
-  mcpSelections: AgentMCPSelection[];
-  apiSelections: AgentAPISelection[];
+  // Step 1 — instructions
   systemPrompt: string;
   goal: string;
   persona: string;
   tone: string;
-  instructions: string;
-  constraints: string;
+  customTone: string;
   responseFormat: string;
+  constraints: string;
   enableMemory: boolean;
   enableHistory: boolean;
   enableCitations: boolean;
   enableToolCalling: boolean;
+  // Step 2 — LLM
+  llmConnectionId: string | null;
+  // Step 3 — one external resource
+  resourceType: AgentResourceType;
+  mcpSelections: AgentMCPSelection[];
+  apiSelections: AgentAPISelection[];
+  // Step 5 — deploy
   visibility: AgentVisibility;
-  deploymentTargets: DeploymentTarget[];
 }
 
 const emptyDraft = (): Draft => ({
@@ -112,54 +118,54 @@ const emptyDraft = (): Draft => ({
   icon: "🤖",
   version: "1.0.0",
   active: true,
-  llmConnectionId: null,
-  fallbackLLMConnectionId: null,
-  mcpSelections: [],
-  apiSelections: [],
   systemPrompt: "",
   goal: "",
   persona: "",
-  tone: "",
-  instructions: "",
+  tone: "Professional",
+  customTone: "",
+  responseFormat: "Markdown",
   constraints: "",
-  responseFormat: "",
   enableMemory: true,
   enableHistory: true,
   enableCitations: false,
   enableToolCalling: true,
+  llmConnectionId: null,
+  resourceType: null,
+  mcpSelections: [],
+  apiSelections: [],
   visibility: "private",
-  deploymentTargets: ["web-chat"],
 });
 
-const draftFromAgent = (a: Agent): Draft => ({
-  name: a.name,
-  description: a.description,
-  category: a.category,
-  tags: a.tags,
-  icon: a.icon,
-  version: a.version,
-  active: a.status !== "inactive",
-  llmConnectionId: a.llmConnectionId,
-  fallbackLLMConnectionId: a.fallbackLLMConnectionId,
-  mcpSelections: a.mcpSelections,
-  apiSelections: a.apiSelections,
-  systemPrompt: a.instructions.systemPrompt,
-  goal: a.instructions.goal,
-  persona: a.instructions.persona,
-  tone: a.instructions.tone,
-  instructions: a.instructions.instructions,
-  constraints: a.instructions.constraints,
-  responseFormat: a.instructions.responseFormat,
-  enableMemory: a.instructions.enableMemory,
-  enableHistory: a.instructions.enableHistory,
-  enableCitations: a.instructions.enableCitations,
-  enableToolCalling: a.instructions.enableToolCalling,
-  visibility: a.visibility,
-  deploymentTargets: a.deploymentTargets,
-});
-
-const slugify = (s: string) =>
-  s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "my-agent";
+const draftFromAgent = (a: Agent): Draft => {
+  const knownTone = TONES.includes(a.instructions.tone);
+  return {
+    name: a.name,
+    description: a.description,
+    category: a.category,
+    tags: a.tags,
+    icon: a.icon,
+    version: a.version,
+    active: a.status !== "inactive",
+    systemPrompt: a.instructions.systemPrompt,
+    goal: a.instructions.goal,
+    persona: a.instructions.persona,
+    tone: knownTone ? a.instructions.tone : a.instructions.tone ? "Custom" : "Professional",
+    customTone: knownTone ? "" : a.instructions.tone,
+    responseFormat: RESPONSE_FORMATS.includes(a.instructions.responseFormat)
+      ? a.instructions.responseFormat
+      : "Markdown",
+    constraints: a.instructions.constraints,
+    enableMemory: a.instructions.enableMemory,
+    enableHistory: a.instructions.enableHistory,
+    enableCitations: a.instructions.enableCitations,
+    enableToolCalling: a.instructions.enableToolCalling,
+    llmConnectionId: a.llmConnectionId,
+    resourceType: a.resourceType,
+    mcpSelections: a.mcpSelections,
+    apiSelections: a.apiSelections,
+    visibility: a.visibility,
+  };
+};
 
 let msgCounter = 0;
 const newMsgId = () => `msg_${Date.now().toString(36)}_${msgCounter++}`;
@@ -180,14 +186,14 @@ function CreateAgentInner() {
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const loadedRef = useRef(false);
 
-  // Test playground state
+  // Test playground
   const [messages, setMessages] = useState<AgentChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [thinking, setThinking] = useState(false);
   const [lastExec, setLastExec] = useState<AgentChatMessage | null>(null);
 
-  // Deploy state
-  const [deployed, setDeployed] = useState(false);
+  // Deploy
+  const [deployStatus, setDeployStatus] = useState<DeploymentStatus>("draft");
 
   const patch = (p: Partial<Draft>) => setD((prev) => ({ ...prev, ...p }));
 
@@ -196,7 +202,6 @@ function CreateAgentInner() {
     if (mounted && !isAuthenticated) router.push("/");
   }, [mounted, isAuthenticated, router]);
 
-  // Load agent for editing / resume
   useEffect(() => {
     if (!mounted || loadedRef.current) return;
     if (editAgentId) {
@@ -204,15 +209,28 @@ function CreateAgentInner() {
       if (a) {
         setD(draftFromAgent(a));
         setAgentId(a.id);
-        setDeployed(a.deployed);
-        setStep(initialStep ? Number(initialStep) : Math.min(a.wizardStep, STEPS.length - 1));
+        setDeployStatus(a.deploymentStatus);
+        setStep(
+          initialStep !== null
+            ? Math.min(Number(initialStep), STEPS.length - 1)
+            : Math.min(a.wizardStep, STEPS.length - 2)
+        );
       }
     }
     loadedRef.current = true;
   }, [mounted, editAgentId, agents, initialStep]);
 
   const selectedLLM = llms.find((l) => l.id === d.llmConnectionId) ?? null;
+  const selectedMCP =
+    d.resourceType === "mcp" && d.mcpSelections[0]
+      ? mcps.find((m) => m.id === d.mcpSelections[0].mcpServerId) ?? null
+      : null;
+  const selectedAPI =
+    d.resourceType === "api" && d.apiSelections[0]
+      ? apis.find((a) => a.id === d.apiSelections[0].apiConnectionId) ?? null
+      : null;
 
+  // ----- Persistence -----
   const buildAgentPayload = (status: Agent["status"]) => ({
     name: d.name.trim() || "Untitled Agent",
     description: d.description.trim(),
@@ -222,15 +240,16 @@ function CreateAgentInner() {
     version: d.version,
     status,
     llmConnectionId: d.llmConnectionId,
-    fallbackLLMConnectionId: d.fallbackLLMConnectionId,
+    fallbackLLMConnectionId: null,
+    resourceType: d.resourceType,
     mcpSelections: d.mcpSelections,
     apiSelections: d.apiSelections,
     instructions: {
       systemPrompt: d.systemPrompt,
       goal: d.goal,
       persona: d.persona,
-      tone: d.tone,
-      instructions: d.instructions,
+      tone: d.tone === "Custom" ? d.customTone : d.tone,
+      instructions: "",
       constraints: d.constraints,
       responseFormat: d.responseFormat,
       enableMemory: d.enableMemory,
@@ -239,20 +258,23 @@ function CreateAgentInner() {
       enableToolCalling: d.enableToolCalling,
     },
     visibility: d.visibility,
-    deploymentTargets: d.deploymentTargets,
     wizardStep: step,
   });
 
   const saveDraft = (silent = false): string => {
     let id = agentId;
     if (id) {
-      updateAgent(id, buildAgentPayload(deployed ? "active" : "draft"));
+      updateAgent(id, buildAgentPayload(deployStatus === "live" ? "active" : "draft"));
     } else {
       const created = addAgent({
         ...buildAgentPayload("draft"),
+        deploymentTargets: ["web-chat"],
         deployed: false,
+        deploymentStatus: "draft",
         agentUrl: "",
+        chatUrl: "",
         apiEndpoint: "",
+        apiKey: "",
         embedCode: "",
         totalRuns: 0,
         createdBy: "You",
@@ -265,7 +287,6 @@ function CreateAgentInner() {
     return id;
   };
 
-  // Autosave on step change (after the agent exists)
   useEffect(() => {
     if (agentId && loadedRef.current && mounted) saveDraft(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -277,122 +298,165 @@ function CreateAgentInner() {
     return true;
   };
 
-  const toggleMCP = (mcpId: string) => {
-    const existing = d.mcpSelections.find((s) => s.mcpServerId === mcpId);
-    if (existing) {
-      patch({ mcpSelections: d.mcpSelections.filter((s) => s.mcpServerId !== mcpId) });
-    } else {
-      const server = mcps.find((m) => m.id === mcpId);
-      patch({
-        mcpSelections: [
-          ...d.mcpSelections,
-          {
-            mcpServerId: mcpId,
-            toolIds: server?.tools.filter((t) => t.enabled).map((t) => t.id) ?? [],
-          },
-        ],
-      });
-    }
+  // ----- Step 3 helpers: one external resource -----
+  const setResourceType = (type: AgentResourceType) => {
+    patch({ resourceType: type, mcpSelections: [], apiSelections: [] });
   };
 
-  const toggleMCPTool = (mcpId: string, toolId: string) => {
+  const selectMCP = (mcpId: string) => {
+    const already = d.mcpSelections[0]?.mcpServerId === mcpId;
+    if (already) {
+      patch({ mcpSelections: [] });
+      return;
+    }
+    const server = mcps.find((m) => m.id === mcpId);
     patch({
-      mcpSelections: d.mcpSelections.map((s) =>
-        s.mcpServerId === mcpId
-          ? {
-              ...s,
-              toolIds: s.toolIds.includes(toolId)
-                ? s.toolIds.filter((t) => t !== toolId)
-                : [...s.toolIds, toolId],
-            }
-          : s
-      ),
+      mcpSelections: [
+        {
+          mcpServerId: mcpId,
+          toolIds:
+            server?.tools
+              .filter((t) => t.enabled && t.permission !== "admin")
+              .map((t) => t.id) ?? [],
+          ...defaultAgentMCPConfig(),
+        },
+      ],
     });
   };
 
-  const toggleAPI = (apiId: string) => {
-    const existing = d.apiSelections.find((s) => s.apiConnectionId === apiId);
-    if (existing) {
-      patch({ apiSelections: d.apiSelections.filter((s) => s.apiConnectionId !== apiId) });
-    } else {
-      const api = apis.find((a) => a.id === apiId);
-      patch({
-        apiSelections: [
-          ...d.apiSelections,
-          {
-            apiConnectionId: apiId,
-            endpointIds: api?.endpoints.filter((e) => e.enabled).map((e) => e.id) ?? [],
-          },
-        ],
-      });
-    }
-  };
+  const updateMCPSel = (p: Partial<AgentMCPSelection>) =>
+    patch({ mcpSelections: d.mcpSelections.map((s) => ({ ...s, ...p })) });
 
-  const toggleAPIEndpoint = (apiId: string, epId: string) => {
-    patch({
-      apiSelections: d.apiSelections.map((s) =>
-        s.apiConnectionId === apiId
-          ? {
-              ...s,
-              endpointIds: s.endpointIds.includes(epId)
-                ? s.endpointIds.filter((e) => e !== epId)
-                : [...s.endpointIds, epId],
-            }
-          : s
-      ),
+  const toggleMCPTool = (toolId: string) => {
+    const sel = d.mcpSelections[0];
+    if (!sel) return;
+    updateMCPSel({
+      toolIds: sel.toolIds.includes(toolId)
+        ? sel.toolIds.filter((t) => t !== toolId)
+        : [...sel.toolIds, toolId],
     });
   };
 
-  // ----- Test playground -----
+  const setMCPPermissionMode = (mode: AgentMCPPermissionMode) => {
+    if (!selectedMCP) return;
+    let toolIds = d.mcpSelections[0]?.toolIds ?? [];
+    if (mode === "read_only")
+      toolIds = selectedMCP.tools
+        .filter((t) => t.enabled && t.permission === "read")
+        .map((t) => t.id);
+    if (mode === "read_write")
+      toolIds = selectedMCP.tools
+        .filter((t) => t.enabled && t.permission !== "admin")
+        .map((t) => t.id);
+    updateMCPSel({ permissionMode: mode, toolIds });
+  };
+
+  const toolAllowedInMode = (tool: MCPTool, mode: AgentMCPPermissionMode) => {
+    if (mode === "custom") return true;
+    if (mode === "read_only") return tool.permission === "read";
+    return tool.permission !== "admin";
+  };
+
+  const selectAPI = (apiId: string) => {
+    const already = d.apiSelections[0]?.apiConnectionId === apiId;
+    if (already) {
+      patch({ apiSelections: [] });
+      return;
+    }
+    const api = apis.find((a) => a.id === apiId);
+    patch({
+      apiSelections: [
+        {
+          apiConnectionId: apiId,
+          endpointIds: api?.endpoints.filter((e) => e.enabled).map((e) => e.id) ?? [],
+          ...defaultAgentAPIConfig(),
+        },
+      ],
+    });
+  };
+
+  const updateAPISel = (p: Partial<AgentAPISelection>) =>
+    patch({ apiSelections: d.apiSelections.map((s) => ({ ...s, ...p })) });
+
+  const toggleAPIEndpoint = (epId: string) => {
+    const sel = d.apiSelections[0];
+    if (!sel) return;
+    updateAPISel({
+      endpointIds: sel.endpointIds.includes(epId)
+        ? sel.endpointIds.filter((e) => e !== epId)
+        : [...sel.endpointIds, epId],
+    });
+  };
+
+  // ----- Step 4: test playground -----
   const sendTestMessage = async () => {
     const prompt = chatInput.trim();
     if (!prompt || thinking) return;
     setChatInput("");
-    const userMsg: AgentChatMessage = { id: newMsgId(), role: "user", content: prompt };
-    setMessages((m) => [...m, userMsg]);
+    setMessages((m) => [...m, { id: newMsgId(), role: "user", content: prompt }]);
     setThinking(true);
 
     await new Promise((r) => setTimeout(r, 1000 + Math.random() * 800));
 
-    const mcpCalls = d.mcpSelections
-      .map((s) => mcps.find((m) => m.id === s.mcpServerId)?.name)
-      .filter(Boolean)
-      .slice(0, 2) as string[];
-    const apiCalls = d.apiSelections
-      .map((s) => apis.find((a) => a.id === s.apiConnectionId)?.name)
-      .filter(Boolean)
-      .slice(0, 2) as string[];
+    const toolInvocations: { server: string; tool: string }[] = [];
+    if (selectedMCP && d.mcpSelections[0]) {
+      selectedMCP.tools
+        .filter((t) => d.mcpSelections[0].toolIds.includes(t.id))
+        .slice(0, 2)
+        .forEach((t) =>
+          toolInvocations.push({ server: selectedMCP.displayName, tool: t.name })
+        );
+    }
+    const apiEndpointsInvoked =
+      selectedAPI && d.apiSelections[0]
+        ? selectedAPI.endpoints
+            .filter((e) => d.apiSelections[0].endpointIds.includes(e.id))
+            .slice(0, 2)
+            .map((e) => `${e.method} ${e.path}`)
+        : [];
 
     const tokens = Math.floor(150 + Math.random() * 400);
     const timeline: { step: string; ms: number }[] = [
-      { step: "Prompt received", ms: 0 },
-      ...(d.enableToolCalling && mcpCalls.length
-        ? mcpCalls.map((c, i) => ({ step: `MCP call: ${c}`, ms: 180 + i * 140 }))
+      { step: "User prompt received", ms: 0 },
+      { step: `LLM: ${selectedLLM ? selectedLLM.config.defaultModel : "no model"}`, ms: 120 },
+      ...(d.enableToolCalling
+        ? toolInvocations.map((x, i) => ({
+            step: `${x.server} → ${x.tool}`,
+            ms: 260 + i * 160,
+          }))
         : []),
-      ...(d.enableToolCalling && apiCalls.length
-        ? apiCalls.map((c, i) => ({ step: `API call: ${c}`, ms: 420 + i * 160 }))
+      ...(d.enableToolCalling
+        ? apiEndpointsInvoked.map((e, i) => ({ step: `API: ${e}`, ms: 420 + i * 160 }))
         : []),
-      { step: "LLM generation", ms: 650 },
-      { step: "Response returned", ms: 900 + Math.floor(Math.random() * 300) },
+      { step: "LLM generation", ms: 780 },
+      { step: "Response generated", ms: 1000 + Math.floor(Math.random() * 300) },
     ];
+
+    const resourceLabel = selectedMCP
+      ? selectedMCP.displayName
+      : selectedAPI
+      ? selectedAPI.name
+      : null;
 
     const reply: AgentChatMessage = {
       id: newMsgId(),
       role: "assistant",
       content: selectedLLM
-        ? `(Simulated) As ${d.name || "your agent"}, here's my response to "${prompt.slice(0, 60)}": I would ${
+        ? `(Simulated) As ${d.name || "your agent"}, responding to "${prompt.slice(0, 60)}": I would ${
             d.goal ? `work toward: ${d.goal.slice(0, 80)}` : "assist based on my instructions"
-          }${mcpCalls.length ? `, using tools from ${mcpCalls.join(" and ")}` : ""}${
-            apiCalls.length ? ` and calling ${apiCalls.join(", ")}` : ""
-          }.`
+          }${resourceLabel ? `, using ${resourceLabel}` : ""}.`
         : "No LLM selected — go back to Step 2 and choose an active LLM connection.",
       llmLabel: selectedLLM
         ? `${providerMeta(selectedLLM.provider).label} · ${selectedLLM.config.defaultModel}`
         : "None",
-      mcpCalls,
-      apiCalls,
+      mcpCalls: toolInvocations.map((x) => `${x.server} → ${x.tool}`),
+      apiCalls: apiEndpointsInvoked,
       timeline,
       responseTimeMs: timeline[timeline.length - 1].ms,
+      toolExecutionMs:
+        toolInvocations.length || apiEndpointsInvoked.length
+          ? Math.floor(120 + Math.random() * 250)
+          : 0,
       tokensUsed: tokens,
       estimatedCost: selectedLLM
         ? +((tokens * selectedLLM.estimatedCostPer1k) / 1000).toFixed(5)
@@ -404,32 +468,50 @@ function CreateAgentInner() {
     setThinking(false);
   };
 
-  // ----- Deploy -----
-  const slug = slugify(d.name);
-  const agentUrl = `https://agents.safalvir.com/a/${slug}`;
-  const apiEndpoint = `https://api.safalvir.com/v1/agents/${slug}/invoke`;
-  const embedCode = `<script src="https://agents.safalvir.com/embed.js" data-agent="${slug}"></script>`;
+  // ----- Step 5: deploy -----
+  const agtId = (agentId ?? "agent_xxxxxx").replace(/^agent_?/, "agt_");
+  const agentUrl = `https://ai.safalvir.com/agents/${agtId}`;
+  const chatUrl = `https://ai.safalvir.com/chat/${agtId}`;
+  const apiEndpoint = `POST /api/v1/agents/${agtId}/chat`;
+  const curlExample = `curl -X POST https://api.safalvir.com/v1/agents/${agtId}/chat \\
+-H "Authorization: Bearer YOUR_API_KEY" \\
+-H "Content-Type: application/json" \\
+-d '{"message":"Hello"}'`;
 
-  const deploy = (publish: boolean) => {
+  const deployAgent = async () => {
     const id = saveDraft(true);
+    setDeployStatus("deploying");
+    updateAgent(id, { deploymentStatus: "deploying" });
+    await new Promise((r) => setTimeout(r, 1400));
     updateAgent(id, {
       status: "active",
       deployed: true,
-      visibility: publish ? "public" : d.visibility,
+      deploymentStatus: "live",
       agentUrl,
+      chatUrl,
       apiEndpoint,
-      embedCode,
+      apiKey: `sk_safal_${Math.random().toString(36).slice(2, 14)}`,
       wizardStep: STEPS.length - 1,
     });
-    setDeployed(true);
-    toast.success(publish ? "Agent published to marketplace!" : "Agent deployed!");
-    router.push("/ai-studio/my-agents");
+    setDeployStatus("live");
+    toast.success("Agent deployed!");
+    setStep(5);
   };
 
   const copyText = (t: string, label: string) => {
     navigator.clipboard.writeText(t);
     toast.success(`${label} copied`);
   };
+
+  const enabledToolNames = selectedMCP
+    ? selectedMCP.tools
+        .filter((t) => d.mcpSelections[0]?.toolIds.includes(t.id))
+        .map((t) => t.name)
+    : selectedAPI
+    ? selectedAPI.endpoints
+        .filter((e) => d.apiSelections[0]?.endpointIds.includes(e.id))
+        .map((e) => `${e.method} ${e.path}`)
+    : [];
 
   if (!mounted) return null;
 
@@ -450,79 +532,167 @@ function CreateAgentInner() {
           <WizardProgress steps={STEPS} current={step} onStepClick={setStep} />
         </Card>
 
-        {/* Step 1 — Agent Details */}
+        {/* ===== Step 1 — Agent Details + Instructions ===== */}
         {step === 0 && (
-          <Card>
-            <h2 className="text-base font-semibold text-gray-900 mb-4">Agent Details</h2>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input
-                  label="Agent Name *"
-                  value={d.name}
-                  onChange={(e) => patch({ name: e.target.value })}
-                  placeholder="e.g. Support Copilot"
+          <div className="space-y-6">
+            <Card>
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Agent Information</h2>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input
+                    label="Agent Name *"
+                    value={d.name}
+                    onChange={(e) => patch({ name: e.target.value })}
+                    placeholder="e.g. Support Copilot"
+                  />
+                  <Select
+                    label="Category"
+                    options={AGENT_CATEGORIES.map((c) => ({ value: c, label: c }))}
+                    value={d.category}
+                    onChange={(e) => patch({ category: e.target.value })}
+                  />
+                </div>
+                <Textarea
+                  label="Description *"
+                  value={d.description}
+                  onChange={(e) => patch({ description: e.target.value })}
+                  rows={2}
+                  placeholder="What does this agent do?"
                 />
-                <Select
-                  label="Category"
-                  options={AGENT_CATEGORIES.map((c) => ({ value: c, label: c }))}
-                  value={d.category}
-                  onChange={(e) => patch({ category: e.target.value })}
-                />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Agent Icon
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {AGENT_ICONS.map((ic) => (
+                        <button
+                          key={ic}
+                          type="button"
+                          onClick={() => patch({ icon: ic })}
+                          className={cn(
+                            "w-9 h-9 rounded-lg text-lg flex items-center justify-center border-2 transition-all",
+                            d.icon === ic
+                              ? "border-primary-500 bg-primary-50"
+                              : "border-gray-200 hover:border-gray-300"
+                          )}
+                        >
+                          {ic}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <Input
+                    label="Version"
+                    value={d.version}
+                    onChange={(e) => patch({ version: e.target.value })}
+                    placeholder="1.0.0"
+                  />
+                  <Toggle
+                    label="Status"
+                    description={d.active ? "Active" : "Inactive"}
+                    checked={d.active}
+                    onChange={(active) => patch({ active })}
+                  />
+                </div>
+                <TagsInput tags={d.tags} onChange={(tags) => patch({ tags })} />
               </div>
-              <Textarea
-                label="Description *"
-                value={d.description}
-                onChange={(e) => patch({ description: e.target.value })}
-                rows={2}
-                placeholder="What does this agent do?"
-              />
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Agent Icon
-                  </label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {AGENT_ICONS.map((ic) => (
-                      <button
-                        key={ic}
-                        type="button"
-                        onClick={() => patch({ icon: ic })}
-                        className={cn(
-                          "w-9 h-9 rounded-lg text-lg flex items-center justify-center border-2 transition-all",
-                          d.icon === ic
-                            ? "border-primary-500 bg-primary-50"
-                            : "border-gray-200 hover:border-gray-300"
-                        )}
-                      >
-                        {ic}
-                      </button>
-                    ))}
+            </Card>
+
+            <Card>
+              <h2 className="text-base font-semibold text-gray-900 mb-1">Agent Instructions</h2>
+              <p className="text-sm text-gray-500 mb-4">
+                Define how the agent thinks and responds.
+              </p>
+              <div className="space-y-4">
+                <Textarea
+                  label="System Instruction (Primary Prompt)"
+                  value={d.systemPrompt}
+                  onChange={(e) => patch({ systemPrompt: e.target.value })}
+                  rows={4}
+                  placeholder="You are a helpful assistant that..."
+                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Textarea
+                    label="Agent Goal"
+                    value={d.goal}
+                    onChange={(e) => patch({ goal: e.target.value })}
+                    rows={2}
+                    placeholder="What should this agent achieve?"
+                  />
+                  <Textarea
+                    label="Constraints"
+                    value={d.constraints}
+                    onChange={(e) => patch({ constraints: e.target.value })}
+                    rows={2}
+                    placeholder={"Never expose secrets.\nAlways cite sources.\nKeep answers below 500 words."}
+                  />
+                  <Input
+                    label="Persona"
+                    value={d.persona}
+                    onChange={(e) => patch({ persona: e.target.value })}
+                    placeholder="e.g. Friendly support engineer"
+                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Select
+                      label="Response Tone"
+                      options={TONES.map((t) => ({ value: t, label: t }))}
+                      value={d.tone}
+                      onChange={(e) => patch({ tone: e.target.value })}
+                    />
+                    <Select
+                      label="Response Format"
+                      options={RESPONSE_FORMATS.map((f) => ({ value: f, label: f }))}
+                      value={d.responseFormat}
+                      onChange={(e) => patch({ responseFormat: e.target.value })}
+                    />
                   </div>
                 </div>
-                <Input
-                  label="Version"
-                  value={d.version}
-                  onChange={(e) => patch({ version: e.target.value })}
-                  placeholder="1.0.0"
-                />
-                <Toggle
-                  label="Status"
-                  description={d.active ? "Active" : "Inactive"}
-                  checked={d.active}
-                  onChange={(active) => patch({ active })}
-                />
+                {d.tone === "Custom" && (
+                  <Input
+                    label="Custom Tone"
+                    value={d.customTone}
+                    onChange={(e) => patch({ customTone: e.target.value })}
+                    placeholder="Describe the tone, e.g. Warm but concise"
+                  />
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 pt-2 border-t border-gray-100">
+                  <Toggle
+                    label="Enable Memory"
+                    description="Remember facts across conversations"
+                    checked={d.enableMemory}
+                    onChange={(v) => patch({ enableMemory: v })}
+                  />
+                  <Toggle
+                    label="Enable Conversation History"
+                    description="Keep chat context within a session"
+                    checked={d.enableHistory}
+                    onChange={(v) => patch({ enableHistory: v })}
+                  />
+                  <Toggle
+                    label="Enable Citations"
+                    description="Cite sources in responses"
+                    checked={d.enableCitations}
+                    onChange={(v) => patch({ enableCitations: v })}
+                  />
+                  <Toggle
+                    label="Enable Tool Calling"
+                    description="Allow MCP tools and API calls"
+                    checked={d.enableToolCalling}
+                    onChange={(v) => patch({ enableToolCalling: v })}
+                  />
+                </div>
               </div>
-              <TagsInput tags={d.tags} onChange={(tags) => patch({ tags })} />
-            </div>
-          </Card>
+            </Card>
+          </div>
         )}
 
-        {/* Step 2 — Select LLM */}
+        {/* ===== Step 2 — Select LLM ===== */}
         {step === 1 && (
           <Card>
             <h2 className="text-base font-semibold text-gray-900 mb-1">Select LLM</h2>
             <p className="text-sm text-gray-500 mb-4">
-              Choose the default model for this agent. Inactive connections are greyed out.
+              Select one LLM. Inactive connections are disabled.
             </p>
             {llms.length === 0 ? (
               <p className="text-sm text-gray-400 py-6 text-center border border-dashed rounded-lg">
@@ -563,7 +733,7 @@ function CreateAgentInner() {
                         </div>
                         {selected && <CheckCircle className="w-5 h-5 text-primary-600" />}
                       </div>
-                      <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <StatusBadge status={l.status} />
                         <HealthBadge health={l.health} />
                         <Badge variant="gray">{Math.round(l.contextWindow / 1000)}K ctx</Badge>
@@ -571,62 +741,255 @@ function CreateAgentInner() {
                           {l.estimatedCostPer1k === 0 ? "Free" : `$${l.estimatedCostPer1k}/1K`}
                         </Badge>
                       </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {l.config.visionEnabled && <Badge variant="info">Vision</Badge>}
-                        {l.config.functionCalling && <Badge variant="secondary">Function Calling</Badge>}
-                        {l.config.reasoningMode !== "off" && <Badge variant="primary">Reasoning</Badge>}
-                      </div>
                     </button>
                   );
                 })}
               </div>
             )}
-            {d.llmConnectionId && (
-              <div className="mt-4 max-w-sm">
-                <Select
-                  label="Fallback LLM (optional)"
-                  options={[
-                    { value: "", label: "None" },
-                    ...llms
-                      .filter((l) => l.id !== d.llmConnectionId && l.status === "active")
-                      .map((l) => ({ value: l.id, label: l.name })),
-                  ]}
-                  value={d.fallbackLLMConnectionId ?? ""}
-                  onChange={(e) =>
-                    patch({ fallbackLLMConnectionId: e.target.value || null })
-                  }
-                />
-              </div>
-            )}
           </Card>
         )}
 
-        {/* Step 3 — Select MCP Servers */}
+        {/* ===== Step 3 — Connect External Resource ===== */}
         {step === 2 && (
           <Card>
-            <h2 className="text-base font-semibold text-gray-900 mb-1">Select MCP Servers</h2>
-            <p className="text-sm text-gray-500 mb-4">
-              Pick the MCP servers this agent can use, then choose specific tools.
+            <h2 className="text-base font-semibold text-gray-900 mb-1">
+              Connectivity
+            </h2>
+            <p className="text-sm text-gray-500 mb-6">
+              Choose your connectivity — an MCP server or an API connection.
             </p>
-            {mcps.filter((m) => m.status === "active").length === 0 ? (
-              <p className="text-sm text-gray-400 py-6 text-center border border-dashed rounded-lg">
-                No active MCP servers.{" "}
+
+            {/* Connectivity type radio */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 max-w-xl">
+              {(
+                [
+                  { v: "mcp", label: "MCP Server", icon: <Server className="w-4 h-4" />, desc: "Give the agent tools via Model Context Protocol" },
+                  { v: "api", label: "API Connection", icon: <Globe className="w-4 h-4" />, desc: "Let the agent call REST API endpoints" },
+                ] as { v: AgentResourceType; label: string; icon: React.ReactNode; desc: string }[]
+              ).map((o) => (
                 <button
-                  className="text-primary-600 font-medium"
-                  onClick={() => router.push("/ai-studio/connections")}
+                  key={o.v}
+                  type="button"
+                  onClick={() => setResourceType(o.v)}
+                  className={cn(
+                    "rounded-xl border-2 p-4 text-left transition-all",
+                    d.resourceType === o.v
+                      ? "border-primary-500 bg-primary-50/50"
+                      : "border-gray-200 hover:border-gray-300"
+                  )}
                 >
-                  Add one in AI Connections →
+                  <div className="flex items-center gap-2 mb-1 text-gray-700">
+                    <span
+                      className={cn(
+                        "w-4 h-4 rounded-full border-2 flex items-center justify-center",
+                        d.resourceType === o.v ? "border-primary-600" : "border-gray-300"
+                      )}
+                    >
+                      {d.resourceType === o.v && (
+                        <span className="w-2 h-2 rounded-full bg-primary-600" />
+                      )}
+                    </span>
+                    {o.icon}
+                    <span className="text-sm font-semibold">{o.label}</span>
+                  </div>
+                  <p className="text-xs text-gray-500">{o.desc}</p>
                 </button>
-              </p>
-            ) : (
+              ))}
+            </div>
+
+            {/* MCP branch */}
+            {d.resourceType === "mcp" && (
               <div className="space-y-3">
-                {mcps
-                  .filter((m) => m.status === "active")
-                  .map((m) => {
-                    const sel = d.mcpSelections.find((s) => s.mcpServerId === m.id);
+                {mcps.filter((m) => m.status === "active").length === 0 ? (
+                  <p className="text-sm text-gray-400 py-6 text-center border border-dashed rounded-lg">
+                    No active MCP servers.{" "}
+                    <button
+                      className="text-primary-600 font-medium"
+                      onClick={() => router.push("/ai-studio/connections")}
+                    >
+                      Add one in AI Connections →
+                    </button>
+                  </p>
+                ) : (
+                  mcps
+                    .filter((m) => m.status === "active")
+                    .map((m) => {
+                      const sel =
+                        d.mcpSelections[0]?.mcpServerId === m.id ? d.mcpSelections[0] : null;
+                      const enabledTools = m.tools.filter((t) => t.enabled);
+                      return (
+                        <div
+                          key={m.id}
+                          className={cn(
+                            "rounded-xl border-2 transition-all",
+                            sel ? "border-primary-400 bg-primary-50/30" : "border-gray-200"
+                          )}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => selectMCP(m.id)}
+                            className="w-full flex items-center gap-3 p-4 text-left"
+                          >
+                            <div className="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center text-xl flex-shrink-0">
+                              {m.icon || "📦"}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-900">
+                                {m.displayName}
+                              </p>
+                              <p className="text-xs text-gray-500 truncate">{m.description}</p>
+                            </div>
+                            <div className="hidden md:flex items-center gap-2 flex-shrink-0">
+                              <HealthBadge health={m.health} />
+                              <Badge variant="gray">{m.category}</Badge>
+                              <Badge variant="gray">{enabledTools.length} tools</Badge>
+                              <span className="text-[11px] text-gray-400">
+                                Synced {fmtDate(m.lastSyncedAt)}
+                              </span>
+                            </div>
+                            <span
+                              className={cn(
+                                "w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0",
+                                sel ? "border-primary-600" : "border-gray-300"
+                              )}
+                            >
+                              {sel && <span className="w-2 h-2 rounded-full bg-primary-600" />}
+                            </span>
+                          </button>
+
+                          {sel && (
+                            <div className="px-4 pb-4 space-y-4">
+                              {/* Discovered tools */}
+                              <div>
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                                  Tools ({sel.toolIds.length} selected)
+                                </p>
+                                <div className="space-y-1">
+                                  {enabledTools.map((t) => {
+                                    const allowed = toolAllowedInMode(t, sel.permissionMode);
+                                    return (
+                                      <label
+                                        key={t.id}
+                                        className={cn(
+                                          "flex items-center gap-2.5 text-sm",
+                                          allowed
+                                            ? "text-gray-700 cursor-pointer"
+                                            : "text-gray-300 cursor-not-allowed"
+                                        )}
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          checked={sel.toolIds.includes(t.id)}
+                                          disabled={!allowed}
+                                          onChange={() => toggleMCPTool(t.id)}
+                                          className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 disabled:opacity-40"
+                                        />
+                                        <span>{t.name}</span>
+                                        <PermissionBadge permission={t.permission} />
+                                        <span className="text-xs text-gray-400 truncate">
+                                          {t.description}
+                                        </span>
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              {/* Configure */}
+                              <div className="pt-3 border-t border-gray-100">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                                  Configure
+                                </p>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-2">
+                                  <Input
+                                    label="Maximum Tool Calls"
+                                    type="number"
+                                    min={1}
+                                    value={sel.maxToolCalls}
+                                    onChange={(e) =>
+                                      updateMCPSel({ maxToolCalls: Number(e.target.value) })
+                                    }
+                                    className="!py-2 text-sm"
+                                  />
+                                  <Input
+                                    label="Tool Timeout (sec)"
+                                    type="number"
+                                    min={1}
+                                    value={sel.toolTimeoutSeconds}
+                                    onChange={(e) =>
+                                      updateMCPSel({
+                                        toolTimeoutSeconds: Number(e.target.value),
+                                      })
+                                    }
+                                    className="!py-2 text-sm"
+                                  />
+                                  <Select
+                                    label="Tool Permissions"
+                                    options={[
+                                      { value: "read_only", label: "Read Only" },
+                                      { value: "read_write", label: "Read & Write" },
+                                      { value: "custom", label: "Custom" },
+                                    ]}
+                                    value={sel.permissionMode}
+                                    onChange={(e) =>
+                                      setMCPPermissionMode(
+                                        e.target.value as AgentMCPPermissionMode
+                                      )
+                                    }
+                                    className="!py-2 text-sm"
+                                  />
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
+                                  <Toggle
+                                    label="Retry Failed Calls"
+                                    checked={sel.retryFailedCalls}
+                                    onChange={(v) => updateMCPSel({ retryFailedCalls: v })}
+                                  />
+                                  <Toggle
+                                    label="Require Approval for Write/Delete"
+                                    checked={sel.approvalRules.update && sel.approvalRules.delete}
+                                    onChange={(v) =>
+                                      updateMCPSel({
+                                        approvalRules: {
+                                          ...sel.approvalRules,
+                                          create: v,
+                                          update: v,
+                                          delete: v,
+                                        },
+                                      })
+                                    }
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                )}
+              </div>
+            )}
+
+            {/* API branch */}
+            {d.resourceType === "api" && (
+              <div className="space-y-3">
+                {apis.length === 0 ? (
+                  <p className="text-sm text-gray-400 py-6 text-center border border-dashed rounded-lg">
+                    No API connections.{" "}
+                    <button
+                      className="text-primary-600 font-medium"
+                      onClick={() => router.push("/ai-studio/connections")}
+                    >
+                      Add one in AI Connections →
+                    </button>
+                  </p>
+                ) : (
+                  apis.map((a) => {
+                    const sel =
+                      d.apiSelections[0]?.apiConnectionId === a.id ? d.apiSelections[0] : null;
                     return (
                       <div
-                        key={m.id}
+                        key={a.id}
                         className={cn(
                           "rounded-xl border-2 transition-all",
                           sel ? "border-primary-400 bg-primary-50/30" : "border-gray-200"
@@ -634,229 +997,112 @@ function CreateAgentInner() {
                       >
                         <button
                           type="button"
-                          onClick={() => toggleMCP(m.id)}
+                          onClick={() => selectAPI(a.id)}
                           className="w-full flex items-center gap-3 p-4 text-left"
                         >
-                          <LogoAvatar label={m.name} />
+                          <LogoAvatar label={a.name} />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900">{m.name}</p>
-                            <p className="text-xs text-gray-500 truncate">{m.description}</p>
+                            <p className="text-sm font-semibold text-gray-900">{a.name}</p>
+                            <p className="text-xs text-gray-500 truncate">{a.description}</p>
                           </div>
-                          <Badge variant="gray">{m.category}</Badge>
-                          <Badge variant="gray">
-                            {m.tools.filter((t) => t.enabled).length} tools
-                          </Badge>
-                          <StatusBadge status={m.status} />
-                          <div
+                          <div className="hidden md:flex items-center gap-2 flex-shrink-0">
+                            <Badge variant="gray">{a.category}</Badge>
+                            <Badge variant="gray">{a.authType.replace("_", " ")}</Badge>
+                            <StatusBadge status={a.status} />
+                          </div>
+                          <span
                             className={cn(
-                              "w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0",
-                              sel ? "bg-primary-600 border-primary-600" : "border-gray-300"
+                              "w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0",
+                              sel ? "border-primary-600" : "border-gray-300"
                             )}
                           >
-                            {sel && <Check className="w-3.5 h-3.5 text-white" />}
-                          </div>
+                            {sel && <span className="w-2 h-2 rounded-full bg-primary-600" />}
+                          </span>
                         </button>
+
                         {sel && (
-                          <div className="px-4 pb-4 pl-16 space-y-1.5">
-                            {m.tools
-                              .filter((t) => t.enabled)
-                              .map((t) => (
-                                <label
-                                  key={t.id}
-                                  className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={sel.toolIds.includes(t.id)}
-                                    onChange={() => toggleMCPTool(m.id, t.id)}
-                                    className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                                  />
-                                  <span>{t.name}</span>
-                                  <span className="text-xs text-gray-400">{t.description}</span>
-                                </label>
-                              ))}
+                          <div className="px-4 pb-4 space-y-4">
+                            <div>
+                              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                                Endpoints ({sel.endpointIds.length} selected)
+                              </p>
+                              <div className="space-y-1">
+                                {a.endpoints
+                                  .filter((e) => e.enabled)
+                                  .map((e) => (
+                                    <label
+                                      key={e.id}
+                                      className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={sel.endpointIds.includes(e.id)}
+                                        onChange={() => toggleAPIEndpoint(e.id)}
+                                        className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                                      />
+                                      <span className="font-mono text-xs font-semibold text-gray-500">
+                                        {e.method}
+                                      </span>
+                                      <span className="font-mono text-xs">{e.path}</span>
+                                      <span className="text-xs text-gray-400 truncate">
+                                        {e.description}
+                                      </span>
+                                    </label>
+                                  ))}
+                              </div>
+                            </div>
+                            <div className="pt-3 border-t border-gray-100">
+                              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                                Configure
+                              </p>
+                              <div className="grid grid-cols-3 gap-4">
+                                <Input
+                                  label="Timeout (sec)"
+                                  type="number"
+                                  min={1}
+                                  value={sel.timeoutSeconds}
+                                  onChange={(e) =>
+                                    updateAPISel({ timeoutSeconds: Number(e.target.value) })
+                                  }
+                                  className="!py-2 text-sm"
+                                />
+                                <Input
+                                  label="Retry"
+                                  type="number"
+                                  min={0}
+                                  max={10}
+                                  value={sel.retryCount}
+                                  onChange={(e) =>
+                                    updateAPISel({ retryCount: Number(e.target.value) })
+                                  }
+                                  className="!py-2 text-sm"
+                                />
+                                <Input
+                                  label="Rate Limit (rpm)"
+                                  type="number"
+                                  min={1}
+                                  value={sel.rateLimitRpm}
+                                  onChange={(e) =>
+                                    updateAPISel({ rateLimitRpm: Number(e.target.value) })
+                                  }
+                                  className="!py-2 text-sm"
+                                />
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>
                     );
-                  })}
+                  })
+                )}
               </div>
             )}
           </Card>
         )}
 
-        {/* Step 4 — Select API Connections */}
+        {/* ===== Step 4 — Test Agent ===== */}
         {step === 3 && (
-          <Card>
-            <h2 className="text-base font-semibold text-gray-900 mb-1">Select API Connections</h2>
-            <p className="text-sm text-gray-500 mb-4">
-              Give the agent access to external APIs and choose which endpoints it may call.
-            </p>
-            {apis.length === 0 ? (
-              <p className="text-sm text-gray-400 py-6 text-center border border-dashed rounded-lg">
-                No API connections.{" "}
-                <button
-                  className="text-primary-600 font-medium"
-                  onClick={() => router.push("/ai-studio/connections")}
-                >
-                  Add one in AI Connections →
-                </button>
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {apis.map((a) => {
-                  const sel = d.apiSelections.find((s) => s.apiConnectionId === a.id);
-                  return (
-                    <div
-                      key={a.id}
-                      className={cn(
-                        "rounded-xl border-2 transition-all",
-                        sel ? "border-primary-400 bg-primary-50/30" : "border-gray-200"
-                      )}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => toggleAPI(a.id)}
-                        className="w-full flex items-center gap-3 p-4 text-left"
-                      >
-                        <LogoAvatar label={a.name} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900">{a.name}</p>
-                          <p className="text-xs text-gray-500 truncate">{a.description}</p>
-                        </div>
-                        <Badge variant="gray">{a.category}</Badge>
-                        <StatusBadge status={a.status} />
-                        <div
-                          className={cn(
-                            "w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0",
-                            sel ? "bg-primary-600 border-primary-600" : "border-gray-300"
-                          )}
-                        >
-                          {sel && <Check className="w-3.5 h-3.5 text-white" />}
-                        </div>
-                      </button>
-                      {sel && a.endpoints.length > 0 && (
-                        <div className="px-4 pb-4 pl-16 space-y-1.5">
-                          {a.endpoints
-                            .filter((e) => e.enabled)
-                            .map((e) => (
-                              <label
-                                key={e.id}
-                                className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer"
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={sel.endpointIds.includes(e.id)}
-                                  onChange={() => toggleAPIEndpoint(a.id, e.id)}
-                                  className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                                />
-                                <span className="font-mono text-xs font-semibold text-gray-500">
-                                  {e.method}
-                                </span>
-                                <span className="font-mono text-xs">{e.path}</span>
-                                <span className="text-xs text-gray-400">{e.description}</span>
-                              </label>
-                            ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </Card>
-        )}
-
-        {/* Step 5 — Instructions */}
-        {step === 4 && (
-          <Card>
-            <h2 className="text-base font-semibold text-gray-900 mb-1">Agent Instructions</h2>
-            <p className="text-sm text-gray-500 mb-4">
-              This is the intelligence of the agent — define how it thinks and responds.
-            </p>
-            <div className="space-y-4">
-              <Textarea
-                label="System Prompt"
-                value={d.systemPrompt}
-                onChange={(e) => patch({ systemPrompt: e.target.value })}
-                rows={4}
-                placeholder="You are a helpful assistant that..."
-              />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Textarea
-                  label="Agent Goal"
-                  value={d.goal}
-                  onChange={(e) => patch({ goal: e.target.value })}
-                  rows={2}
-                  placeholder="What should this agent achieve?"
-                />
-                <Textarea
-                  label="Constraints"
-                  value={d.constraints}
-                  onChange={(e) => patch({ constraints: e.target.value })}
-                  rows={2}
-                  placeholder="What must the agent never do?"
-                />
-                <Input
-                  label="Persona"
-                  value={d.persona}
-                  onChange={(e) => patch({ persona: e.target.value })}
-                  placeholder="e.g. Friendly support engineer"
-                />
-                <Input
-                  label="Tone"
-                  value={d.tone}
-                  onChange={(e) => patch({ tone: e.target.value })}
-                  placeholder="e.g. Professional and warm"
-                />
-              </div>
-              <Textarea
-                label="Instructions"
-                value={d.instructions}
-                onChange={(e) => patch({ instructions: e.target.value })}
-                rows={3}
-                placeholder="Step-by-step guidance for how the agent should work..."
-              />
-              <Input
-                label="Response Format"
-                value={d.responseFormat}
-                onChange={(e) => patch({ responseFormat: e.target.value })}
-                placeholder="e.g. Short paragraphs with bullet points"
-              />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 pt-2 border-t border-gray-100">
-                <Toggle
-                  label="Enable Memory"
-                  description="Remember facts across conversations"
-                  checked={d.enableMemory}
-                  onChange={(v) => patch({ enableMemory: v })}
-                />
-                <Toggle
-                  label="Enable Conversation History"
-                  description="Keep chat context within a session"
-                  checked={d.enableHistory}
-                  onChange={(v) => patch({ enableHistory: v })}
-                />
-                <Toggle
-                  label="Enable Citations"
-                  description="Cite sources in responses"
-                  checked={d.enableCitations}
-                  onChange={(v) => patch({ enableCitations: v })}
-                />
-                <Toggle
-                  label="Enable Tool Calling"
-                  description="Allow MCP tools and API calls"
-                  checked={d.enableToolCalling}
-                  onChange={(v) => patch({ enableToolCalling: v })}
-                />
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {/* Step 6 — Test Agent */}
-        {step === 5 && (
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-            {/* Chat window */}
             <Card padding="none" className="lg:col-span-3 flex flex-col h-[520px]">
               <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -870,9 +1116,7 @@ function CreateAgentInner() {
                     title="Retry last prompt"
                     onClick={() => {
                       const lastUser = [...messages].reverse().find((m) => m.role === "user");
-                      if (lastUser) {
-                        setChatInput(lastUser.content);
-                      }
+                      if (lastUser) setChatInput(lastUser.content);
                     }}
                     className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg text-xs font-medium px-2"
                   >
@@ -889,10 +1133,10 @@ function CreateAgentInner() {
                     <Eraser className="w-4 h-4" />
                   </button>
                   <button
-                    title="Save test"
+                    title="Save test result"
                     onClick={() => {
                       saveDraft(true);
-                      toast.success("Test session saved");
+                      toast.success("Test result saved");
                     }}
                     className="p-1.5 text-gray-400 hover:text-primary-700 hover:bg-primary-50 rounded-lg"
                   >
@@ -952,7 +1196,6 @@ function CreateAgentInner() {
               </div>
             </Card>
 
-            {/* Execution details */}
             <Card className="lg:col-span-2 h-[520px] overflow-y-auto">
               <h3 className="text-sm font-semibold text-gray-900 mb-3">Execution Details</h3>
               {!lastExec ? (
@@ -963,9 +1206,24 @@ function CreateAgentInner() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
                     <MetaCell label="LLM" value={lastExec.llmLabel} />
+                    <MetaCell
+                      label="Resource"
+                      value={
+                        selectedMCP
+                          ? selectedMCP.displayName
+                          : selectedAPI
+                          ? selectedAPI.name
+                          : "None"
+                      }
+                    />
                     <MetaCell label="Response Time" value={`${lastExec.responseTimeMs} ms`} />
+                    <MetaCell
+                      label="Tool Execution"
+                      value={lastExec.toolExecutionMs ? `${lastExec.toolExecutionMs} ms` : "—"}
+                    />
                     <MetaCell label="Tokens Used" value={lastExec.tokensUsed} />
                     <MetaCell label="Est. Cost" value={`$${lastExec.estimatedCost}`} />
+                    <MetaCell label="Result" value={lastExec.error ? "Failure" : "Success"} />
                   </div>
                   {lastExec.error && (
                     <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-700">
@@ -974,7 +1232,7 @@ function CreateAgentInner() {
                   )}
                   <div>
                     <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1.5">
-                      MCP Calls
+                      Tools Invoked
                     </p>
                     {lastExec.mcpCalls?.length ? (
                       lastExec.mcpCalls.map((c) => (
@@ -988,11 +1246,11 @@ function CreateAgentInner() {
                   </div>
                   <div>
                     <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1.5">
-                      API Calls
+                      API Endpoints Invoked
                     </p>
                     {lastExec.apiCalls?.length ? (
                       lastExec.apiCalls.map((c) => (
-                        <Badge key={c} variant="info" className="mr-1.5 mb-1.5">
+                        <Badge key={c} variant="info" className="mr-1.5 mb-1.5 font-mono">
                           {c}
                         </Badge>
                       ))
@@ -1002,9 +1260,9 @@ function CreateAgentInner() {
                   </div>
                   <div>
                     <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-2">
-                      Tool Execution Timeline
+                      Execution Timeline
                     </p>
-                    <div className="space-y-0">
+                    <div>
                       {lastExec.timeline?.map((t, i) => (
                         <div key={i} className="flex items-start gap-2.5">
                           <div className="flex flex-col items-center">
@@ -1021,25 +1279,67 @@ function CreateAgentInner() {
                       ))}
                     </div>
                   </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1.5">
+                      Logs
+                    </p>
+                    <div className="font-mono text-[11px] bg-gray-900 text-gray-100 rounded-lg p-3 space-y-0.5">
+                      {(lastExec.timeline ?? []).map((t, i) => (
+                        <div key={i}>
+                          <span className="text-green-400">INFO</span>{" "}
+                          <span className="text-gray-400">+{t.ms}ms</span> {t.step}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </Card>
           </div>
         )}
 
-        {/* Step 7 — Deploy */}
-        {step === 6 && (
+        {/* ===== Step 5 — Deploy ===== */}
+        {step === 4 && (
           <Card>
-            <h2 className="text-base font-semibold text-gray-900 mb-4">Deploy</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-semibold text-gray-900">Deploy</h2>
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold",
+                  deployStatus === "live" && "bg-green-100 text-green-700",
+                  deployStatus === "deploying" && "bg-blue-100 text-blue-700",
+                  deployStatus === "draft" && "bg-gray-100 text-gray-600",
+                  deployStatus === "failed" && "bg-red-100 text-red-700"
+                )}
+              >
+                <span
+                  className={cn(
+                    "w-1.5 h-1.5 rounded-full",
+                    deployStatus === "live" && "bg-green-500",
+                    deployStatus === "deploying" && "bg-blue-500 animate-pulse",
+                    deployStatus === "draft" && "bg-gray-400",
+                    deployStatus === "failed" && "bg-red-500"
+                  )}
+                />
+                {deployStatus === "live"
+                  ? "Live"
+                  : deployStatus === "deploying"
+                  ? "Deploying…"
+                  : deployStatus === "failed"
+                  ? "Failed"
+                  : "Draft"}
+              </span>
+            </div>
+
             <div className="space-y-6">
               <div>
                 <p className="text-sm font-medium text-gray-700 mb-2">Visibility</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {(
                     [
-                      { v: "private", label: "Private", desc: "Only you can use this agent", icon: <EyeOff className="w-4 h-4" /> },
-                      { v: "team", label: "Team", desc: "Everyone in your workspace", icon: <Users className="w-4 h-4" /> },
-                      { v: "public", label: "Public Marketplace", desc: "Listed for all Safal AI users", icon: <Globe className="w-4 h-4" /> },
+                      { v: "private", label: "🔒 Private", desc: "Only you can use this agent", icon: <Lock className="w-4 h-4" /> },
+                      { v: "team", label: "👥 Organization", desc: "Everyone in your organization", icon: <Users className="w-4 h-4" /> },
+                      { v: "public", label: "🌍 Public", desc: "Publish to the Agent Marketplace", icon: <Globe className="w-4 h-4" /> },
                     ] as { v: AgentVisibility; label: string; desc: string; icon: React.ReactNode }[]
                   ).map((o) => (
                     <button
@@ -1054,7 +1354,6 @@ function CreateAgentInner() {
                       )}
                     >
                       <div className="flex items-center gap-2 mb-1 text-gray-700">
-                        {o.icon}
                         <span className="text-sm font-semibold">{o.label}</span>
                       </div>
                       <p className="text-xs text-gray-500">{o.desc}</p>
@@ -1063,43 +1362,16 @@ function CreateAgentInner() {
                 </div>
               </div>
 
-              <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">Deployment Targets</p>
-                <div className="flex flex-wrap gap-2">
-                  {DEPLOY_TARGETS.map((t) => {
-                    const on = d.deploymentTargets.includes(t.value);
-                    return (
-                      <button
-                        key={t.value}
-                        type="button"
-                        onClick={() =>
-                          patch({
-                            deploymentTargets: on
-                              ? d.deploymentTargets.filter((x) => x !== t.value)
-                              : [...d.deploymentTargets, t.value],
-                          })
-                        }
-                        className={cn(
-                          "inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border-2 text-sm font-medium transition-all",
-                          on
-                            ? "border-primary-500 bg-primary-50 text-primary-700"
-                            : "border-gray-200 text-gray-600 hover:border-gray-300"
-                        )}
-                      >
-                        {t.icon}
-                        {t.label}
-                        {on && <Check className="w-3.5 h-3.5" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
               <div className="space-y-3 pt-2 border-t border-gray-100">
+                <p className="text-sm font-medium text-gray-700">
+                  Generated on deploy
+                </p>
                 {[
+                  { label: "Agent ID", value: agtId },
                   { label: "Agent URL", value: agentUrl },
-                  { label: "API Endpoint", value: apiEndpoint },
-                  { label: "Embed Code", value: embedCode },
+                  { label: "Chat URL", value: chatUrl },
+                  { label: "REST API Endpoint", value: apiEndpoint },
+                  { label: "API Key", value: deployStatus === "live" ? "sk_safal_••••••••••••" : "••••••••••••••• (generated on deploy)" },
                 ].map((row) => (
                   <div key={row.label}>
                     <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1">
@@ -1118,25 +1390,148 @@ function CreateAgentInner() {
                     </div>
                   </div>
                 ))}
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1">
+                    cURL Example
+                  </p>
+                  <div className="flex items-start gap-2">
+                    <pre className="flex-1 text-xs bg-gray-900 text-gray-100 rounded-lg px-3 py-2.5 font-mono overflow-x-auto">
+                      {curlExample}
+                    </pre>
+                    <button
+                      onClick={() => copyText(curlExample, "cURL example")}
+                      className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-center gap-3 pt-2">
-                <Button onClick={() => deploy(false)}>
-                  <Rocket className="w-4 h-4 mr-1.5" /> Deploy
+                <Button onClick={deployAgent} isLoading={deployStatus === "deploying"}>
+                  <Rocket className="w-4 h-4 mr-1.5" /> Deploy Agent
                 </Button>
                 <Button variant="outline" onClick={() => saveDraft()}>
                   Save Draft
                 </Button>
-                <Button variant="secondary" onClick={() => deploy(true)}>
-                  <Globe className="w-4 h-4 mr-1.5" /> Publish
+                <Button variant="ghost" onClick={() => router.push("/ai-studio/my-agents")}>
+                  Cancel
                 </Button>
               </div>
             </div>
           </Card>
         )}
 
-        {/* Wizard nav */}
-        {step < 6 && (
+        {/* ===== Step 6 — Success ===== */}
+        {step === 5 && (
+          <Card className="max-w-2xl mx-auto">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-100 to-purple-100 flex items-center justify-center mx-auto mb-4">
+                <PartyPopper className="w-8 h-8 text-green-600" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-1">
+                🎉 Agent Successfully Created
+              </h2>
+              <p className="text-sm text-gray-500">
+                {d.icon} {d.name || "Your agent"} is ready to use.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <MetaCell label="Agent Name" value={`${d.icon} ${d.name || "Untitled Agent"}`} />
+              <MetaCell
+                label="Status"
+                value={
+                  <span className="inline-flex items-center gap-1.5 text-green-700 font-medium">
+                    <span className="w-2 h-2 rounded-full bg-green-500" />
+                    {deployStatus === "live" ? "Live" : "Draft"}
+                  </span>
+                }
+              />
+              <MetaCell
+                label="Visibility"
+                value={
+                  d.visibility === "public"
+                    ? "🌍 Public"
+                    : d.visibility === "team"
+                    ? "👥 Organization"
+                    : "🔒 Private"
+                }
+              />
+              <MetaCell
+                label="LLM"
+                value={
+                  selectedLLM
+                    ? `${providerMeta(selectedLLM.provider).label} · ${selectedLLM.config.defaultModel}`
+                    : "None"
+                }
+              />
+              <MetaCell
+                label="Connectivity"
+                value={
+                  selectedMCP
+                    ? `${selectedMCP.icon} ${selectedMCP.displayName}`
+                    : selectedAPI
+                    ? selectedAPI.name
+                    : "None"
+                }
+              />
+              <MetaCell label="Agent ID" value={<span className="font-mono">{agtId}</span>} />
+            </div>
+
+            {enabledToolNames.length > 0 && (
+              <div className="mb-6">
+                <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-2">
+                  Enabled {selectedMCP ? "Tools" : "Endpoints"}
+                </p>
+                <div className="space-y-1">
+                  {enabledToolNames.map((t) => (
+                    <div key={t} className="flex items-center gap-2 text-sm text-gray-700">
+                      <Check className="w-4 h-4 text-green-600" /> {t}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-gray-100">
+              <Button size="sm" onClick={() => copyText(agentUrl, "Agent URL")}>
+                <ExternalLink className="w-4 h-4 mr-1.5" /> Open Agent
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => toast.success("Opening chat session (demo)")}
+              >
+                <MessageSquare className="w-4 h-4 mr-1.5" /> Chat with Agent
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => router.push("/ai-studio/my-agents")}
+              >
+                View in My Agents
+              </Button>
+              {d.visibility === "public" && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    if (agentId) updateAgent(agentId, { visibility: "public" });
+                    toast.success("Published to the Agent Marketplace!");
+                    router.push("/ai-studio/marketplace");
+                  }}
+                >
+                  <Globe className="w-4 h-4 mr-1.5" /> Publish to Marketplace
+                </Button>
+              )}
+            </div>
+          </Card>
+        )}
+
+        {/* Wizard nav (steps 1-4; Deploy and Success have their own buttons) */}
+        {step < 4 && (
           <div className="flex items-center justify-between">
             <Button variant="outline" size="sm" onClick={() => saveDraft()}>
               <Save className="w-4 h-4 mr-1.5" /> Save Draft

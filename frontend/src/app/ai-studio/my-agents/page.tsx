@@ -81,7 +81,7 @@ export default function MyAgentsPage() {
     a.visibility === "public" ? (
       <Badge variant="info" dot>Public</Badge>
     ) : a.visibility === "team" ? (
-      <Badge variant="secondary" dot>Team</Badge>
+      <Badge variant="secondary" dot>Organization</Badge>
     ) : (
       <Badge variant="gray" dot>Private</Badge>
     );
@@ -131,7 +131,7 @@ export default function MyAgentsPage() {
               options={[
                 { value: "all", label: "All Visibility" },
                 { value: "private", label: "Private" },
-                { value: "team", label: "Team" },
+                { value: "team", label: "Organization" },
                 { value: "public", label: "Public" },
               ]}
               value={visibilityFilter}
@@ -213,7 +213,7 @@ export default function MyAgentsPage() {
                   </button>
                   <button
                     title="Test"
-                    onClick={() => router.push(`/ai-studio/create-agent?agentId=${a.id}&step=5`)}
+                    onClick={() => router.push(`/ai-studio/create-agent?agentId=${a.id}&step=3`)}
                     className="p-2 text-gray-400 hover:text-purple-700 hover:bg-purple-50 rounded-lg"
                   >
                     <FlaskConical className="w-4 h-4" />
