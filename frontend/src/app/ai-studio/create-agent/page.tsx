@@ -195,6 +195,9 @@ function CreateAgentInner() {
   // Deploy
   const [deployStatus, setDeployStatus] = useState<DeploymentStatus>("draft");
 
+  // Search
+  const [resourceSearch, setResourceSearch] = useState("");
+
   const patch = (p: Partial<Draft>) => setD((prev) => ({ ...prev, ...p }));
 
   useEffect(() => setMounted(true), []);
@@ -301,6 +304,7 @@ function CreateAgentInner() {
   // ----- Step 3 helpers: one external resource -----
   const setResourceType = (type: AgentResourceType) => {
     patch({ resourceType: type, mcpSelections: [], apiSelections: [] });
+    setResourceSearch("");
   };
 
   const selectMCP = (mcpId: string) => {
@@ -799,7 +803,13 @@ function CreateAgentInner() {
 
             {/* MCP branch */}
             {d.resourceType === "mcp" && (
-              <div className="space-y-3">
+              <div className="space-y-3 mt-4">
+                <Input
+                  placeholder="Search MCP Servers..."
+                  value={resourceSearch}
+                  onChange={(e) => setResourceSearch(e.target.value)}
+                  className="mb-4"
+                />
                 {mcps.filter((m) => m.status === "active").length === 0 ? (
                   <p className="text-sm text-gray-400 py-6 text-center border border-dashed rounded-lg">
                     No active MCP servers.{" "}
@@ -813,6 +823,7 @@ function CreateAgentInner() {
                 ) : (
                   mcps
                     .filter((m) => m.status === "active")
+                    .filter((m) => m.displayName.toLowerCase().includes(resourceSearch.toLowerCase()) || m.description.toLowerCase().includes(resourceSearch.toLowerCase()))
                     .map((m) => {
                       const sel =
                         d.mcpSelections[0]?.mcpServerId === m.id ? d.mcpSelections[0] : null;
@@ -972,7 +983,13 @@ function CreateAgentInner() {
 
             {/* API branch */}
             {d.resourceType === "api" && (
-              <div className="space-y-3">
+              <div className="space-y-3 mt-4">
+                <Input
+                  placeholder="Search API Connections..."
+                  value={resourceSearch}
+                  onChange={(e) => setResourceSearch(e.target.value)}
+                  className="mb-4"
+                />
                 {apis.length === 0 ? (
                   <p className="text-sm text-gray-400 py-6 text-center border border-dashed rounded-lg">
                     No API connections.{" "}
@@ -984,7 +1001,9 @@ function CreateAgentInner() {
                     </button>
                   </p>
                 ) : (
-                  apis.map((a) => {
+                  apis
+                    .filter((a) => a.name.toLowerCase().includes(resourceSearch.toLowerCase()) || a.description.toLowerCase().includes(resourceSearch.toLowerCase()))
+                    .map((a) => {
                     const sel =
                       d.apiSelections[0]?.apiConnectionId === a.id ? d.apiSelections[0] : null;
                     return (
